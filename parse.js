@@ -1,7 +1,7 @@
 const cheerio = require('cheerio');
 
-String.prototype.toProperCase = function () {
-    return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+String.prototype.toProperCase = function () { // eslint-disable-line
+  return this.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 };
 
 const parse = (body) => {
@@ -15,7 +15,8 @@ const parse = (body) => {
       $(row).find('td').each((j, column) => {
         switch (j) {
           case 0:
-            project.landUseId = $(column).find('a').eq(0).text().trim();
+            project.landUseAll = $(column).find('a').eq(0).text().trim();
+            project.landUseId = project.landUseAll.split(' ')[1];
             project.landUseReceivedDate = $(column).find('a').eq(1).text().trim();
             break;
 
