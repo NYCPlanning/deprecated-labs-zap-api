@@ -1,5 +1,9 @@
 const cheerio = require('cheerio');
 
+String.prototype.toProperCase = function () {
+    return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+};
+
 const parse = (body) => {
   const $ = cheerio.load(body);
   const projects = [];
@@ -22,14 +26,14 @@ const parse = (body) => {
 
           case 2:
             // split on more than one space
-            project.lastMilestone = $(column).find('font').contents().eq(0).text().trim();
+            project.lastMilestone = $(column).find('font').contents().eq(0).text().trim().toProperCase();
             project.lastMilestoneDate = $(column).find('font').contents().eq(2).text().trim();
             break;
 
           case 3:
             // skip the <br> by getting contents() at position 0 and 2
-            project.projectName = $(column).find('font').contents().eq(0).text().trim();
-            project.location = $(column).find('font').contents().eq(2).text().trim();
+            project.projectName = $(column).find('font').contents().eq(0).text().trim().toProperCase();
+            project.location = $(column).find('font').contents().eq(2).text().trim().toProperCase();
             break;
 
           case 4:
