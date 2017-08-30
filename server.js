@@ -1,5 +1,5 @@
 const express = require('express');
-const request = require('request');
+const rp = require('request-promise-native');
 // require('request-debug')(request);
 const parse = require('./parse');
 const aspHeaders = require('./aspHeaders');
@@ -34,9 +34,9 @@ app.get('/cdprojects/:boroname/:cd', (req, res) => {
 
   const boroAcronym = boroMap(boroname);
 
-  const URL = `http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx`;
+  const URL = 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx';
 
-  request({
+  const activeProjects = rp({
     url: URL,
     jar: true,
     method: 'POST',
@@ -54,11 +54,40 @@ app.get('/cdprojects/:boroname/:cd', (req, res) => {
       __VIEWSTATE: aspHeaders.viewstate,
       __EVENTVALIDATION: aspHeaders.eventvalidation,
       __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
-    }
-  }, (err, response, body) => {
-    console.log(response.statusCode)
-    res.json(parse(body));
+    },
   });
+
+  const completedProjects = rp({
+    url: URL,
+    jar: true,
+    method: 'POST',
+    followAllRedirects: true,
+    headers: {
+      Referer: 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx',
+    },
+    form: {
+      status: 'completed',
+      ddl_geography: 2,
+      TypeID: 0,
+      borough: boroAcronym,
+      cd,
+      Search2: 'search',
+      __VIEWSTATE: aspHeaders.viewstate,
+      __EVENTVALIDATION: aspHeaders.eventvalidation,
+      __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
+    },
+  });
+
+  Promise.all([activeProjects, completedProjects])
+    .then((values) => {
+      const active = parse(values[0]);
+      const completed = parse(values[1]);
+
+      res.json({
+        active,
+        completed,
+      });
+    });
 });
 
 module.exports = app;
