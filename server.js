@@ -29,11 +29,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/cdprojects/:boroname/:cd', (req, res) => {
+app.get('/urlurp/cd/:boroname/:cd.json', (req, res) => {
   const { boroname, cd } = req.params;
 
   const boroAcronym = boroMap(boroname);
-  console.log(boroAcronym)
+  console.log(`Fetching LUCATS applications for ${boroAcronym}${cd}`) // eslint-disable-line
 
   const URL = 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx';
 
@@ -82,12 +82,22 @@ app.get('/cdprojects/:boroname/:cd', (req, res) => {
   Promise.all([activeProjects, completedProjects])
     .then((values) => {
       const active = parse(values[0]);
-      const completed = parse(values[1]);
-
-      res.json({
-        active,
-        completed,
+      active.map((application) => {
+        const a = application;
+        a.status = 'active';
+        return a;
       });
+
+      const completed = parse(values[1]);
+      completed.map((application) => {
+        const a = application;
+        a.status = 'completed';
+        return a;
+      });
+
+      // combine active and completed into one array of objects
+      const response = active.concat(completed);
+      res.json(response);
     });
 });
 
