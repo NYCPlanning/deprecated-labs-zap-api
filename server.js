@@ -1,6 +1,8 @@
 const express = require('express');
 const request = require('request');
+// require('request-debug')(request);
 const parse = require('./parse');
+const aspHeaders = require('./aspHeaders');
 
 const app = express();
 
@@ -30,12 +32,33 @@ app.use((req, res, next) => {
 app.get('/cdprojects/:boroname/:cd', (req, res) => {
   const { boroname, cd } = req.params;
 
-  const URL = `http://a030-lucats.nyc.gov/lucats/DirectULURPCD.aspx?Boro=${boroMap(boroname)}&CD=${cd}`;
+  const boroAcronym = boroMap(boroname);
+
+  const URL = `http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx`;
 
   request({
     url: URL,
     jar: true,
-  }, (err, response, body) => { res.json(parse(body)); });
+    method: 'POST',
+    followAllRedirects: true,
+    headers: {
+      Referer: 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx',
+    },
+    form: {
+      status: 'active',
+      ddl_geography: 2,
+      TypeID: 0,
+      borough: boroAcronym,
+      cd,
+      Search2: 'search',
+      __VIEWSTATE: aspHeaders.viewstate,
+      __EVENTVALIDATION: aspHeaders.eventvalidation,
+      __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
+    }
+  }, (err, response, body) => {
+    console.log(response.statusCode)
+    res.json(parse(body));
+  });
 });
 
 module.exports = app;
