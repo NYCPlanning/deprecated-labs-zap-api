@@ -33,6 +33,7 @@ app.get('/cdprojects/:boroname/:cd', (req, res) => {
   const { boroname, cd } = req.params;
 
   const boroAcronym = boroMap(boroname);
+  console.log(boroAcronym)
 
   const URL = 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx';
 
@@ -51,8 +52,8 @@ app.get('/cdprojects/:boroname/:cd', (req, res) => {
       borough: boroAcronym,
       cd,
       Search2: 'search',
-      __VIEWSTATE: aspHeaders.viewstate,
-      __EVENTVALIDATION: aspHeaders.eventvalidation,
+      __VIEWSTATE: aspHeaders.viewstate[boroAcronym],
+      __EVENTVALIDATION: aspHeaders.eventvalidation[boroAcronym],
       __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
     },
   });
