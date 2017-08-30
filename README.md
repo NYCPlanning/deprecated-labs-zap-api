@@ -16,49 +16,94 @@ An express.js api that scrapes data from LUCATS in real-time and serves JSON.
 
 ## Routes
 
-- `/cdprojects/:boroname/:cd` - gets the first 20 active projects associated with a given community district.
+- `/urlurp/cd/:boroname/:cd.json` - gets a combined list of active and completed projects for a given borough and cd.
 
 `boroname` - one of `manhattan`, `bronx`, `brooklyn`, `queens`, `statenisland`
 `cd` - the community district number without leading zeroes
 
 ## Example response
 
-A `GET` to `/cdprojects/brooklyn/11` will result in the following response:
+A `GET` to `/urlurp/cd/brooklyn/11.json` will result in the following response:
 
 ```
 [
   {
-    landUseId: "N 180044 ZCK",
+    landUseAll: "N 180044 ZCK",
+    landUseId: "180044",
     landUseReceivedDate: "08/08/2017",
     ceqrNumber: "18DCP022K",
     ceqrReceivedDate: "",
-    lastMilestone: "APPLICATION UNDER REVIEW",
+    lastMilestone: "Application Under Review",
     lastMilestoneDate: "08/08/2017",
-    projectName: "TOYS "R" US WATERFRONT CERT.",
-    location: "1684 SHORE PARKWAY",
-    cd: "K11"
+    projectName: "Toys "R" Us Waterfront Cert.",
+    location: "1684 Shore Parkway",
+    cd: "K11",
+    status: "active"
   },
   {
-    landUseId: "N 170399 ZCK",
+    landUseAll: "N 170399 ZCK",
+    landUseId: "170399",
     landUseReceivedDate: "05/08/2017",
     ceqrNumber: "17DCP174K",
     ceqrReceivedDate: "",
     lastMilestone: "",
     lastMilestoneDate: "",
-    projectName: "8750 17TH AVE (HOW CHAIR CERT.)",
-    location: "8750 17TH AVENUE",
-    cd: "K11"
+    projectName: "8750 17th Ave (How Chair Cert.)",
+    location: "8750 17th Avenue",
+    cd: "K11",
+    status: "active"
   },
   {
-    landUseId: "N 150364 ZAK",
+    landUseAll: "N 150364 ZAK",
+    landUseId: "150364",
     landUseReceivedDate: "05/08/2015",
     ceqrNumber: "77DCP",
     ceqrReceivedDate: "",
-    lastMilestone: "REVISED PLAN RECEIVED",
+    lastMilestone: "Revised Plan Received",
     lastMilestoneDate: "04/24/2017",
-    projectName: "CAESER'S BAY SHOPPING CENTER",
-    location: "8973/8995 BAY PARKWAY",
-    cd: "K11"
+    projectName: "Caeser's Bay Shopping Center",
+    location: "8973/8995 Bay Parkway",
+    cd: "K11",
+    status: "active"
+  },
+  {
+    landUseAll: "N 180044 ZCK",
+    landUseId: "180044",
+    landUseReceivedDate: "08/08/2017",
+    ceqrNumber: "18DCP022K",
+    ceqrReceivedDate: "",
+    lastMilestone: "Application Under Review",
+    lastMilestoneDate: "08/08/2017",
+    projectName: "Toys "R" Us Waterfront Cert.",
+    location: "1684 Shore Parkway",
+    cd: "K11",
+    status: "completed"
+  },
+  {
+    landUseAll: "N 170399 ZCK",
+    landUseId: "170399",
+    landUseReceivedDate: "05/08/2017",
+    ceqrNumber: "17DCP174K",
+    ceqrReceivedDate: "",
+    lastMilestone: "",
+    lastMilestoneDate: "",
+    projectName: "8750 17th Ave (How Chair Cert.)",
+    location: "8750 17th Avenue",
+    cd: "K11",
+    status: "completed"
+  },
+  {
+    landUseAll: "N 150364 ZAK",
+    landUseId: "150364",
+    landUseReceivedDate: "05/08/2015",
+    ceqrNumber: "77DCP",
+    ceqrReceivedDate: "",
+    lastMilestone: "Revised Plan Received",
+    lastMilestoneDate: "04/24/2017",
+    projectName: "Caeser's Bay Shopping Center",
+    location: "8973/8995 Bay Parkway",
+    cd: "K11",
+    status: "completed"
   }
 ]
 ```
