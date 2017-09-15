@@ -7,6 +7,10 @@
     "start": "node ./bin/www",
     "devstart": "nodemon ./bin/www"
   },
+  "engines": {
+    "node": "8.2.1",
+    "npm": "5.3.0"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
