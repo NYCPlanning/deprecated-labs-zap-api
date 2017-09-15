@@ -29,7 +29,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/urlurp/cd/:boroname/:cd.json', (req, res) => {
+app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
   const { boroname, cd } = req.params;
 
   const boroAcronym = boroMap(boroname);
@@ -81,14 +81,15 @@ app.get('/urlurp/cd/:boroname/:cd.json', (req, res) => {
 
   Promise.all([activeProjects, completedProjects])
     .then((values) => {
-      const active = parse(values[0]);
+      const [activeHTML, completedHTML] = values;
+      const active = parse(activeHTML);
       active.map((application) => {
         const a = application;
         a.status = 'active';
         return a;
       });
 
-      const completed = parse(values[1]);
+      const completed = parse(completedHTML);
       completed.map((application) => {
         const a = application;
         a.status = 'completed';
