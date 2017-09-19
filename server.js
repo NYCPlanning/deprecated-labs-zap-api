@@ -58,48 +58,53 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
     },
   });
 
-  const completedProjects = rp({
-    url: URL,
-    jar: true,
-    method: 'POST',
-    followAllRedirects: true,
-    headers: {
-      Referer: 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx',
-    },
-    form: {
-      status: 'completed',
-      ddl_geography: 2,
-      TypeID: 0,
-      borough: boroAcronym,
-      cd,
-      Search2: 'search',
-      __VIEWSTATE: aspHeaders.viewstate[boroAcronym],
-      __EVENTVALIDATION: aspHeaders.eventvalidation[boroAcronym],
-      __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
-    },
-  });
-
-  Promise.all([activeProjects, completedProjects])
-    .then((values) => {
-      const [activeHTML, completedHTML] = values;
-      const active = parse(activeHTML);
-      active.map((application) => {
-        const a = application;
-        a.status = 'active';
-        return a;
-      });
-
-      const completed = parse(completedHTML);
-      completed.map((application) => {
-        const a = application;
-        a.status = 'completed';
-        return a;
-      });
-
-      // combine active and completed into one array of objects
-      const response = active.concat(completed);
-      res.json(response);
+  setTimeout(() => {
+    const completedProjects = rp({
+      url: URL,
+      jar: true,
+      method: 'POST',
+      followAllRedirects: true,
+      headers: {
+        Referer: 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx',
+      },
+      form: {
+        status: 'completed',
+        ddl_geography: 2,
+        TypeID: 0,
+        borough: boroAcronym,
+        cd,
+        Search2: 'search',
+        __VIEWSTATE: aspHeaders.viewstate[boroAcronym],
+        __EVENTVALIDATION: aspHeaders.eventvalidation[boroAcronym],
+        __VIEWSTATEGENERATOR: aspHeaders.viewstategenerator,
+      },
     });
+
+    Promise.all([activeProjects, completedProjects])
+        .then((values) => {
+          const [activeHTML, completedHTML] = values;
+          const active = parse(activeHTML);
+          active.map((application) => {
+            const a = application;
+            a.status = 'active';
+            return a;
+          });
+
+          const completed = parse(completedHTML);
+          completed.map((application) => {
+            const a = application;
+            a.status = 'completed';
+            return a;
+          });
+
+          console.log('ACTIVE', activeHTML)
+          console.log('COMPLETED', completedHTML)
+
+          // combine active and completed into one array of objects
+          const response = active.concat(completed);
+          res.json(response);
+        });
+  }, 1100);
 });
 
 module.exports = app;
