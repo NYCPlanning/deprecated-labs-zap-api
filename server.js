@@ -1,11 +1,9 @@
 const express = require('express');
 const rp = require('request-promise-native');
-const apicache = require('apicache');
 const parse = require('./parse');
 const aspHeaders = require('./aspHeaders');
 
 const app = express();
-const cache = apicache.middleware;
 
 const jar1 = rp.jar();
 const jar2 = rp.jar();
@@ -26,8 +24,6 @@ const boroMap = (boroname) => {
       return null;
   }
 };
-
-app.use(cache('720 minutes'));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
