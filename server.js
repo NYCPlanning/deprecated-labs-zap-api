@@ -7,7 +7,7 @@ const aspHeaders = require('./aspHeaders');
 const app = express();
 const cache = apicache.middleware;
 
-app.use(cache('720 minutes'));
+app.use(cache('1440 minutes'));
 
 const boroMap = (boroname) => {
   switch (boroname) {
