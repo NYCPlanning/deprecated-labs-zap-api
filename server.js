@@ -1,10 +1,13 @@
 const express = require('express');
 const rp = require('request-promise-native');
-// require('request-debug')(request);
+const apicache = require('apicache');
 const parse = require('./parse');
 const aspHeaders = require('./aspHeaders');
 
 const app = express();
+const cache = apicache.middleware;
+
+app.use(cache('720 minutes'));
 
 const boroMap = (boroname) => {
   switch (boroname) {
@@ -96,9 +99,6 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
             a.status = 'completed';
             return a;
           });
-
-          console.log('ACTIVE', activeHTML)
-          console.log('COMPLETED', completedHTML)
 
           // combine active and completed into one array of objects
           const response = active.concat(completed);
