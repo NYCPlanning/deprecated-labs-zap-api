@@ -7,7 +7,8 @@ const aspHeaders = require('./aspHeaders');
 const app = express();
 const cache = apicache.middleware;
 
-app.use(cache('1440 minutes'));
+const jar1 = rp.jar();
+const jar2 = rp.jar();
 
 const boroMap = (boroname) => {
   switch (boroname) {
@@ -26,6 +27,8 @@ const boroMap = (boroname) => {
   }
 };
 
+app.use(cache('720 minutes'));
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -42,7 +45,7 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
 
   const activeProjects = rp({
     url: URL,
-    jar: true,
+    jar: jar1,
     method: 'POST',
     followAllRedirects: true,
     headers: {
@@ -64,7 +67,7 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
   setTimeout(() => {
     const completedProjects = rp({
       url: URL,
-      jar: true,
+      jar: jar2,
       method: 'POST',
       followAllRedirects: true,
       headers: {

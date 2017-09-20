@@ -45,6 +45,7 @@ const parse = (body) => {
 
         }
       });
+      console.log(project.projectName); //eslint-disable-line
       projects.push(project);
     }
   });
