@@ -5,8 +5,8 @@ const aspHeaders = require('./aspHeaders');
 
 const app = express();
 
-const jar1 = rp.jar();
-const jar2 = rp.jar();
+
+// const jar2 = rp.jar();
 
 const boroMap = (boroname) => {
   switch (boroname) {
@@ -38,6 +38,7 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
   console.log(`Fetching LUCATS applications for ${boroAcronym}${cd}`) // eslint-disable-line
 
   const URL = 'http://a030-lucats.nyc.gov/lucats/ULURP_Search.aspx';
+  const jar1 = rp.jar();
 
   rp({
     url: URL,
@@ -66,7 +67,6 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
         a.status = 'active';
         return a;
       });
-
       res.json(active);
     });
 });
