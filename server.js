@@ -1,6 +1,7 @@
 const express = require('express');
 const rp = require('request-promise-native');
-const parse = require('./parse');
+const parseMulti = require('./parse-multi');
+const parseSingle = require('./parse-single');
 const aspHeaders = require('./aspHeaders');
 
 const app = express();
@@ -61,7 +62,13 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
     },
   })
     .then((activeHTML) => {
-      const active = parse(activeHTML);
+      let active = [];
+      // LUCATS has different results when there is only one project in a community district
+      if (activeHTML.includes('Land Use Application ID')) {
+        active = parseSingle(activeHTML);
+      } else {
+        active = parseMulti(activeHTML);
+      }
       active.map((application) => {
         const a = application;
         a.status = 'active';
