@@ -14,12 +14,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "apicache": "^1.0.0",
+    "apicache": "^1.2.0",
     "cheerio": "^1.0.0-rc.2",
-    "express": "^4.15.4",
-    "request": "^2.81.0",
+    "express": "^4.16.2",
+    "request": "^2.83.0",
     "request-debug": "^0.2.0",
-    "request-promise-native": "^1.0.4"
+    "request-promise-native": "^1.0.5"
   },
   "devDependencies": {
     "babel-eslint": "^7.1.1",
