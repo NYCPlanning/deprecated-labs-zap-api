@@ -1,29 +1,33 @@
 # labs-lucats-proxy
-An express.js api that scrapes data from LUCATS in real-time and serves JSON.
+An express.js api that scrapes data from [LUCATS](http://a030-lucats.nyc.gov/lucats/welcome.aspx) in real-time for a given community district and serves it up as JSON.
 
-## Development Environment
+## Requirements
 
-1. Clone this repo & install dependencies
-  ```
-  git clone https://github.com/NYCPlanning/labs-lucats-proxy.git
-  npm install
-  ```
+You will need the following things properly installed on your computer.
 
-2. Start the server
-  ```
-  npm run devstart
-  ```
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/) (with NPM)
 
-## Routes
+## Local development
 
-- `/urlurp/cd/:boroname/:cd.json` - gets a combined list of active and completed projects for a given borough and cd.
+- Clone this repo `git clone https://github.com/NYCPlanning/labs-lucats-proxy.git`
+- Install Dependencies `npm install`
+- Start the server `npm run devstart`
+- Try an API call at `localhost:3000/ulurp/cd/brooklyn/1.json`
+
+## Architecture
+This is a simple express.js app.  When a request comes in for a community district, it fetches the corresponding page on LUCATS and scrapes it, pulling out bits of data for each project.  These are assembled into an array of objects, and sent out as a JSON response.
+
+### Routes
+
+- `https://lucats.planninglabs.nyc/urlurp/cd/:boroname/:cd.json` - gets a combined list of active and completed projects for a given borough and cd.
 
 `boroname` - one of `manhattan`, `bronx`, `brooklyn`, `queens`, `statenisland`
 `cd` - the community district number without leading zeroes
 
-## Example response
+### Example response
 
-A `GET` to `/urlurp/cd/brooklyn/11.json` will result in the following response:
+A `GET` to `/ulurp/cd/brooklyn/11.json` will result in the following response:
 
 ```
 [
@@ -107,3 +111,22 @@ A `GET` to `/urlurp/cd/brooklyn/11.json` will result in the following response:
   }
 ]
 ```
+
+## Backend services
+
+- **[LUCATS]((http://a030-lucats.nyc.gov/lucats/welcome.aspx)** -  A DCP web application for searching land use applications.
+
+## Testing and checks
+
+- **ESLint** - We use ESLint with Airbnb's rules for JavaScript projects
+  - Add an ESLint plugin to your text editor to highlight broken rules while you code
+  - You can also run `eslint` at the command line with the `--fix` flag to automatically fix some errors.
+
+## Deployment
+
+Create dokku remote: `git remote add dokku dokku@{dokkudomain}:lucats`
+Deploy: `git push dokku master`
+
+## Contact us
+
+You can find us on Twitter at [@nycplanninglabs](https://twitter.com/nycplanninglabs), or comment on issues and we'll follow up as soon as we can. If you'd like to send an email, use [labs_dl@planning.nyc.gov](mailto:labs_dl@planning.nyc.gov)
