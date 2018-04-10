@@ -78,4 +78,16 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
     });
 });
 
+app.get('/zap/:zapAcronym.json', (req, res) => {
+  const { zapAcronym } = req.params;
+  const zapUrl = `https://dcppfsuat.dynamics365portals.us/_odata/Projects?$filter=substringof('${zapAcronym}',dcp_validatedcommunitydistricts)&$filter=dcp_certifiedreferred%20eq%20null&$top=10&$orderby=dcp_certifiedreferred`;
+  rp({
+    url: zapUrl,
+    json: true,
+  })
+    .then((data) => {
+      res.json(data.value);
+    });
+});
+
 module.exports = app;
