@@ -80,13 +80,23 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
 
 app.get('/zap/:zapAcronym.json', (req, res) => {
   const { zapAcronym } = req.params;
-  const zapUrl = `https://dcppfsuat.dynamics365portals.us/_odata/Projects?$filter=substringof('${zapAcronym}',dcp_validatedcommunitydistricts)&$filter=dcp_certifiedreferred%20eq%20null&$top=10&$orderby=dcp_certifiedreferred`;
+  const zapUrl = `https://dcppfsuat.dynamics365portals.us/_odata/Projects?$filter=(dcp_publicstatus/Value eq 717170000 and substringof('${zapAcronym}',dcp_validatedcommunitydistricts))`;
+
   rp({
     url: zapUrl,
     json: true,
   })
     .then((data) => {
-      res.json(data.value);
+      const projects = data.value;
+
+      const cleanedProjects = projects.map(project => ({
+        projectid: project.dcp_projectid,
+        applicant_customer: project.dcp_applicant_customer ? project.dcp_applicant_customer.Name : 'Unknown Applicant',
+        projectname: project.dcp_projectname,
+        type: project.dcp_ulurp_nonulurp ? project.dcp_ulurp_nonulurp.Name : 'Unknown Type',
+      }));
+
+      res.json(cleanedProjects);
     });
 });
 
