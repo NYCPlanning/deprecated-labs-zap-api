@@ -6,9 +6,6 @@ const aspHeaders = require('./aspHeaders');
 
 const app = express();
 
-
-// const jar2 = rp.jar();
-
 const boroMap = (boroname) => {
   switch (boroname) {
     case 'manhattan':
@@ -80,7 +77,7 @@ app.get('/ulurp/cd/:boroname/:cd.json', (req, res) => {
 
 app.get('/zap/:zapAcronym.json', (req, res) => {
   const { zapAcronym } = req.params;
-  const zapUrl = `https://dcppfsuat.dynamics365portals.us/_odata/Projects?$filter=(dcp_publicstatus/Value eq 717170000 and substringof('${zapAcronym}',dcp_validatedcommunitydistricts))`;
+  const zapUrl = `https://nycdcppfs.dynamics365portals.us/_odata/Projects?$filter=(dcp_publicstatus/Value eq 717170000 and substringof('${zapAcronym}',dcp_validatedcommunitydistricts))`;
 
   rp({
     url: zapUrl,
