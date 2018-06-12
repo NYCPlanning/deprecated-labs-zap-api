@@ -1,20 +1,19 @@
 {
-  "name": "labs-applicantmaps-api",
-  "version": "0.0.0",
-  "private": true,
+  "name": "labs-lucats-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
   "scripts": {
     "start": "node ./bin/www",
     "devstart": "nodemon ./bin/www"
   },
   "dependencies": {
-    "body-parser": "~1.18.2",
-    "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "dotenv": "^6.0.0",
     "express": "~4.15.5",
-    "express-json-validator-middleware": "^1.2.3",
     "morgan": "^1.9.0",
-    "pg-promise": "^8.4.4"
+    "pg-promise": "^8.4.4",
+    "request-promise-native": "^1.0.5"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

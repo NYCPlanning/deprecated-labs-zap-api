@@ -8,6 +8,7 @@
     "camelcase": [0],
   },
   "env": {
+    "browser": true,
     "node": true
   },
 }
