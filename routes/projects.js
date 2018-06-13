@@ -4,8 +4,9 @@ const pgp = require('pg-promise')();
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
 const router = express.Router();
 
-const projectColumns = `
+const detailProjectColumns = `
   dcp_name,
+  dcp_projectid,
   dcp_projectname,
   dcp_projectbrief,
   dcp_borough,
@@ -29,7 +30,24 @@ const projectColumns = `
   dcp_femafloodzonecoastala,
   dcp_femafloodzonecoastala,
   dcp_femafloodzonev,
-  dcp_publicstatus
+  dcp_publicstatus,
+  (
+    SELECT json_agg(json_build_object(
+      'dcp_validatedborough', b.dcp_validatedborough,
+      'dcp_validatedblock', b.dcp_validatedblock,
+      'dcp_validatedlot', b.dcp_validatedlot,
+      'dcp_bblnumber', b.dcp_bblnumber
+    ))
+    FROM dcp_projectbbl b
+    WHERE b.dcp_project = p.dcp_projectid
+  ) AS bbls
+`;
+
+// columns for use in list view
+const listProjectColumns = `
+  dcp_name,
+  dcp_projectname,
+  dcp_projectbrief
 `;
 
 /* GET /projects/:id */
@@ -37,15 +55,16 @@ const projectColumns = `
 router.get('/:id', (req, res) => {
   const { id } = req.params;
   const SQL = `
-    SELECT ${projectColumns}
-    FROM dcp_project
+    SELECT ${detailProjectColumns}
+    FROM dcp_project p
     WHERE dcp_name = '${id}'
   `;
   db.one(SQL)
     .then((data) => {
       res.send(data);
     })
-    .catch(() => {
+    .catch((error) => {
+      console.log(error)
       res.status(404).send({
         error: `no project found with id ${id}`,
       });
@@ -60,8 +79,8 @@ router.get('/geography/:id', (req, res) => {
   // TODO this only works with a well-formed community district acronym
   // make it validate geography, and work with different geography types
   const SQL = `
-    SELECT ${projectColumns}
-    FROM dcp_project
+    SELECT ${listProjectColumns}
+    FROM dcp_project p
     WHERE dcp_validatedcommunitydistricts LIKE '%${id}%'
   `;
 
