@@ -1,6 +1,8 @@
 const express = require('express');
 const pgp = require('pg-promise')();
 const carto = require('../utils/carto');
+const knex = require('knex')({ client: 'postgresql', connection: process.env.DATABASE_CONNECTION_STRING });
+const bookshelf = require('bookshelf')(knex);
 
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
 const router = express.Router();
@@ -15,6 +17,10 @@ const getBblFeatureCollection = (bbls) => {
 
   return carto.SQL(SQL, 'geojson');
 };
+
+const Project = bookshelf.Model.extend({
+  tableName: 'dcp_project',
+});
 
 const detailProjectColumns = `
   dcp_name,
@@ -109,15 +115,23 @@ router.get('/', ({ query: { 'community-district': communityDistrict } }, res) =>
     SQL += `WHERE dcp_validatedcommunitydistricts ILIKE '%${communityDistrict}%'`;
   }
 
-  db.any(SQL)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch(() => {
-      res.status(404).send({
-        error: `no projects found for geography ${communityDistrict}`,
-      });
+  Project
+    .select(listProjectColumns)
+    .where('dcp_validatedcommunitydistricts', 'ILIKE', `%${communityDistrict}%`)
+    .fetch()
+    .then((projects) => {
+      console.log('projects:', projects.toJSON());
     });
+
+  // db.any(SQL)
+  //   .then((data) => {
+  //     res.send(data);
+  //   })
+  //   .catch(() => {
+  //     res.status(404).send({
+  //       error: `no projects found for geography ${communityDistrict}`,
+  //     });
+  //   });
 });
 
 /* GET /projects/:id */
