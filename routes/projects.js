@@ -53,29 +53,29 @@ const detailProjectColumns = `
       'dcp_name', a.dcp_name,
       'dcp_ulurpnumber', a.dcp_ulurpnumber,
       'dcp_prefix', a.dcp_prefix,
-      'statuscode', a.statuscode
+      'statuscode', a.statuscode,
+      'milestones', (
+        SELECT json_agg(json_build_object(
+          'dcp_name', m.dcp_name,
+          'dcp_plannedstartdate', m.dcp_plannedstartdate,
+          'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
+          'statuscode', m.statuscode,
+          'dcp_milestonesequence', m.dcp_milestonesequence
+        ))
+        FROM (
+          SELECT * FROM dcp_projectmilestone mm
+          WHERE mm.dcp_projectaction = a.dcp_projectactionid
+          ORDER BY mm.dcp_milestonesequence ASC
+        ) m
+      )
     ))
     FROM dcp_projectaction a
     WHERE a.dcp_project = p.dcp_projectid
-      AND a.statuscode <> 'Mistake'
   ) AS actions,
   (
     SELECT json_agg(json_build_object(
-      'dcp_name', m.dcp_name,
-      'dcp_plannedstartdate', m.dcp_plannedstartdate,
-      'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
-      'statuscode', m.statuscode,
-      'dcp_milestonesequence', m.dcp_milestonesequence
+      'dcp_keyword', k.dcp_keyword
     ))
-    FROM (
-      SELECT *
-      FROM dcp_projectmilestone mm
-      WHERE mm.dcp_project = p.dcp_projectid
-      ORDER BY mm.dcp_milestonesequence ASC
-    ) m
-  ) AS milestones,
-  (
-    SELECT json_agg(k.dcp_keyword)
     FROM dcp_projectkeywords k
     WHERE k.dcp_project = p.dcp_projectid
   ) AS keywords,
@@ -86,7 +86,6 @@ const detailProjectColumns = `
     ))
     FROM dcp_projectaddress a
     WHERE a.dcp_project = p.dcp_projectid
-      AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL)
   ) AS addresses
 `;
 
@@ -96,6 +95,30 @@ const listProjectColumns = `
   dcp_projectname,
   dcp_projectbrief
 `;
+
+/* GET /projects */
+router.get('/', ({ query: { 'community-district': communityDistrict } }, res) => {
+  // TODO this only works with a well-formed community district acronym
+  // make it validate geography, and work with different geography types
+  let SQL = `
+    SELECT ${listProjectColumns}
+    FROM dcp_project p
+  `;
+
+  if (communityDistrict) {
+    SQL += `WHERE dcp_validatedcommunitydistricts ILIKE '%${communityDistrict}%'`;
+  }
+
+  db.any(SQL)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch(() => {
+      res.status(404).send({
+        error: `no projects found for geography ${communityDistrict}`,
+      });
+    });
+});
 
 /* GET /projects/:id */
 /* Retreive a single project */
@@ -121,30 +144,6 @@ router.get('/:id', (req, res) => {
     .catch((error) => {
       res.status(404).send({
         error: `no project found with id ${id}`,
-      });
-    });
-});
-
-/* GET /projects/geography/:id */
-/* Retreive all projects for a geography */
-router.get('/geography/:id', (req, res) => {
-  const { id } = req.params;
-
-  // TODO this only works with a well-formed community district acronym
-  // make it validate geography, and work with different geography types
-  const SQL = `
-    SELECT ${listProjectColumns}
-    FROM dcp_project p
-    WHERE dcp_validatedcommunitydistricts LIKE '%${id}%'
-  `;
-
-  db.any(SQL)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch(() => {
-      res.status(404).send({
-        error: `no projects found for geography ${id}`,
       });
     });
 });
