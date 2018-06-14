@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const projects = require('./routes/projects');
 const zap = require('./routes/zap');
+const exportRoute = require('./routes/export');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(logger('dev'));
 // import routes
 app.use('/projects', projects);
 app.use('/zap', zap);
+app.use('/export', exportRoute);
 
 app.use((req, res) => {
   res.status(404).json({
