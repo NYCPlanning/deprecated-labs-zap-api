@@ -1,8 +1,20 @@
 const express = require('express');
 const pgp = require('pg-promise')();
+const carto = require('../utils/carto');
 
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
 const router = express.Router();
+
+const getBblFeatureCollection = (bbls) => {
+  if (bbls === null) return null;
+  const SQL = `
+    SELECT the_geom
+    FROM mappluto_v1711
+    WHERE bbl IN (${bbls.join(',')})
+  `;
+
+  return carto.SQL(SQL, 'geojson');
+};
 
 const detailProjectColumns = `
   dcp_name,
@@ -32,12 +44,7 @@ const detailProjectColumns = `
   dcp_femafloodzonev,
   dcp_publicstatus,
   (
-    SELECT json_agg(json_build_object(
-      'dcp_validatedborough', b.dcp_validatedborough,
-      'dcp_validatedblock', b.dcp_validatedblock,
-      'dcp_validatedlot', b.dcp_validatedlot,
-      'dcp_bblnumber', b.dcp_bblnumber
-    ))
+    SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
   ) AS bbls,
@@ -99,7 +106,9 @@ router.get('/:id', (req, res) => {
     WHERE dcp_name = '${id}'
   `;
   db.one(SQL)
-    .then((project) => {
+    .then(async (project) => {
+      project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
+
       res.send({
         data: {
           type: 'projects',
@@ -109,7 +118,6 @@ router.get('/:id', (req, res) => {
       });
     })
     .catch((error) => {
-      console.log(error)
       res.status(404).send({
         error: `no project found with id ${id}`,
       });

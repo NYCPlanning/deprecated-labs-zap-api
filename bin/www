@@ -90,5 +90,5 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  console.log(`Applicant Maps API listening on port ${port}`)
+  console.log(`ZAP API listening on port ${port}`)
 }
