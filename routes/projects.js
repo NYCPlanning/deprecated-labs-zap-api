@@ -99,8 +99,14 @@ router.get('/:id', (req, res) => {
     WHERE dcp_name = '${id}'
   `;
   db.one(SQL)
-    .then((data) => {
-      res.send(data);
+    .then((project) => {
+      res.send({
+        data: {
+          type: 'projects',
+          id,
+          attributes: project,
+        },
+      });
     })
     .catch((error) => {
       console.log(error)
