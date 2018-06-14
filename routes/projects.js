@@ -116,7 +116,6 @@ router.get('/', ({ query: { 'community-district': communityDistrict } }, res) =>
   }
 
   Project
-    .select(listProjectColumns)
     .where('dcp_validatedcommunitydistricts', 'ILIKE', `%${communityDistrict}%`)
     .fetch()
     .then((projects) => {
