@@ -40,7 +40,31 @@ const detailProjectColumns = `
     ))
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
-  ) AS bbls
+  ) AS bbls,
+  (
+    SELECT json_agg(json_build_object(
+      'dcp_name', a.dcp_name,
+      'dcp_ulurpnumber', a.dcp_ulurpnumber,
+      'dcp_prefix', a.dcp_prefix,
+      'statuscode', a.statuscode,
+      'milestones', (
+        SELECT json_agg(json_build_object(
+          'dcp_name', m.dcp_name,
+          'dcp_plannedstartdate', m.dcp_plannedstartdate,
+          'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
+          'statuscode', m.statuscode,
+          'dcp_milestonesequence', m.dcp_milestonesequence
+        ))
+        FROM (
+          SELECT * FROM dcp_projectmilestone mm
+          WHERE mm.dcp_projectaction = a.dcp_projectactionid
+          ORDER BY mm.dcp_milestonesequence ASC
+        ) m
+      )
+    ))
+    FROM dcp_projectaction a
+    WHERE a.dcp_project = p.dcp_projectid
+  ) AS actions
 `;
 
 // columns for use in list view
