@@ -8,11 +8,9 @@
     "devstart": "nodemon ./bin/www"
   },
   "dependencies": {
-    "bookshelf": "0.13.3",
     "debug": "~2.6.9",
     "dotenv": "^6.0.0",
     "express": "~4.15.5",
-    "knex": "0.13",
     "morgan": "^1.9.0",
     "pg-promise": "^8.4.4",
     "request": "^2.87.0",
