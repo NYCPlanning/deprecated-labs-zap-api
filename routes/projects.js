@@ -31,8 +31,7 @@ router.get('/', ({ query: { 'community-district': communityDistrict } }, res) =>
     .then((data) => {
       res.send(data);
     })
-    .catch((error) => {
-      console.log(error);
+    .catch(() => {
       res.status(404).send({
         error: `no projects found for geography ${communityDistrict}`,
       });
@@ -56,7 +55,7 @@ router.get('/:id', (req, res) => {
         },
       });
     })
-    .catch((error) => {
+    .catch(() => {
       res.status(404).send({
         error: `no project found with id ${id}`,
       });
