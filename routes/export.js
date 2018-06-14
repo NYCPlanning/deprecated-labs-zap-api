@@ -9,9 +9,10 @@ router.get('/projectbbls', (req, res) => {
   const SQL = `
     SELECT
       string_agg(dcp_bblnumber, ',') as bbls,
-      b.dcp_project as projectid
+      p.dcp_name as projectid
     FROM dcp_projectbbl b
-    GROUP BY b.dcp_project;
+    LEFT JOIN dcp_project p ON p.dcp_projectid = b.dcp_project
+    GROUP BY p.dcp_name;
   `;
 
   db.any(SQL)
