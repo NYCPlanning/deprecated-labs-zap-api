@@ -64,7 +64,22 @@ const detailProjectColumns = `
     ))
     FROM dcp_projectaction a
     WHERE a.dcp_project = p.dcp_projectid
-  ) AS actions
+  ) AS actions,
+  (
+    SELECT json_agg(json_build_object(
+      'dcp_keyword', k.dcp_keyword
+    ))
+    FROM dcp_projectkeywords k
+    WHERE k.dcp_project = p.dcp_projectid
+  ) AS keywords,
+  (
+    SELECT json_agg(json_build_object(
+      'dcp_validatedaddressnumber', a.dcp_validatedaddressnumber,
+      'dcp_validatedstreet', a.dcp_validatedstreet
+    ))
+    FROM dcp_projectaddress a
+    WHERE a.dcp_project = p.dcp_projectid
+  ) AS addresses
 `;
 
 // columns for use in list view
