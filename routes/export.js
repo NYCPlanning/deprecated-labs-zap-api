@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/projectbbls', (req, res) => {
   const SQL = `
     SELECT
-      string_agg(dcp_bblnumber, ',') as bbls,
+      string_agg(dcp_bblnumber, ';') as bbls,
       p.dcp_name as projectid
     FROM dcp_projectbbl b
     LEFT JOIN dcp_project p ON p.dcp_projectid = b.dcp_project
