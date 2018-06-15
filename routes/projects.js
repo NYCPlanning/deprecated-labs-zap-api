@@ -4,7 +4,7 @@ const path = require('path');
 // print the SQL query
 const initOptions = {
   query(e) {
-     (process.env.DEBUG === true) ? console.log(e.query) : null; // eslint-disable-line
+     (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
   },
 };
 
