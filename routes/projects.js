@@ -46,10 +46,10 @@ router.get('/', async ({ query: { 'community-district': communityDistrict = '', 
 /* Retreive a single project */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-
+  console.log(id);
   try {
     const project = await db.one(findProjectQuery, { id });
-    project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
+    // project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
 
     res.send({
       data: {
