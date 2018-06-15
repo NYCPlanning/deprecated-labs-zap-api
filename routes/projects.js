@@ -4,7 +4,7 @@ const path = require('path');
 // print the SQL query
 const initOptions = {
   query(e) {
-     (process.env.DEBUG === true) ? console.log(e.query) : null; // eslint-disable-line
+     (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
   },
 };
 
@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
     });
   } catch (e) {
     res.status(404).send({
-      error: `no project found with id ${id}`,
+      error: e.toString(),
     });
   }
 });

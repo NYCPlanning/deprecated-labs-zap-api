@@ -72,4 +72,4 @@ SELECT
     WHERE a.dcp_project = p.dcp_projectid
   ) AS addresses
 FROM dcp_project p
-WHERE dcp_name = ${id}
+WHERE dcp_name = '${id:value}'
