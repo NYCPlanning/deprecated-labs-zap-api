@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
     });
   } catch (e) {
     res.status(404).send({
-      error: `no project found with id ${id}`,
+      error: e.toString(),
     });
   }
 });
