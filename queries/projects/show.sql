@@ -27,7 +27,7 @@ SELECT
   dcp_femafloodzonecoastala,
   dcp_femafloodzonev,
   dcp_publicstatus,
-  (
+ (
     SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
@@ -37,29 +37,29 @@ SELECT
       'dcp_name', a.dcp_name,
       'dcp_ulurpnumber', a.dcp_ulurpnumber,
       'dcp_prefix', a.dcp_prefix,
-      'statuscode', a.statuscode,
-      'milestones', (
-        SELECT json_agg(json_build_object(
-          'dcp_name', m.dcp_name,
-          'dcp_plannedstartdate', m.dcp_plannedstartdate,
-          'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
-          'statuscode', m.statuscode,
-          'dcp_milestonesequence', m.dcp_milestonesequence
-        ))
-        FROM (
-          SELECT * FROM dcp_projectmilestone mm
-          WHERE mm.dcp_projectaction = a.dcp_projectactionid
-          ORDER BY mm.dcp_milestonesequence ASC
-        ) m
-      )
+      'statuscode', a.statuscode
     ))
     FROM dcp_projectaction a
     WHERE a.dcp_project = p.dcp_projectid
+      AND a.statuscode <> 'Mistake'
   ) AS actions,
   (
     SELECT json_agg(json_build_object(
-      'dcp_keyword', k.dcp_keyword
+      'dcp_name', m.dcp_name,
+      'dcp_plannedstartdate', m.dcp_plannedstartdate,
+      'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
+      'statuscode', m.statuscode,
+      'dcp_milestonesequence', m.dcp_milestonesequence
     ))
+    FROM (
+      SELECT *
+      FROM dcp_projectmilestone mm
+      WHERE mm.dcp_project = p.dcp_projectid
+      ORDER BY mm.dcp_milestonesequence ASC
+    ) m
+  ) AS milestones,
+  (
+    SELECT json_agg(k.dcp_keyword)
     FROM dcp_projectkeywords k
     WHERE k.dcp_project = p.dcp_projectid
   ) AS keywords,
@@ -70,6 +70,7 @@ SELECT
     ))
     FROM dcp_projectaddress a
     WHERE a.dcp_project = p.dcp_projectid
+      AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL)
   ) AS addresses
 FROM dcp_project p
 WHERE dcp_name = '${id:value}'
