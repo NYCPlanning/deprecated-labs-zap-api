@@ -28,7 +28,13 @@ router.get('/', async ({ query: { 'community-district': communityDistrict = '', 
   try {
     const projects =
       await db.any(listProjectsQuery, { communityDistrict, itemsPerPage, offset: (page - 1) * itemsPerPage });
-    res.send(projects);
+    res.send({
+      data: projects.map(project => ({
+        type: 'projects',
+        id: project.dcp_name,
+        attributes: project,
+      })),
+    });
   } catch (e) {
     res.status(404).send({
       error: e.toString(),
