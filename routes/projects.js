@@ -24,7 +24,7 @@ const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 
 /* GET /projects */
-router.get('/', async ({ query: { 'community-district': communityDistrict, page = 1, itemsPerPage = 30 } }, res) => {
+router.get('/', async ({ query: { 'community-district': communityDistrict = '', page = 1, itemsPerPage = 30 } }, res) => {
   try {
     const projects =
       await db.any(listProjectsQuery, { communityDistrict, itemsPerPage, offset: (page - 1) * itemsPerPage });
