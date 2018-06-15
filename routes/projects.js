@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
   console.log(id);
   try {
     const project = await db.one(findProjectQuery, { id });
-    // project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
+    project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
 
     res.send({
       data: {
