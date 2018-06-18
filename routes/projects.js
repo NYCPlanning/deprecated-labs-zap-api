@@ -45,10 +45,10 @@ router.get('/', async (req, res) => {
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
-      dcp_femafloodzonea = false,
-      dcp_femafloodzonecoastala = false,
-      dcp_femafloodzoneshadedx = false,
-      dcp_femafloodzonev = false,
+      // dcp_femafloodzonea = false,
+      // dcp_femafloodzonecoastala = false,
+      // dcp_femafloodzoneshadedx = false,
+      // dcp_femafloodzonev = false,
     },
   } = req;
 
