@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
         paginate,
       });
 
-    const [{ total_projects = 0 } = {}] = projects || [];
+    const [{ total_projects: total = 0 } = {}] = projects || [];
 
     res.send({
       data: projects.map(project => ({
@@ -66,7 +66,8 @@ router.get('/', async (req, res) => {
         attributes: project,
       })),
       meta: {
-        total_projects,
+        total,
+        pageTotal: projects.length,
       },
     });
   } catch (e) {

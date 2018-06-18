@@ -4,7 +4,7 @@ SELECT
   dcp_projectbrief,
   dcp_certifiedreferred,
   dcp_projectid,
-  count(dcp_projectid) OVER() as total_projects
+  cast(count(dcp_projectid) OVER() as integer) as total_projects
 FROM dcp_project p
 WHERE dcp_validatedcommunitydistricts ILIKE '%${communityDistrict:value}%' 
   AND coalesce(dcp_publicstatus, 'Unknown') IN (${dcp_publicstatus:csv})
