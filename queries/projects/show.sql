@@ -32,17 +32,23 @@ SELECT
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
   ) AS bbls,
+
   (
     SELECT json_agg(json_build_object(
-      'dcp_name', a.dcp_name,
+      'dcp_name', SUBSTRING(a.dcp_name FROM '-{1}\s*(.*)'), -- use regex to pull out action name -{1}(.*)
+      'actioncode', SUBSTRING(a.dcp_name FROM '^(\w+)'),
       'dcp_ulurpnumber', a.dcp_ulurpnumber,
       'dcp_prefix', a.dcp_prefix,
-      'statuscode', a.statuscode
+      'statuscode', a.statuscode,
+      'dcp_ccresolutionnumber', a.dcp_ccresolutionnumber,
+      'dcp_zoningresolution', z.dcp_zoningresolution
     ))
     FROM dcp_projectaction a
+    LEFT JOIN dcp_zoningresolution z ON a.dcp_zoningresolution = z.dcp_zoningresolutionid
     WHERE a.dcp_project = p.dcp_projectid
       AND a.statuscode <> 'Mistake'
   ) AS actions,
+
   (
     SELECT json_agg(json_build_object(
       'dcp_name', m.dcp_name,
