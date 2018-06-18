@@ -22,18 +22,54 @@ function sql(file) {
 
 const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
+const paginateQuery = sql('../queries/helpers/paginate.sql');
+
+function generatePaginate(values) {
+  return {
+    toPostgres() { return pgp.as.format(paginateQuery, values); },
+    rawType: true,
+  };
+}
 
 /* GET /projects */
-router.get('/', async ({ query: { 'community-district': communityDistrict = '', page = 1, itemsPerPage = 30 } }, res) => {
+router.get('/', async (req, res) => {
+  // extract params, set defaults
+  const {
+    query: {
+      // pagination
+      page = 1,
+      itemsPerPage = 30,
+
+      // filters
+      'community-district': communityDistrict = '',
+      dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
+    },
+  } = req;
+
+  const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
+
   try {
     const projects =
-      await db.any(listProjectsQuery, { communityDistrict, itemsPerPage, offset: (page - 1) * itemsPerPage });
+      await db.any(listProjectsQuery, {
+        communityDistrict,
+        itemsPerPage,
+        dcp_publicstatus,
+        paginate,
+      });
+
+    const [{ total_projects: total = 0 } = {}] = projects || [];
+    const { length = 0 } = projects;
+
     res.send({
       data: projects.map(project => ({
         type: 'projects',
         id: project.dcp_name,
         attributes: project,
       })),
+      meta: {
+        total,
+        pageTotal: length,
+      },
     });
   } catch (e) {
     res.status(404).send({
@@ -46,7 +82,7 @@ router.get('/', async ({ query: { 'community-district': communityDistrict = '', 
 /* Retreive a single project */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+
   try {
     const project = await db.one(findProjectQuery, { id });
     project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
