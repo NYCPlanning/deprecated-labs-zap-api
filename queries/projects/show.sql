@@ -39,9 +39,12 @@ SELECT
       'actioncode', SUBSTRING(a.dcp_name FROM '^(\w+)'),
       'dcp_ulurpnumber', a.dcp_ulurpnumber,
       'dcp_prefix', a.dcp_prefix,
-      'statuscode', a.statuscode
+      'statuscode', a.statuscode,
+      'dcp_ccresolutionnumber', a.dcp_ccresolutionnumber,
+      'dcp_zoningresolution', z.dcp_zoningresolution
     ))
     FROM dcp_projectaction a
+    LEFT JOIN dcp_zoningresolution z ON a.dcp_zoningresolution = z.dcp_zoningresolutionid
     WHERE a.dcp_project = p.dcp_projectid
       AND a.statuscode <> 'Mistake'
   ) AS actions,
