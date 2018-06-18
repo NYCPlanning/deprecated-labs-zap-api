@@ -43,6 +43,12 @@ router.get('/', async (req, res) => {
       // filters
       'community-district': communityDistrict = '',
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
+      dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
+      dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
+      dcp_femafloodzonea = false,
+      dcp_femafloodzonecoastala = false,
+      dcp_femafloodzoneshadedx = false,
+      dcp_femafloodzonev = false,
     },
   } = req;
 
@@ -52,8 +58,9 @@ router.get('/', async (req, res) => {
     const projects =
       await db.any(listProjectsQuery, {
         communityDistrict,
-        itemsPerPage,
         dcp_publicstatus,
+        dcp_ceqrtype,
+        dcp_ulurp_nonulurp,
         paginate,
       });
 
