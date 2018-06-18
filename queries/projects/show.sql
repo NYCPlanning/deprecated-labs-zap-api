@@ -8,7 +8,7 @@ SELECT
   dcp_borough,
   dcp_ulurp_nonulurp,
   dcp_leaddivision,
-  dcp_applicant_customer,
+  account.name as dcp_applicant_customer,
   dcp_ceqrtype,
   dcp_ceqrnumber,
   dcp_easeis,
@@ -59,8 +59,9 @@ SELECT
     ) m
   ) AS milestones,
   (
-    SELECT json_agg(k.dcp_keyword)
+    SELECT json_agg(dcp_keyword.dcp_keyword)
     FROM dcp_projectkeywords k
+    LEFT JOIN dcp_keyword ON k.dcp_keyword = dcp_keyword.dcp_keywordid
     WHERE k.dcp_project = p.dcp_projectid
   ) AS keywords,
   (
@@ -73,4 +74,5 @@ SELECT
       AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL)
   ) AS addresses
 FROM dcp_project p
+LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
 WHERE dcp_name = '${id:value}'
