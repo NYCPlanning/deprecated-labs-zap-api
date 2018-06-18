@@ -35,7 +35,8 @@ SELECT
 
   (
     SELECT json_agg(json_build_object(
-      'dcp_name', SUBSTRING(a.dcp_name FROM '-{1}(.*)'), -- use regex to pull out action name -{1}(.*)
+      'dcp_name', SUBSTRING(a.dcp_name FROM '-{1}\s*(.*)'), -- use regex to pull out action name -{1}(.*)
+      'actioncode', SUBSTRING(a.dcp_name FROM '^(\w+)'),
       'dcp_ulurpnumber', a.dcp_ulurpnumber,
       'dcp_prefix', a.dcp_prefix,
       'statuscode', a.statuscode
