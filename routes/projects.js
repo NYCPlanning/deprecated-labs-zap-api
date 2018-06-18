@@ -24,10 +24,29 @@ const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 
 /* GET /projects */
-router.get('/', async ({ query: { 'community-district': communityDistrict = '', page = 1, itemsPerPage = 30 } }, res) => {
+router.get('/', async (req, res) => {
+  // extract params, set defaults
+  const {
+    query: {
+      // pagination
+      offset = 1,
+      itemsPerPage = 30,
+
+      // filters
+      'community-district': communityDistrict = '',
+      dcp_projectstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified'],
+    },
+  } = req;
+
   try {
     const projects =
-      await db.any(listProjectsQuery, { communityDistrict, itemsPerPage, offset: (page - 1) * itemsPerPage });
+      await db.any(listProjectsQuery, {
+        communityDistrict,
+        itemsPerPage,
+        dcp_projectstatus,
+        offset: (offset - 1) * itemsPerPage,
+      });
+
     res.send({
       data: projects.map(project => ({
         type: 'projects',
@@ -46,7 +65,7 @@ router.get('/', async ({ query: { 'community-district': communityDistrict = '', 
 /* Retreive a single project */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+
   try {
     const project = await db.one(findProjectQuery, { id });
     project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
