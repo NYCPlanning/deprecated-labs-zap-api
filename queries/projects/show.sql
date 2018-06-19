@@ -111,4 +111,4 @@ SELECT
 FROM dcp_project p
 LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
 WHERE dcp_name = '${id:value}'
-  AND dcp_publicstatus IS NOT NULL
+  AND dcp_visibility = 'General Public'
