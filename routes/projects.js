@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
       itemsPerPage = 30,
 
       // filters
-      'community-district': communityDistrict = '',
+      'community-districts': communityDistricts = [],
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
@@ -53,14 +53,16 @@ router.get('/', async (req, res) => {
   } = req;
 
   const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
+  const communityDistrictsQuery =
+    communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
 
   try {
     const projects =
       await db.any(listProjectsQuery, {
-        communityDistrict,
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,
+        communityDistrictsQuery,
         paginate,
       });
 
