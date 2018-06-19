@@ -52,17 +52,48 @@ SELECT
   (
     SELECT json_agg(json_build_object(
       'dcp_name', m.dcp_name,
+      'milestonename', m.milestonename,
       'dcp_plannedstartdate', m.dcp_plannedstartdate,
       'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
+      'dcp_actualstartdate', m.dcp_actualstartdate,
+      'dcp_actualenddate', m.dcp_actualenddate,
       'statuscode', m.statuscode,
       'dcp_milestonesequence', m.dcp_milestonesequence
     ))
     FROM (
-      SELECT *
+      SELECT mm.*, dcp_milestone.dcp_name AS milestonename
       FROM dcp_projectmilestone mm
-      WHERE mm.dcp_project = p.dcp_projectid
+      LEFT JOIN dcp_milestone ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
+      WHERE mm.dcp_projectaction = (
+		    SELECT dcp_projectactionid
+        FROM dcp_projectaction
+        WHERE dcp_project = p.dcp_projectid
+        ORDER BY dcp_actionhierarchy ASC
+        LIMIT 1
+	    )
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
+    WHERE milestonename IN (
+      'Land Use Fee Payment',
+      'Land Use Application Filed Review',
+      'CEQR Fee Payment',
+      'Filed EAS Review',
+      'EIS Draft Scope Review',
+      'EIS Public Scoping Meeting',
+      'Final Scope of Work Issued',
+      'NOC of Draft EIS Issued',
+      'DEIS Public Hearing Held',
+      'FEIS Submitted and Review',
+      'Review Session - Certified / Referred',
+      'Community Board Referral',
+      'Borough President Referral',
+      'Borough Board Referral',
+      'CPC Public Meeting – Vote',
+      'CPC Public Meeting - Public Hearing',
+      'City Council Review',
+      'Mayoral Vote',
+      'Final Letter Sent'
+    )
   ) AS milestones,
   (
     SELECT json_agg(dcp_keyword.dcp_keyword)
@@ -82,3 +113,4 @@ SELECT
 FROM dcp_project p
 LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
 WHERE dcp_name = '${id:value}'
+  AND dcp_publicstatus IS NOT NULL
