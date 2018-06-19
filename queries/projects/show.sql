@@ -58,10 +58,13 @@ SELECT
       'dcp_milestonesequence', m.dcp_milestonesequence
     ))
     FROM (
-      SELECT *
-      FROM dcp_projectmilestone mm
-      WHERE mm.dcp_project = p.dcp_projectid
-      ORDER BY mm.dcp_milestonesequence ASC
+
+            SELECT *
+            FROM dcp_projectmilestone mm
+            WHERE mm.dcp_projectaction = (
+      		    SELECT dcp_projectactionid FROM dcp_projectaction WHERE dcp_project = p.dcp_projectid  ORDER BY dcp_actionhierarchy ASC LIMIT 1
+      	    )
+            ORDER BY mm.dcp_milestonesequence ASC
     ) m
   ) AS milestones,
   (
