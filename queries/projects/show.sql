@@ -86,10 +86,10 @@ SELECT
       'Community Board Referral',
       'Borough President Referral',
       'Borough Board Referral',
-      'CPC Public Meeting – Vote',
+      'CPC Public Meeting - Vote',
       'CPC Public Meeting - Public Hearing',
       'City Council Review',
-      'Mayoral Vote',
+      'Mayoral Veto',
       'Final Letter Sent'
     )
   ) AS milestones,
