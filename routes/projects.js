@@ -45,10 +45,10 @@ router.get('/', async (req, res) => {
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
-      // dcp_femafloodzonea = false,
-      // dcp_femafloodzonecoastala = false,
-      // dcp_femafloodzoneshadedx = false,
-      // dcp_femafloodzonev = false,
+      dcp_femafloodzonea = false,
+      dcp_femafloodzonecoastala = false,
+      dcp_femafloodzoneshadedx = false,
+      dcp_femafloodzonev = false,
     },
   } = req;
 
@@ -56,12 +56,23 @@ router.get('/', async (req, res) => {
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
 
+  // special handling for FEMA flood zones
+  // to only filter when set to true
+  const dcp_femafloodzoneaQuery = dcp_femafloodzonea ? 'AND dcp_femafloodzonea = true' : '';
+  const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala ? 'AND dcp_femafloodzonecoastala = true' : '';
+  const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx ? 'AND dcp_femafloodzoneshadedx = true' : '';
+  const dcp_femafloodzonevQuery = dcp_femafloodzonev ? 'AND dcp_femafloodzonev = true' : '';
+
   try {
     const projects =
       await db.any(listProjectsQuery, {
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,
+        dcp_femafloodzoneaQuery,
+        dcp_femafloodzonecoastalaQuery,
+        dcp_femafloodzoneshadedxQuery,
+        dcp_femafloodzonevQuery,
         communityDistrictsQuery,
         paginate,
       });
