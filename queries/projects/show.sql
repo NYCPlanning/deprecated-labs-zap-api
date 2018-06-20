@@ -55,6 +55,8 @@ SELECT
       'milestonename', m.milestonename,
       'dcp_plannedstartdate', m.dcp_plannedstartdate,
       'dcp_plannedcompletiondate', m.dcp_plannedcompletiondate,
+      'dcp_actualstartdate', m.dcp_actualstartdate,
+      'dcp_actualenddate', m.dcp_actualenddate,
       'statuscode', m.statuscode,
       'dcp_milestonesequence', m.dcp_milestonesequence
     ))
