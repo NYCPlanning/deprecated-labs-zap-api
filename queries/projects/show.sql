@@ -88,10 +88,10 @@ SELECT
       'Community Board Referral',
       'Borough President Referral',
       'Borough Board Referral',
-      'CPC Public Meeting – Vote',
+      'CPC Public Meeting - Vote',
       'CPC Public Meeting - Public Hearing',
       'City Council Review',
-      'Mayoral Vote',
+      'Mayoral Veto',
       'Final Letter Sent'
     )
   ) AS milestones,
@@ -113,4 +113,4 @@ SELECT
 FROM dcp_project p
 LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
 WHERE dcp_name = '${id:value}'
-  AND dcp_publicstatus IS NOT NULL
+  AND dcp_visibility = 'General Public'
