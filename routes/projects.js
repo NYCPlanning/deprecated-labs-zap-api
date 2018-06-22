@@ -1,5 +1,11 @@
 const express = require('express');
 const path = require('path');
+const SphericalMercator = require("sphericalmercator");
+const mercator = new SphericalMercator()
+const NodeCache = require( "node-cache" );
+var shortid = require('shortid');
+const tileCache = new NodeCache();
+
 
 // print the SQL query
 const initOptions = {
@@ -52,6 +58,20 @@ router.get('/', async (req, res) => {
     },
   } = req;
 
+  const standardColumns = `
+    ,
+    dcp_projectname,
+    dcp_projectbrief,
+    dcp_publicstatus,
+    dcp_certifiedreferred,
+    dcp_projectid,
+    dcp_femafloodzonea,
+    dcp_femafloodzonecoastala,
+    dcp_femafloodzoneshadedx,
+    dcp_femafloodzonev,
+    cast(count(dcp_projectid) OVER() as integer) as total_projects
+  `;
+
   const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
@@ -66,6 +86,7 @@ router.get('/', async (req, res) => {
   try {
     const projects =
       await db.any(listProjectsQuery, {
+        standardColumns,
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,
@@ -80,6 +101,26 @@ router.get('/', async (req, res) => {
     const [{ total_projects: total = 0 } = {}] = projects || [];
     const { length = 0 } = projects;
 
+    let tileProjects = await db.any(listProjectsQuery, {
+      standardColumns: '',
+      dcp_publicstatus,
+      dcp_ceqrtype,
+      dcp_ulurp_nonulurp,
+      dcp_femafloodzoneaQuery,
+      dcp_femafloodzonecoastalaQuery,
+      dcp_femafloodzoneshadedxQuery,
+      dcp_femafloodzonevQuery,
+      communityDistrictsQuery,
+      paginate: '',
+    });
+
+    tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
+    const tileId = shortid.generate()
+
+    await tileCache.set(tileId, tileProjects)
+
+    console.log(tileProjects)
+
     res.send({
       data: projects.map(project => ({
         type: 'projects',
@@ -89,6 +130,7 @@ router.get('/', async (req, res) => {
       meta: {
         total,
         pageTotal: length,
+        tiles: [`http://localhost:3000/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
       },
     });
   } catch (e) {
@@ -120,5 +162,42 @@ router.get('/:id', async (req, res) => {
     });
   }
 });
+
+router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
+  const { tileId, z, x, y } = req.params;
+
+  const projectIds = await tileCache.get( tileId );
+  const bbox = mercator.bbox(x, y, z, false);
+  console.log(bbox)
+
+  const SQL = `
+    SELECT ST_AsMVT(q, 'project-centroids', 4096, 'geom')
+    FROM (
+      SELECT
+          projectid,
+          ST_AsMVTGeom(
+              geom,
+              TileBBox(${z}, ${x}, ${y}, 4326),
+              4096,
+              256,
+              false
+          ) geom
+      FROM project_centroids
+      WHERE ST_Intersects(ST_SetSRID(geom, 4326), ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326))
+      AND projectid IN (${projectIds.join(',')})
+    ) q
+  `;
+
+  try {
+    const tile = await db.one(SQL);
+    console.log(tile.st_asmvt)
+    res.setHeader('Content-Type', 'application/x-protobuf')
+    res.send(tile.st_asmvt);
+  } catch (e) {
+    res.status(404).send({
+      error: e.toString(),
+    });
+  }
+})
 
 module.exports = router;
