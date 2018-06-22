@@ -122,6 +122,30 @@ router.get('/', async (req, res) => {
     // map to an array of quoted projectids
     tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
 
+    // get the bounds for the geometries
+    let bounds = await db.one(`
+      SELECT
+      ARRAY[
+        ARRAY[
+          ST_XMin(bbox),
+          ST_YMin(bbox)
+        ],
+        ARRAY[
+          ST_XMax(bbox),
+          ST_YMax(bbox)
+        ]
+      ] as bbox
+      FROM (
+        SELECT ST_Extent(geom) AS bbox
+        FROM (
+          SELECT geom
+          FROM project_centroids
+          WHERE projectid IN (${tileProjects.join(',')})
+        ) x
+      )y
+    `);
+    bounds = bounds.bbox;
+
     // create a shortid for this set of projectids and store it in the cache
     const tileId = shortid.generate();
     await tileCache.set(tileId, tileProjects);
@@ -137,6 +161,7 @@ router.get('/', async (req, res) => {
         total,
         pageTotal: length,
         tiles: [`http://localhost:3000/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        bounds,
       },
     });
   } catch (e) {
