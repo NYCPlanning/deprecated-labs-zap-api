@@ -1,13 +1,15 @@
 const express = require('express');
 const path = require('path');
-const SphericalMercator = require("sphericalmercator");
-const mercator = new SphericalMercator()
-const NodeCache = require( "node-cache" );
-var shortid = require('shortid');
+const SphericalMercator = require('sphericalmercator');
+const NodeCache = require('node-cache');
+const shortid = require('shortid');
+
+const mercator = new SphericalMercator();
 const tileCache = new NodeCache();
+const router = express.Router();
 
 
-// print the SQL query
+// log the SQL query
 const initOptions = {
   query(e) {
      (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
@@ -17,15 +19,16 @@ const initOptions = {
 const pgp = require('pg-promise')(initOptions);
 const getBblFeatureCollection = require('../utils/get-bbl-feature-collection');
 
+// initialize database connection
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
-const router = express.Router();
 
-// Helper for linking to external query files:
+// helper for linking to external query files:
 function sql(file) {
   const fullPath = path.join(__dirname, file);
   return new pgp.QueryFile(fullPath, { minify: true });
 }
 
+// import sql query templates
 const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 const paginateQuery = sql('../queries/helpers/paginate.sql');
@@ -101,6 +104,8 @@ router.get('/', async (req, res) => {
     const [{ total_projects: total = 0 } = {}] = projects || [];
     const { length = 0 } = projects;
 
+    // tileProjects is uses the same WHERE clauses as above,
+    // but only SELECTs dcp_name and does not include pagination
     let tileProjects = await db.any(listProjectsQuery, {
       standardColumns: '',
       dcp_publicstatus,
@@ -114,13 +119,14 @@ router.get('/', async (req, res) => {
       paginate: '',
     });
 
+    // map to an array of quoted projectids
     tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
-    const tileId = shortid.generate()
 
-    await tileCache.set(tileId, tileProjects)
+    // create a shortid for this set of projectids and store it in the cache
+    const tileId = shortid.generate();
+    await tileCache.set(tileId, tileProjects);
 
-    console.log(tileProjects)
-
+    // send the response with a tile template
     res.send({
       data: projects.map(project => ({
         type: 'projects',
@@ -163,13 +169,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
+/* GET /projects/tiles/:tileId/:z/:x/:y.mvt */
+/* Retreive a vector tile by tileid */
 router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
-  const { tileId, z, x, y } = req.params;
+  const {
+    tileId,
+    z,
+    x,
+    y,
+  } = req.params;
 
-  const projectIds = await tileCache.get( tileId );
+  // retreive the projectids from the cache
+  const projectIds = await tileCache.get(tileId);
+  // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false);
-  console.log(bbox)
 
+  // SELECT data for the vector tile, filtering on the list of projectids
   const SQL = `
     SELECT ST_AsMVT(q, 'project-centroids', 4096, 'geom')
     FROM (
@@ -190,14 +206,13 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
   try {
     const tile = await db.one(SQL);
-    console.log(tile.st_asmvt)
-    res.setHeader('Content-Type', 'application/x-protobuf')
+    res.setHeader('Content-Type', 'application/x-protobuf');
     res.send(tile.st_asmvt);
   } catch (e) {
     res.status(404).send({
       error: e.toString(),
     });
   }
-})
+});
 
 module.exports = router;
