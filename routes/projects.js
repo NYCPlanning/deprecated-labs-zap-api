@@ -235,7 +235,10 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
   try {
     const tile = await db.one(SQL);
+
     res.setHeader('Content-Type', 'application/x-protobuf');
+
+    if (tile.st_asmvt.length === 0) return;
     res.send(tile.st_asmvt);
   } catch (e) {
     res.status(404).send({
