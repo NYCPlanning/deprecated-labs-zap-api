@@ -2,6 +2,8 @@ SELECT
   dcp_name
   ${standardColumns^}
 FROM dcp_project p
+LEFT JOIN project_centroids c
+  ON p.dcp_name = c.projectid
 WHERE coalesce(dcp_publicstatus, 'Unknown') IN (${dcp_publicstatus:csv})
   AND coalesce(dcp_ceqrtype, 'Unknown') IN (${dcp_ceqrtype:csv})
   AND coalesce(dcp_ulurp_nonulurp, 'Unknown') IN (${dcp_ulurp_nonulurp:csv})
