@@ -162,7 +162,7 @@ router.get('/', async (req, res) => {
       meta: {
         total,
         pageTotal: length,
-        tiles: [`http://localhost:3000/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        tiles: [`${process.env.HOST}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
         bounds,
       },
     });
