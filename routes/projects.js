@@ -5,7 +5,8 @@ const NodeCache = require('node-cache');
 const shortid = require('shortid');
 
 const mercator = new SphericalMercator();
-const tileCache = new NodeCache();
+// tileCache key/value pairs expire after 1 hour
+const tileCache = new NodeCache({ stdTTL: 3600 });
 const router = express.Router();
 
 
