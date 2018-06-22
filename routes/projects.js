@@ -190,7 +190,8 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
     SELECT ST_AsMVT(q, 'project-centroids', 4096, 'geom')
     FROM (
       SELECT
-          projectid,
+          c.projectid,
+          p.dcp_projectname,
           ST_AsMVTGeom(
               geom,
               TileBBox(${z}, ${x}, ${y}, 4326),
@@ -198,7 +199,9 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
               256,
               false
           ) geom
-      FROM project_centroids
+      FROM project_centroids c
+      LEFT JOIN dcp_project p
+        ON c.projectid = p.dcp_name
       WHERE ST_Intersects(ST_SetSRID(geom, 4326), ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326))
       AND projectid IN (${projectIds.join(',')})
     ) q
