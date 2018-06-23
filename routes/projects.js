@@ -221,7 +221,7 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
           p.dcp_projectname,
           ST_AsMVTGeom(
               geom,
-              TileBBox(${z}, ${x}, ${y}, 4326),
+              ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326),
               4096,
               256,
               false
