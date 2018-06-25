@@ -79,6 +79,11 @@ router.get('/', async (req, res) => {
     dcp_projectname,
     dcp_projectbrief,
     dcp_publicstatus,
+    CASE
+      WHEN dcp_publicstatus = 'Approved' THEN 'Complete'
+      WHEN dcp_publicstatus = 'Withdrawn' THEN 'Complete'
+      ELSE dcp_publicstatus
+    END,
     dcp_certifiedreferred,
     dcp_projectid,
     dcp_femafloodzonea,
