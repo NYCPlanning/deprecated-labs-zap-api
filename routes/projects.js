@@ -61,10 +61,6 @@ router.get('/', async (req, res) => {
     },
   } = req;
 
-  // if no public status filters are passed use defaults
-  // TODO: Make sure front end doesn't pass a public status query param if no status checkbox is checked
-  if (req.query.dcp_publicstatus.includes('')) req.query.dcp_publicstatus = ['akjdhkjashd', 'alskdjh'];
-
   // altered filters
   let {
     query: {
