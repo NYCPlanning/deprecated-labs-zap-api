@@ -61,6 +61,10 @@ router.get('/', async (req, res) => {
     },
   } = req;
 
+  // if no public status filters are passed use defaults
+  // TODO: Make sure front end doesn't pass a public status query param if no status checkbox is checked
+  if (req.query.dcp_publicstatus.includes('')) req.query.dcp_publicstatus = ['akjdhkjashd', 'alskdjh'];
+
   // altered filters
   let {
     query: {
@@ -137,28 +141,34 @@ router.get('/', async (req, res) => {
     tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
 
     // get the bounds for the geometries
-    let bounds = await db.one(`
-      SELECT
-      ARRAY[
-        ARRAY[
-          ST_XMin(bbox),
-          ST_YMin(bbox)
-        ],
-        ARRAY[
-          ST_XMax(bbox),
-          ST_YMax(bbox)
-        ]
-      ] as bbox
-      FROM (
-        SELECT ST_Extent(geom) AS bbox
-        FROM (
-          SELECT geom
-          FROM project_centroids
-          WHERE projectid IN (${tileProjects.join(',')})
-        ) x
-      )y
-    `);
-    bounds = bounds.bbox;
+    let bounds;
+    if (tileProjects.length > 0) {
+      bounds = await db.one(`
+         SELECT
+         ARRAY[
+           ARRAY[
+             ST_XMin(bbox),
+             ST_YMin(bbox)
+           ],
+           ARRAY[
+             ST_XMax(bbox),
+             ST_YMax(bbox)
+           ]
+         ] as bbox
+         FROM (
+           SELECT ST_Extent(geom) AS bbox
+           FROM (
+             SELECT geom
+             FROM project_centroids
+             WHERE projectid IN (${tileProjects.join(',')})
+           ) x
+         )y
+       `);
+      bounds = bounds.bbox;
+    } else {
+      // default view for no results should be the whole city
+      bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
+    }
 
     // create a shortid for this set of projectids and store it in the cache
     const tileId = shortid.generate();
@@ -220,9 +230,11 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
   } = req.params;
 
   // retreive the projectids from the cache
-  const projectIds = await tileCache.get(tileId);
+  let projectIds = await tileCache.get(tileId);
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false);
+
+  if (projectIds.length === 0) projectIds = ['\'noprojects\''];
 
   // SELECT data for the vector tile, filtering on the list of projectids
   const SQL = `
