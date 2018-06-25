@@ -22,6 +22,7 @@ const getBblFeatureCollection = require('../utils/get-bbl-feature-collection');
 
 // initialize database connection
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
+const host = process.env.HOST;
 
 // helper for linking to external query files:
 function sql(file) {
@@ -33,6 +34,7 @@ function sql(file) {
 const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 const paginateQuery = sql('../queries/helpers/paginate.sql');
+const standardColumns = sql('../queries/projects/standard-columns.sql');
 
 function generatePaginate(values) {
   return {
@@ -74,26 +76,6 @@ router.get('/', async (req, res) => {
     dcp_publicstatus.push('Withdrawn');
     dcp_publicstatus = dcp_publicstatus.filter(d => d !== 'Complete');
   }
-
-  const standardColumns = `
-    ,
-    dcp_projectname,
-    dcp_projectbrief,
-    dcp_publicstatus,
-    CASE
-      WHEN dcp_publicstatus = 'Approved' THEN 'Complete'
-      WHEN dcp_publicstatus = 'Withdrawn' THEN 'Complete'
-      ELSE dcp_publicstatus
-    END,
-    dcp_certifiedreferred,
-    dcp_projectid,
-    dcp_femafloodzonea,
-    dcp_femafloodzonecoastala,
-    dcp_femafloodzoneshadedx,
-    dcp_femafloodzonev,
-    cast(count(dcp_projectid) OVER() as integer) as total_projects,
-    CASE WHEN c.geom IS NOT NULL THEN true ELSE false END AS has_centroid
-  `;
 
   const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
@@ -186,7 +168,7 @@ router.get('/', async (req, res) => {
       meta: {
         total,
         pageTotal: length,
-        tiles: [`${process.env.HOST}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        tiles: [`${host}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
         bounds,
       },
     });
