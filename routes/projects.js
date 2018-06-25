@@ -52,7 +52,6 @@ router.get('/', async (req, res) => {
 
       // filters
       'community-districts': communityDistricts = [],
-      dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
       dcp_femafloodzonea = false,
@@ -61,6 +60,19 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonev = false,
     },
   } = req;
+
+  // altered filters
+  let {
+    query: {
+      dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
+    },
+  } = req;
+
+  if (dcp_publicstatus.includes('Complete')) {
+    dcp_publicstatus.push('Approved');
+    dcp_publicstatus.push('Withdrawn');
+    dcp_publicstatus = dcp_publicstatus.filter(d => d !== 'Complete');
+  }
 
   const standardColumns = `
     ,
