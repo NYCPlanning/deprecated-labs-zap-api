@@ -3,12 +3,12 @@ const path = require('path');
 const SphericalMercator = require('sphericalmercator');
 const NodeCache = require('node-cache');
 const shortid = require('shortid');
+const generateDynamicQuery = require('../utils/generate-dynamic-sql');
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
 const tileCache = new NodeCache({ stdTTL: 3600 });
 const router = express.Router();
-
 
 // log the SQL query
 const initOptions = {
@@ -34,14 +34,7 @@ function sql(file) {
 const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 const paginateQuery = sql('../queries/helpers/paginate.sql');
-const standardColumns = sql('../queries/projects/standard-columns.sql');
-
-function generatePaginate(values) {
-  return {
-    toPostgres() { return pgp.as.format(paginateQuery, values); },
-    rawType: true,
-  };
-}
+const standardColumns = sql('../queries/helpers/standard-projects-columns.sql');
 
 /* GET /projects */
 router.get('/', async (req, res) => {
@@ -77,7 +70,7 @@ router.get('/', async (req, res) => {
     dcp_publicstatus = dcp_publicstatus.filter(d => d !== 'Complete');
   }
 
-  const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
+  const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
 
@@ -146,7 +139,7 @@ router.get('/', async (req, res) => {
              FROM project_centroids
              WHERE projectid IN (${tileProjects.join(',')})
            ) x
-         )y
+         ) y
        `);
       bounds = bounds.bbox;
     } else {
