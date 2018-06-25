@@ -61,7 +61,8 @@ router.get('/', async (req, res) => {
     },
   } = req;
 
-  // altered filters
+  // The frontend can ask for "dcp_projectstatus=Complete", but Complete doesn't exist in the database
+  // If 'Complete' is in the query params, substitute with 'Approved' AND 'Withdrawn'
   let {
     query: {
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
