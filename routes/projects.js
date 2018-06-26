@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonecoastala = false,
       dcp_femafloodzoneshadedx = false,
       dcp_femafloodzonev = false,
-      dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
+      dcp_publicstatus = ['Complete', 'Filed', 'Certified', 'Unknown'],
     },
   } = req;
 
