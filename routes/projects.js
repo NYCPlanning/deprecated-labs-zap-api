@@ -80,6 +80,9 @@ router.get('/', async (req, res) => {
     dcp_projectname,
     dcp_projectbrief,
     dcp_publicstatus,
+    dcp_borough,
+    dcp_ulurp_nonulurp,
+    dcp_communitydistricts,
     CASE
       WHEN dcp_publicstatus = 'Approved' THEN 'Complete'
       WHEN dcp_publicstatus = 'Withdrawn' THEN 'Complete'
