@@ -104,7 +104,6 @@ router.get('/', async (req, res) => {
     });
 
     // map to an array of quoted projectids
-    // tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
     tileProjects = tileProjects.map(row => row.dcp_name);
 
     // get the bounds for the geometries

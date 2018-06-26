@@ -1,7 +1,7 @@
 ,
 dcp_projectname,
 dcp_projectbrief,
-dcp_publicstatus,
+dcp_publicstatus_simp,
 dcp_certifiedreferred,
 dcp_projectid,
 dcp_femafloodzonea,
