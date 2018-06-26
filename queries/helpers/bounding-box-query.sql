@@ -14,6 +14,6 @@ FROM (
   FROM (
     SELECT geom
     FROM project_centroids
-    WHERE projectid IN (${tileProjects.join(',')})
+    WHERE projectid IN (${tileProjects:csv})
   ) x
 ) y

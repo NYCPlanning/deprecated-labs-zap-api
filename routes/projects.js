@@ -35,6 +35,8 @@ const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 const paginateQuery = sql('../queries/helpers/paginate.sql');
 const standardColumns = sql('../queries/helpers/standard-projects-columns.sql');
+const boundingBoxQuery = sql('../queries/helpers/bounding-box-query.sql');
+const generateVectorTile = sql('../queries/helpers/generate-vector-tile.sql');
 
 /* GET /projects */
 router.get('/', async (req, res) => {
@@ -53,22 +55,9 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonecoastala = false,
       dcp_femafloodzoneshadedx = false,
       dcp_femafloodzonev = false,
-    },
-  } = req;
-
-  // The frontend can ask for "dcp_projectstatus=Complete", but Complete doesn't exist in the database
-  // If 'Complete' is in the query params, substitute with 'Approved' AND 'Withdrawn'
-  let {
-    query: {
       dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
     },
   } = req;
-
-  if (dcp_publicstatus.includes('Complete')) {
-    dcp_publicstatus.push('Approved');
-    dcp_publicstatus.push('Withdrawn');
-    dcp_publicstatus = dcp_publicstatus.filter(d => d !== 'Complete');
-  }
 
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
@@ -115,32 +104,13 @@ router.get('/', async (req, res) => {
     });
 
     // map to an array of quoted projectids
-    tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
+    // tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
+    tileProjects = tileProjects.map(row => row.dcp_name);
 
     // get the bounds for the geometries
     let bounds;
     if (tileProjects.length > 0) {
-      bounds = await db.one(`
-         SELECT
-         ARRAY[
-           ARRAY[
-             ST_XMin(bbox),
-             ST_YMin(bbox)
-           ],
-           ARRAY[
-             ST_XMax(bbox),
-             ST_YMax(bbox)
-           ]
-         ] as bbox
-         FROM (
-           SELECT ST_Extent(geom) AS bbox
-           FROM (
-             SELECT geom
-             FROM project_centroids
-             WHERE projectid IN (${tileProjects.join(',')})
-           ) x
-         ) y
-       `);
+      bounds = await db.one(boundingBoxQuery, { tileProjects });
       bounds = bounds.bbox;
     } else {
       // default view for no results should be the whole city
@@ -213,34 +183,12 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
   if (projectIds.length === 0) projectIds = ['\'noprojects\''];
 
-  // SELECT data for the vector tile, filtering on the list of projectids
-  const SQL = `
-    SELECT ST_AsMVT(q, 'project-centroids', 4096, 'geom')
-    FROM (
-      SELECT
-          c.projectid,
-          p.dcp_projectname,
-          ST_AsMVTGeom(
-              geom,
-              ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326),
-              4096,
-              256,
-              false
-          ) geom
-      FROM project_centroids c
-      LEFT JOIN dcp_project p
-        ON c.projectid = p.dcp_name
-      WHERE ST_Intersects(ST_SetSRID(geom, 4326), ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326))
-      AND projectid IN (${projectIds.join(',')})
-    ) q
-  `;
-
   try {
-    const tile = await db.one(SQL);
+    const tile = await db.one(generateVectorTile, [...bbox, projectIds]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
-    if (tile.st_asmvt.length === 0) return;
+    if (tile.st_asmvt.length === 0) throw new Error(404);
     res.send(tile.st_asmvt);
   } catch (e) {
     res.status(404).send({
