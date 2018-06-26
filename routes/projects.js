@@ -3,12 +3,12 @@ const path = require('path');
 const SphericalMercator = require('sphericalmercator');
 const NodeCache = require('node-cache');
 const shortid = require('shortid');
+const generateDynamicQuery = require('../utils/generate-dynamic-sql');
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
 const tileCache = new NodeCache({ stdTTL: 3600 });
 const router = express.Router();
-
 
 // log the SQL query
 const initOptions = {
@@ -22,6 +22,7 @@ const getBblFeatureCollection = require('../utils/get-bbl-feature-collection');
 
 // initialize database connection
 const db = pgp(process.env.DATABASE_CONNECTION_STRING);
+const host = process.env.HOST;
 
 // helper for linking to external query files:
 function sql(file) {
@@ -33,13 +34,9 @@ function sql(file) {
 const listProjectsQuery = sql('../queries/projects/index.sql');
 const findProjectQuery = sql('../queries/projects/show.sql');
 const paginateQuery = sql('../queries/helpers/paginate.sql');
-
-function generatePaginate(values) {
-  return {
-    toPostgres() { return pgp.as.format(paginateQuery, values); },
-    rawType: true,
-  };
-}
+const standardColumns = sql('../queries/helpers/standard-projects-columns.sql');
+const boundingBoxQuery = sql('../queries/helpers/bounding-box-query.sql');
+const generateVectorTile = sql('../queries/helpers/generate-vector-tile.sql');
 
 /* GET /projects */
 router.get('/', async (req, res) => {
@@ -58,44 +55,11 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonecoastala = false,
       dcp_femafloodzoneshadedx = false,
       dcp_femafloodzonev = false,
+      dcp_publicstatus = ['Complete', 'Filed', 'Certified', 'Unknown'],
     },
   } = req;
 
-  // The frontend can ask for "dcp_projectstatus=Complete", but Complete doesn't exist in the database
-  // If 'Complete' is in the query params, substitute with 'Approved' AND 'Withdrawn'
-  let {
-    query: {
-      dcp_publicstatus = ['Approved', 'Withdrawn', 'Filed', 'Certified', 'Unknown'],
-    },
-  } = req;
-
-  if (dcp_publicstatus.includes('Complete')) {
-    dcp_publicstatus.push('Approved');
-    dcp_publicstatus.push('Withdrawn');
-    dcp_publicstatus = dcp_publicstatus.filter(d => d !== 'Complete');
-  }
-
-  const standardColumns = `
-    ,
-    dcp_projectname,
-    dcp_projectbrief,
-    dcp_publicstatus,
-    CASE
-      WHEN dcp_publicstatus = 'Approved' THEN 'Complete'
-      WHEN dcp_publicstatus = 'Withdrawn' THEN 'Complete'
-      ELSE dcp_publicstatus
-    END,
-    dcp_certifiedreferred,
-    dcp_projectid,
-    dcp_femafloodzonea,
-    dcp_femafloodzonecoastala,
-    dcp_femafloodzoneshadedx,
-    dcp_femafloodzonev,
-    cast(count(dcp_projectid) OVER() as integer) as total_projects,
-    CASE WHEN c.geom IS NOT NULL THEN true ELSE false END AS has_centroid
-  `;
-
-  const paginate = generatePaginate({ itemsPerPage, offset: (page - 1) * itemsPerPage });
+  const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
 
@@ -140,32 +104,12 @@ router.get('/', async (req, res) => {
     });
 
     // map to an array of quoted projectids
-    tileProjects = tileProjects.map(row => `'${row.dcp_name}'`);
+    tileProjects = tileProjects.map(row => row.dcp_name);
 
     // get the bounds for the geometries
     let bounds;
     if (tileProjects.length > 0) {
-      bounds = await db.one(`
-         SELECT
-         ARRAY[
-           ARRAY[
-             ST_XMin(bbox),
-             ST_YMin(bbox)
-           ],
-           ARRAY[
-             ST_XMax(bbox),
-             ST_YMax(bbox)
-           ]
-         ] as bbox
-         FROM (
-           SELECT ST_Extent(geom) AS bbox
-           FROM (
-             SELECT geom
-             FROM project_centroids
-             WHERE projectid IN (${tileProjects.join(',')})
-           ) x
-         )y
-       `);
+      bounds = await db.one(boundingBoxQuery, { tileProjects });
       bounds = bounds.bbox;
     } else {
       // default view for no results should be the whole city
@@ -186,7 +130,7 @@ router.get('/', async (req, res) => {
       meta: {
         total,
         pageTotal: length,
-        tiles: [`${process.env.HOST}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        tiles: [`${host}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
         bounds,
       },
     });
@@ -238,34 +182,12 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
   if (projectIds.length === 0) projectIds = ['\'noprojects\''];
 
-  // SELECT data for the vector tile, filtering on the list of projectids
-  const SQL = `
-    SELECT ST_AsMVT(q, 'project-centroids', 4096, 'geom')
-    FROM (
-      SELECT
-          c.projectid,
-          p.dcp_projectname,
-          ST_AsMVTGeom(
-              geom,
-              ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326),
-              4096,
-              256,
-              false
-          ) geom
-      FROM project_centroids c
-      LEFT JOIN dcp_project p
-        ON c.projectid = p.dcp_name
-      WHERE ST_Intersects(ST_SetSRID(geom, 4326), ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326))
-      AND projectid IN (${projectIds.join(',')})
-    ) q
-  `;
-
   try {
-    const tile = await db.one(SQL);
+    const tile = await db.one(generateVectorTile, [...bbox, projectIds]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
-    if (tile.st_asmvt.length === 0) return;
+    if (tile.st_asmvt.length === 0) throw new Error(404);
     res.send(tile.st_asmvt);
   } catch (e) {
     res.status(404).send({
