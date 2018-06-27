@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
   const {
     query: {
       // pagination
-      page = 1,
+      page = '1',
       itemsPerPage = 30,
 
       // filters
@@ -88,37 +88,45 @@ router.get('/', async (req, res) => {
     const [{ total_projects: total = 0 } = {}] = projects || [];
     const { length = 0 } = projects;
 
-    // tileProjects is uses the same WHERE clauses as above,
-    // but only SELECTs dcp_name and does not include pagination
-    let tileProjects = await db.any(listProjectsQuery, {
-      standardColumns: '',
-      dcp_publicstatus,
-      dcp_ceqrtype,
-      dcp_ulurp_nonulurp,
-      dcp_femafloodzoneaQuery,
-      dcp_femafloodzonecoastalaQuery,
-      dcp_femafloodzoneshadedxQuery,
-      dcp_femafloodzonevQuery,
-      communityDistrictsQuery,
-      paginate: '',
-    });
+    // if this is the first page of a new query, include bounds for the query's geoms, and a vector tile template
+    let tileMeta = {};
+    if (page === '1') {
+      // tileQuery is uses the same WHERE clauses as above,
+      // but only SELECTs geom, projectid, and projectname, and does not include pagination
 
-    // map to an array of quoted projectids
-    tileProjects = tileProjects.map(row => row.dcp_name);
+      const tileQuery = pgp.as.format(listProjectsQuery, {
+        standardColumns: 'geom, projectid, dcp_projectname',
+        dcp_publicstatus,
+        dcp_ceqrtype,
+        dcp_ulurp_nonulurp,
+        dcp_femafloodzoneaQuery,
+        dcp_femafloodzonecoastalaQuery,
+        dcp_femafloodzoneshadedxQuery,
+        dcp_femafloodzonevQuery,
+        communityDistrictsQuery,
+        paginate: '',
+      });
 
-    // get the bounds for the geometries
-    let bounds;
-    if (tileProjects.length > 0) {
-      bounds = await db.one(boundingBoxQuery, { tileProjects });
-      bounds = bounds.bbox;
-    } else {
-      // default view for no results should be the whole city
-      bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
+      // get the bounds for the geometries
+      let bounds;
+      if (total) {
+        bounds = await db.one(boundingBoxQuery, { tileQuery });
+        bounds = bounds.bbox;
+      } else {
+        // default view for no results should be the whole city
+        bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
+      }
+
+      // create a shortid for this query and store it in the cache
+      const tileId = shortid.generate();
+      await tileCache.set(tileId, tileQuery);
+
+      tileMeta = {
+        tiles: [`${host}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        bounds,
+      };
     }
 
-    // create a shortid for this set of projectids and store it in the cache
-    const tileId = shortid.generate();
-    await tileCache.set(tileId, tileProjects);
 
     // send the response with a tile template
     res.send({
@@ -130,8 +138,7 @@ router.get('/', async (req, res) => {
       meta: {
         total,
         pageTotal: length,
-        tiles: [`${host}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
-        bounds,
+        ...tileMeta,
       },
     });
   } catch (e) {
@@ -176,14 +183,12 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
   } = req.params;
 
   // retreive the projectids from the cache
-  let projectIds = await tileCache.get(tileId);
+  const tileQuery = await tileCache.get(tileId);
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false);
 
-  if (projectIds.length === 0) projectIds = ['\'noprojects\''];
-
   try {
-    const tile = await db.one(generateVectorTile, [...bbox, projectIds]);
+    const tile = await db.one(generateVectorTile, [...bbox, tileQuery]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
