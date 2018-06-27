@@ -94,6 +94,7 @@ SELECT
       'Mayoral Veto',
       'Final Letter Sent'
     )
+    AND statuscode <> 'Overridden'
   ) AS milestones,
   (
     SELECT json_agg(dcp_keyword.dcp_keyword)
