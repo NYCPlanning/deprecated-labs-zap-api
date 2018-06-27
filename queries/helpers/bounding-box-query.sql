@@ -12,8 +12,6 @@ ARRAY[
 FROM (
   SELECT ST_Extent(geom) AS bbox
   FROM (
-    SELECT geom
-    FROM project_centroids
-    WHERE projectid IN (${tileProjects:csv})
+    ${tileQuery^}
   ) x
 ) y

@@ -9,7 +9,6 @@ WITH normalized_projects AS (
 )
 
 SELECT
-  dcp_name
   ${standardColumns^}
 FROM normalized_projects p
 LEFT JOIN project_centroids c
