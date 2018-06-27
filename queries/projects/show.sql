@@ -31,6 +31,7 @@ SELECT
     SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
+    AND b.dcp_bblnumber IS NOT NULL
   ) AS bbls,
 
   (
