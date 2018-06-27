@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
 
     // if this is the first page of a new query, include bounds for the query's geoms, and a vector tile template
     let tileMeta = {};
-    if (page === '1') {
+    if (page === 1) {
       // tileQuery is uses the same WHERE clauses as above,
       // but only SELECTs geom, projectid, and projectname, and does not include pagination
 
@@ -108,13 +108,11 @@ router.get('/', async (req, res) => {
       });
 
       // get the bounds for the geometries
-      let bounds;
+      // default to a bbox for the whole city
+      let bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
       if (total) {
         bounds = await db.one(boundingBoxQuery, { tileQuery });
         bounds = bounds.bbox;
-      } else {
-        // default view for no results should be the whole city
-        bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
       }
 
       // create a shortid for this query and store it in the cache
