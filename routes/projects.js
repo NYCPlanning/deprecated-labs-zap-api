@@ -55,7 +55,8 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonecoastala = false,
       dcp_femafloodzonea = false,
       dcp_femafloodzoneshadedx = false,
-      dcp_publicstatus = ['Complete', 'Filed', 'Certified', 'Unknown'],
+      dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
+      text_query = '',
     },
   } = req;
 
@@ -69,6 +70,8 @@ router.get('/', async (req, res) => {
   const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala === 'true' ? 'AND dcp_femafloodzonecoastala = true' : '';
   const dcp_femafloodzoneaQuery = dcp_femafloodzonea === 'true' ? 'AND dcp_femafloodzonea = true' : '';
   const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx === 'true' ? 'AND dcp_femafloodzoneshadedx = true' : '';
+  const textQuery = text_query ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (dcp_applicant ilike '%$1:value%'))", [text_query]) : '';
+
 
   try {
     const projects =
@@ -82,6 +85,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        textQuery,
         paginate,
       });
 
@@ -105,6 +109,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        textQuery,
         paginate: '',
       });
 

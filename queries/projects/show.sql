@@ -8,7 +8,7 @@ SELECT
   dcp_borough,
   dcp_ulurp_nonulurp,
   dcp_leaddivision,
-  account.name as dcp_applicant_customer,
+  account.name as dcp_applicant,
   dcp_ceqrtype,
   dcp_ceqrnumber,
   dcp_easeis,
