@@ -1,11 +1,14 @@
 WITH normalized_projects AS (
-  SELECT *,
+  SELECT dcp_project.*,
+    account.name as dcp_applicant_customer,
     CASE
       WHEN dcp_project.dcp_publicstatus = 'Approved' THEN 'Complete'
       WHEN dcp_project.dcp_publicstatus = 'Withdrawn' THEN 'Complete'
       ELSE dcp_project.dcp_publicstatus
     END AS dcp_publicstatus_simp
   FROM dcp_project
+  LEFT JOIN account 
+    ON dcp_project.dcp_applicant_customer = account.accountid
 )
 
 SELECT
