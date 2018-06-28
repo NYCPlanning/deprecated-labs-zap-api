@@ -51,10 +51,10 @@ router.get('/', async (req, res) => {
       'community-districts': communityDistricts = [],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
-      dcp_femafloodzonea = false,
-      dcp_femafloodzonecoastala = false,
-      dcp_femafloodzoneshadedx = false,
       dcp_femafloodzonev = false,
+      dcp_femafloodzonecoastala = false,
+      dcp_femafloodzonea = false,
+      dcp_femafloodzoneshadedx = false,
       dcp_publicstatus = ['Complete', 'Filed', 'Certified', 'Unknown'],
     },
   } = req;
@@ -65,10 +65,10 @@ router.get('/', async (req, res) => {
 
   // special handling for FEMA flood zones
   // to only filter when set to true
-  const dcp_femafloodzoneaQuery = dcp_femafloodzonea ? 'AND dcp_femafloodzonea = true' : '';
-  const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala ? 'AND dcp_femafloodzonecoastala = true' : '';
-  const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx ? 'AND dcp_femafloodzoneshadedx = true' : '';
-  const dcp_femafloodzonevQuery = dcp_femafloodzonev ? 'AND dcp_femafloodzonev = true' : '';
+  const dcp_femafloodzonevQuery = dcp_femafloodzonev === 'true' ? 'AND dcp_femafloodzonev = true' : '';
+  const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala === 'true' ? 'AND dcp_femafloodzonecoastala = true' : '';
+  const dcp_femafloodzoneaQuery = dcp_femafloodzonea === 'true' ? 'AND dcp_femafloodzonea = true' : '';
+  const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx === 'true' ? 'AND dcp_femafloodzoneshadedx = true' : '';
 
   try {
     const projects =
@@ -77,10 +77,10 @@ router.get('/', async (req, res) => {
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,
-        dcp_femafloodzoneaQuery,
-        dcp_femafloodzonecoastalaQuery,
-        dcp_femafloodzoneshadedxQuery,
         dcp_femafloodzonevQuery,
+        dcp_femafloodzonecoastalaQuery,
+        dcp_femafloodzoneaQuery,
+        dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
         paginate,
       });
@@ -90,7 +90,8 @@ router.get('/', async (req, res) => {
 
     // if this is the first page of a new query, include bounds for the query's geoms, and a vector tile template
     let tileMeta = {};
-    if (page === 1) {
+
+    if (page === '1') {
       // tileQuery is uses the same WHERE clauses as above,
       // but only SELECTs geom, projectid, and projectname, and does not include pagination
 
@@ -99,10 +100,10 @@ router.get('/', async (req, res) => {
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,
-        dcp_femafloodzoneaQuery,
-        dcp_femafloodzonecoastalaQuery,
-        dcp_femafloodzoneshadedxQuery,
         dcp_femafloodzonevQuery,
+        dcp_femafloodzonecoastalaQuery,
+        dcp_femafloodzoneaQuery,
+        dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
         paginate: '',
       });
@@ -190,7 +191,9 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
-    if (tile.st_asmvt.length === 0) throw new Error(404);
+    if (tile.st_asmvt.length === 0) {
+      res.status(204);
+    }
     res.send(tile.st_asmvt);
   } catch (e) {
     res.status(404).send({
