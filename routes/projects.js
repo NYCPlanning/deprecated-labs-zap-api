@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonecoastala = false,
       dcp_femafloodzonea = false,
       dcp_femafloodzoneshadedx = false,
-      dcp_publicstatus = ['Complete', 'Filed', 'Certified', 'Unknown'],
+      dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
       text_query = '',
     },
   } = req;
