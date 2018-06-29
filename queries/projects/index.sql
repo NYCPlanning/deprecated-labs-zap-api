@@ -16,5 +16,6 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${boroughsQuery^}
   ${actionTypesQuery^}
   ${textQuery^}
+  ${blockQuery^}
 ORDER BY dcp_name DESC
 ${paginate^}
