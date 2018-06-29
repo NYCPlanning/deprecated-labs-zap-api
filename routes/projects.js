@@ -52,6 +52,7 @@ router.get('/', async (req, res) => {
 
       // filters
       'community-districts': communityDistricts = [],
+      'action-types': actionTypes = [],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
       dcp_femafloodzonev = false,
@@ -66,6 +67,8 @@ router.get('/', async (req, res) => {
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
+
+  const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
 
   // special handling for FEMA flood zones
   // to only filter when set to true
@@ -88,6 +91,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        actionTypesQuery,
         textQuery,
         paginate,
       });
@@ -112,6 +116,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        actionTypesQuery,
         textQuery,
         paginate: '',
       });
