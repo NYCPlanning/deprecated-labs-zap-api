@@ -9,7 +9,8 @@ CREATE MATERIALIZED VIEW normalized_projects AS
       WHEN dcp_project.dcp_publicstatus = 'Certified' THEN 'In Public Review'
       ELSE dcp_project.dcp_publicstatus
     END AS dcp_publicstatus_simp,
-    STRING_AGG(SUBSTRING(dcp_projectaction.dcp_name FROM '^(\w+)'), ';') AS actiontypes
+    STRING_AGG(SUBSTRING(dcp_projectaction.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
+    STRING_AGG(dcp_projectaction.dcp_ulurpnumber, ';') AS ulurpnumbers
   FROM dcp_project
   LEFT JOIN account
     ON dcp_project.dcp_applicant_customer = account.accountid
