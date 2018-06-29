@@ -16,10 +16,4 @@ dcp_femafloodzonev,
 dcp_applicant,
 cast(count(dcp_projectid) OVER() as integer) as total_projects,
 CASE WHEN c.geom IS NOT NULL THEN true ELSE false END AS has_centroid,
-(
-  SELECT ARRAY_AGG(a.dcp_ulurpnumber)
-  FROM dcp_projectaction a
-  WHERE a.dcp_project = p.dcp_projectid
-    AND a.statuscode <> 'Mistake'
-    AND a.dcp_ulurpnumber IS NOT NULL
-) AS ulurpnumbers
+string_to_array(ulurpnumbers, ';') as ulurpnumbers
