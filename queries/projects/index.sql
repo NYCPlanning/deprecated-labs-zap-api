@@ -13,6 +13,7 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${dcp_femafloodzoneaQuery^}
   ${dcp_femafloodzoneshadedxQuery^}
   ${communityDistrictsQuery^}
+  ${boroughsQuery^}
   ${actionTypesQuery^}
   ${textQuery^}
 ORDER BY dcp_name DESC

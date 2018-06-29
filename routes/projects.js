@@ -53,6 +53,7 @@ router.get('/', async (req, res) => {
       // filters
       'community-districts': communityDistricts = [],
       'action-types': actionTypes = [],
+      boroughs = [],
       dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
       dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
       dcp_femafloodzonev = false,
@@ -67,6 +68,8 @@ router.get('/', async (req, res) => {
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
     communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
+
+  const boroughsQuery = boroughs[0] ? pgp.as.format('AND dcp_borough ilike any (array[$1:csv])', [boroughs.map(borough => `%${borough}%`)]) : '';
 
   const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
 
@@ -91,6 +94,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        boroughsQuery,
         actionTypesQuery,
         textQuery,
         paginate,
@@ -116,6 +120,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
         communityDistrictsQuery,
+        boroughsQuery,
         actionTypesQuery,
         textQuery,
         paginate: '',
