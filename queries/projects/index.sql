@@ -17,5 +17,9 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${actionTypesQuery^}
   ${textQuery^}
   ${blockQuery^}
-ORDER BY dcp_name DESC
+ORDER BY CASE WHEN dcp_publicstatus_simp = 'Filed' then 1
+              WHEN dcp_publicstatus_simp = 'In Public Review' then 2
+              WHEN dcp_publicstatus_simp = 'Complete' then 3
+              ELSE 4
+         END ASC, dcp_projectname ASC
 ${paginate^}
