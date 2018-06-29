@@ -4,6 +4,9 @@ const SphericalMercator = require('sphericalmercator');
 const NodeCache = require('node-cache');
 const shortid = require('shortid');
 const generateDynamicQuery = require('../utils/generate-dynamic-sql');
+const turfBuffer = require('@turf/buffer');
+const turfBbox = require('@turf/bbox');
+
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
@@ -124,6 +127,25 @@ router.get('/', async (req, res) => {
       if (total) {
         bounds = await db.one(boundingBoxQuery, { tileQuery });
         bounds = bounds.bbox;
+      }
+
+      // if y coords are the same for both corners, the bbox is for a single point
+      // to prevent fitBounds being lame, wrap a 600m buffer around the point
+
+      if (bounds[0][0] === bounds[1][0]) {
+        const point = {
+          type: 'Point',
+          coordinates: [
+            bounds[0][0],
+            bounds[0][1],
+          ],
+        };
+        const buffer = turfBuffer(point, 0.4);
+        const bbox = turfBbox.default(buffer);
+        bounds = [
+          [bbox[0], bbox[1]],
+          [bbox[2], bbox[3]],
+        ];
       }
 
       // create a shortid for this query and store it in the cache
