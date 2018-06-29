@@ -136,7 +136,6 @@ router.get('/', async (req, res) => {
           ],
         };
         const buffer = turfBuffer(point, 0.4);
-        console.log(buffer)
         const bbox = turfBbox.default(buffer);
         bounds = [
           [bbox[0], bbox[1]],
