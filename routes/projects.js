@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
       // but only SELECTs geom, projectid, and projectname, and does not include pagination
 
       const tileQuery = pgp.as.format(listProjectsQuery, {
-        standardColumns: 'geom, projectid, dcp_projectname',
+        standardColumns: 'geom, projectid, dcp_projectname, dcp_publicstatus_simp',
         dcp_publicstatus,
         dcp_ceqrtype,
         dcp_ulurp_nonulurp,

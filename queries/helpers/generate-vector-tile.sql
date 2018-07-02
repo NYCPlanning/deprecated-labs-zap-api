@@ -4,6 +4,7 @@ FROM (
   SELECT
     projectid,
     dcp_projectname,
+    dcp_publicstatus_simp,
     ST_AsMVTGeom(
       x.geom,
       tileBounds.geom,
