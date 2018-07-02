@@ -26,7 +26,12 @@ SELECT
   dcp_femafloodzonecoastala,
   dcp_femafloodzonecoastala,
   dcp_femafloodzonev,
-  dcp_publicstatus,
+  CASE
+    WHEN dcp_publicstatus = 'Approved' THEN 'Complete'
+    WHEN dcp_publicstatus = 'Withdrawn' THEN 'Complete'
+    WHEN dcp_publicstatus = 'Certified' THEN 'In Public Review'
+    ELSE dcp_publicstatus
+  END AS dcp_publicstatus_simp,
  (
     SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
