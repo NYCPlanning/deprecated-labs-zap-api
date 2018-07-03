@@ -6,6 +6,7 @@ SELECT
   dcp_projectname,
   dcp_projectbrief,
   dcp_borough,
+  dcp_communitydistricts,
   dcp_ulurp_nonulurp,
   dcp_leaddivision,
   account.name as dcp_applicant,
