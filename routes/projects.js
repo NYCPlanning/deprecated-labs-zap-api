@@ -6,7 +6,10 @@ const shortid = require('shortid');
 const generateDynamicQuery = require('../utils/generate-dynamic-sql');
 const turfBuffer = require('@turf/buffer');
 const turfBbox = require('@turf/bbox');
+const { Recaptcha } = require('express-recaptcha');
 
+
+const recaptcha = new Recaptcha(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
@@ -243,11 +246,20 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
 });
 
 
-router.post('/feedback', async (req, res) => {
-  console.log(req.body)
-  res.send({
-    status: 'success',
-  });
+router.post('/feedback', recaptcha.middleware.verify, async (req, res) => {
+  if (!req.recaptcha.error) {
+    // create a new issue
+
+
+    res.send({
+      status: 'success',
+    });
+  } else {
+    res.status(403);
+    res.send({
+      status: 'captcha invalid',
+    });
+  }
 });
 
 module.exports = router;
