@@ -66,12 +66,19 @@ SELECT
       'dcp_actualstartdate', m.dcp_actualstartdate,
       'dcp_actualenddate', m.dcp_actualenddate,
       'statuscode', m.statuscode,
-      'dcp_milestonesequence', m.dcp_milestonesequence
+      'dcp_milestonesequence', m.dcp_milestonesequence,
+      'outcome', m.outcome
     ))
     FROM (
-      SELECT mm.*, dcp_milestone.dcp_name AS milestonename
+      SELECT
+        mm.*,
+        dcp_milestone.dcp_name AS milestonename,
+        dcp_milestoneoutcome.dcp_name AS outcome
       FROM dcp_projectmilestone mm
-      LEFT JOIN dcp_milestone ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
+      LEFT JOIN dcp_milestone
+        ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
+      LEFT JOIN dcp_milestoneoutcome
+        ON mm.dcp_milestoneoutcome = dcp_milestoneoutcomeid
       WHERE mm.dcp_projectaction = (
 		    SELECT dcp_projectactionid
         FROM dcp_projectaction
