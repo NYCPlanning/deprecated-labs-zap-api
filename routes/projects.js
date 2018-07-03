@@ -242,4 +242,12 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
   }
 });
 
+
+router.post('/feedback', async (req, res) => {
+  console.log(req.body)
+  res.send({
+    status: 'success',
+  });
+});
+
 module.exports = router;
