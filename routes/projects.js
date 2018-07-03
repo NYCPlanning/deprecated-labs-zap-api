@@ -129,10 +129,14 @@ router.get('/', async (req, res) => {
         paginate: '',
       });
 
-      // get the bounds for the geometries
+      //create array of projects that have geometry 
+      const projectsWithGeometries = projects.filter(project => project.has_centroid)
+
+      // get the bounds for projects with geometry 
       // default to a bbox for the whole city
+      //if project list has no geometries (projectsWithGeometries is 0) default to whole city
       let bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
-      if (total) {
+      if (projectsWithGeometries.length > 0) {
         bounds = await db.one(boundingBoxQuery, { tileQuery });
         bounds = bounds.bbox;
       }
