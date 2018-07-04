@@ -7,9 +7,13 @@ const generateDynamicQuery = require('../utils/generate-dynamic-sql');
 const turfBuffer = require('@turf/buffer');
 const turfBbox = require('@turf/bbox');
 const { Recaptcha } = require('express-recaptcha');
+const github = require('octonode');
 
 
 const recaptcha = new Recaptcha(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
+
+const client = github.client(process.env.GITHUB_ACCESS_TOKEN);
+const ghrepo = client.repo('NYCPlanning/zap-data-feedback');
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
@@ -245,14 +249,19 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
   }
 });
 
-
+/* POST /projects/feedback */
+/* Submit feedback about a project */
 router.post('/feedback', recaptcha.middleware.verify, async (req, res) => {
   if (!req.recaptcha.error) {
     // create a new issue
-
-
-    res.send({
-      status: 'success',
+    const { projectid, projectname, text } = req.body;
+    ghrepo.issue({
+      title: `Feedback about ${projectname}`,
+      body: `Project ID: [${projectid}](https://zap.planning.nyc.gov/projects/${projectid})\nFeedback: ${text}`,
+    }, () => {
+      res.send({
+        status: 'success',
+      });
     });
   } else {
     res.status(403);
