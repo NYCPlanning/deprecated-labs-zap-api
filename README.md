@@ -4,6 +4,9 @@ An express.js api that serves project data from the Zoning Application Portal (Z
 ## Environment Variables
 `DATABASE_CONNECTION_STRING` - postgreSQL connection string
 `HOST` - used to build out vector tile URLS, set it to 'http://localhost:3000' if developing locally
+`RECAPTCHA_SITE_KEY` - Used for validating human-ness before feedback submission
+`RECAPTCHA_SECRET_KEY` - Used for validating human-ness before feedback submission
+`GITHUB_ACCESS_TOKEN` - An access token that allows for creating new issues in a github repo
 
 ## Requirements
 
