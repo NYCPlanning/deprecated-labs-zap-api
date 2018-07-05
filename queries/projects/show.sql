@@ -1,5 +1,3 @@
-/* */
-
 SELECT
   dcp_name,
   dcp_projectid,
@@ -55,82 +53,6 @@ SELECT
     LEFT JOIN dcp_zoningresolution z ON a.dcp_zoningresolution = z.dcp_zoningresolutionid
     WHERE a.dcp_project = p.dcp_projectid
       AND a.statuscode <> 'Mistake'
-      AND SUBSTRING(a.dcp_name FROM '^(\w+)') IN (
-        'BD',
-        'BF',
-        'CM',
-        'CP',
-        'DL',
-        'DM',
-        'EB',
-        'EC',
-        'EE',
-        'EF',
-        'EM',
-        'EN',
-        'EU',
-        'GF',
-        'HA',
-        'HC',
-        'HD',
-        'HF',
-        'HG',
-        'HI',
-        'HK',
-        'HL',
-        'HM',
-        'HN',
-        'HO',
-        'HP',
-        'HR',
-        'HS',
-        'HU',
-        'HZ',
-        'LD',
-        'MA',
-        'MC',
-        'MD',
-        'ME',
-        'MF',
-        'ML',
-        'MM',
-        'MP',
-        'MY',
-        'NP',
-        'PA',
-        'PC',
-        'PD',
-        'PE',
-        'PI',
-        'PL',
-        'PM',
-        'PN',
-        'PO',
-        'PP',
-        'PQ',
-        'PR',
-        'PS',
-        'PX',
-        'RA',
-        'RC',
-        'RS',
-        'SC',
-        'TC',
-        'TL',
-        'UC',
-        'VT',
-        'ZA',
-        'ZC',
-        'ZD',
-        'ZJ',
-        'ZL',
-        'ZM',
-        'ZP',
-        'ZR',
-        'ZS',
-        'ZX',
-        'ZZ'
-      )
   ) AS actions,
 
   (
@@ -155,13 +77,7 @@ SELECT
         ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
       LEFT JOIN dcp_milestoneoutcome
         ON mm.dcp_milestoneoutcome = dcp_milestoneoutcomeid
-      WHERE mm.dcp_projectaction = (
-		    SELECT dcp_projectactionid
-        FROM dcp_projectaction
-        WHERE dcp_project = p.dcp_projectid
-        ORDER BY dcp_actionhierarchy ASC
-        LIMIT 1
-	    )
+      WHERE mm.dcp_project = p.dcp_projectid
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
     WHERE milestonename IN (
@@ -174,7 +90,6 @@ SELECT
       'Final Scope of Work Issued',
       'NOC of Draft EIS Issued',
       'DEIS Public Hearing Held',
-      'FEIS Submitted and Review',
       'Review Session - Certified / Referred',
       'Community Board Referral',
       'Borough President Referral',
