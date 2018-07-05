@@ -61,7 +61,8 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonea = false,
       dcp_femafloodzoneshadedx = false,
       dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
-      text_query = '',
+      project_applicant_text = '',
+      ulurp_ceqr_text = '',
       block = '',
     },
   } = req;
@@ -80,7 +81,8 @@ router.get('/', async (req, res) => {
   const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala === 'true' ? 'AND dcp_femafloodzonecoastala = true' : '';
   const dcp_femafloodzoneaQuery = dcp_femafloodzonea === 'true' ? 'AND dcp_femafloodzonea = true' : '';
   const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx === 'true' ? 'AND dcp_femafloodzoneshadedx = true' : '';
-  const textQuery = text_query ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (dcp_applicant ilike '%$1:value%') OR (ulurpnumbers ilike '%$1:value%'))", [text_query]) : '';
+  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (dcp_applicant ilike '%$1:value%'))", [project_applicant_text]) : '';
+  const ulurpCeqrQuery = ulurp_ceqr_text ? pgp.as.format("AND ((ulurpnumbers ILIKE '%$1:value%') OR dcp_ceqrnumber ILIKE '%$1:value%')", [ulurp_ceqr_text]) : '';
   const blockQuery = block ? pgp.as.format("AND (blocks ilike '%$1:value%')", [block]) : '';
 
   try {
@@ -97,7 +99,8 @@ router.get('/', async (req, res) => {
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
-        textQuery,
+        projectApplicantTextQuery,
+        ulurpCeqrQuery,
         blockQuery,
         paginate,
       });
@@ -124,15 +127,16 @@ router.get('/', async (req, res) => {
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
-        textQuery,
+        projectApplicantTextQuery,
+        ulurpCeqrQuery,
         blockQuery,
         paginate: '',
       });
 
-      //create array of projects that have geometry 
+      //create array of projects that have geometry
       const projectsWithGeometries = projects.filter(project => project.has_centroid)
 
-      // get the bounds for projects with geometry 
+      // get the bounds for projects with geometry
       // default to a bbox for the whole city
       //if project list has no geometries (projectsWithGeometries is 0) default to whole city
       let bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
