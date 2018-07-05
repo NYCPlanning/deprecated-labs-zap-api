@@ -1,0 +1,5 @@
+DATABASE_CONNECTION_STRING=postgres://{username}:{password}@{domain}:{port}/{database}
+HOST={host to use for vector tile urls}
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+GITHUB_ACCESS_TOKEN=

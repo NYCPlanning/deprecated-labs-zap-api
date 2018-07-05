@@ -1,5 +1,3 @@
-/* */
-
 SELECT
   dcp_name,
   dcp_projectid,
@@ -79,13 +77,7 @@ SELECT
         ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
       LEFT JOIN dcp_milestoneoutcome
         ON mm.dcp_milestoneoutcome = dcp_milestoneoutcomeid
-      WHERE mm.dcp_projectaction = (
-		    SELECT dcp_projectactionid
-        FROM dcp_projectaction
-        WHERE dcp_project = p.dcp_projectid
-        ORDER BY dcp_actionhierarchy ASC
-        LIMIT 1
-	    )
+      WHERE mm.dcp_project = p.dcp_projectid
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
     WHERE milestonename IN (
@@ -98,7 +90,6 @@ SELECT
       'Final Scope of Work Issued',
       'NOC of Draft EIS Issued',
       'DEIS Public Hearing Held',
-      'FEIS Submitted and Review',
       'Review Session - Certified / Referred',
       'Community Board Referral',
       'Borough President Referral',

@@ -6,7 +6,14 @@ const shortid = require('shortid');
 const generateDynamicQuery = require('../utils/generate-dynamic-sql');
 const turfBuffer = require('@turf/buffer');
 const turfBbox = require('@turf/bbox');
+const { Recaptcha } = require('express-recaptcha');
+const github = require('octonode');
 
+
+const recaptcha = new Recaptcha(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
+
+const client = github.client(process.env.GITHUB_ACCESS_TOKEN);
+const ghrepo = client.repo('NYCPlanning/zap-data-feedback');
 
 const mercator = new SphericalMercator();
 // tileCache key/value pairs expire after 1 hour
@@ -62,7 +69,8 @@ router.get('/', async (req, res) => {
       dcp_femafloodzoneshadedx = false,
       dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
       dcp_certifiedreferred = [],
-      text_query = '',
+      project_applicant_text = '',
+      ulurp_ceqr_text = '',
       block = '',
     },
   } = req;
@@ -82,7 +90,8 @@ router.get('/', async (req, res) => {
   const dcp_femafloodzonecoastalaQuery = dcp_femafloodzonecoastala === 'true' ? 'AND dcp_femafloodzonecoastala = true' : '';
   const dcp_femafloodzoneaQuery = dcp_femafloodzonea === 'true' ? 'AND dcp_femafloodzonea = true' : '';
   const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx === 'true' ? 'AND dcp_femafloodzoneshadedx = true' : '';
-  const textQuery = text_query ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (dcp_applicant ilike '%$1:value%') OR (ulurpnumbers ilike '%$1:value%'))", [text_query]) : '';
+  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (dcp_applicant ilike '%$1:value%'))", [project_applicant_text]) : '';
+  const ulurpCeqrQuery = ulurp_ceqr_text ? pgp.as.format("AND ((ulurpnumbers ILIKE '%$1:value%') OR dcp_ceqrnumber ILIKE '%$1:value%')", [ulurp_ceqr_text]) : '';
   const blockQuery = block ? pgp.as.format("AND (blocks ilike '%$1:value%')", [block]) : '';
 
   try {
@@ -100,7 +109,8 @@ router.get('/', async (req, res) => {
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
-        textQuery,
+        projectApplicantTextQuery,
+        ulurpCeqrQuery,
         blockQuery,
         paginate,
       });
@@ -128,13 +138,15 @@ router.get('/', async (req, res) => {
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
-        textQuery,
+        projectApplicantTextQuery,
+        ulurpCeqrQuery,
         blockQuery,
         paginate: '',
       });
 
       // create array of projects that have geometry
       const projectsWithGeometries = projects.filter(project => project.has_centroid);
+
 
       // get the bounds for projects with geometry
       // default to a bbox for the whole city
@@ -247,6 +259,28 @@ router.get('/tiles/:tileId/:z/:x/:y.mvt', async (req, res) => {
   } catch (e) {
     res.status(404).send({
       error: e.toString(),
+    });
+  }
+});
+
+/* POST /projects/feedback */
+/* Submit feedback about a project */
+router.post('/feedback', recaptcha.middleware.verify, async (req, res) => {
+  if (!req.recaptcha.error) {
+    // create a new issue
+    const { projectid, projectname, text } = req.body;
+    ghrepo.issue({
+      title: `Feedback about ${projectname}`,
+      body: `Project ID: [${projectid}](https://zap.planning.nyc.gov/projects/${projectid})\nFeedback: ${text}`,
+    }, () => {
+      res.send({
+        status: 'success',
+      });
+    });
+  } else {
+    res.status(403);
+    res.send({
+      status: 'captcha invalid',
     });
   }
 });

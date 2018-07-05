@@ -16,7 +16,8 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${communityDistrictsQuery^}
   ${boroughsQuery^}
   ${actionTypesQuery^}
-  ${textQuery^}
+  ${projectApplicantTextQuery^}
+  ${ulurpCeqrQuery^}
   ${blockQuery^}
 ORDER BY CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
               WHEN dcp_publicstatus_simp = 'Filed' then 2
