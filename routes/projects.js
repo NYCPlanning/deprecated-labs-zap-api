@@ -68,11 +68,13 @@ router.get('/', async (req, res) => {
       dcp_femafloodzonea = false,
       dcp_femafloodzoneshadedx = false,
       dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
+      dcp_certifiedreferred = [],
       project_applicant_text = '',
       ulurp_ceqr_text = '',
       block = '',
     },
   } = req;
+
 
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
   const communityDistrictsQuery =
@@ -81,7 +83,7 @@ router.get('/', async (req, res) => {
   const boroughsQuery = boroughs[0] ? pgp.as.format('AND dcp_borough ilike any (array[$1:csv])', [boroughs.map(borough => `%${borough}%`)]) : '';
 
   const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
-
+  const certDateQuery = (!!dcp_certifiedreferred[0] && !!dcp_certifiedreferred[1]) ? pgp.as.format('AND dcp_certifiedreferred BETWEEN to_timestamp($1) AND to_timestamp($2)', dcp_certifiedreferred) : '';
   // special handling for FEMA flood zones
   // to only filter when set to true
   const dcp_femafloodzonevQuery = dcp_femafloodzonev === 'true' ? 'AND dcp_femafloodzonev = true' : '';
@@ -103,6 +105,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzonecoastalaQuery,
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
+        certDateQuery,
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
@@ -131,6 +134,7 @@ router.get('/', async (req, res) => {
         dcp_femafloodzonecoastalaQuery,
         dcp_femafloodzoneaQuery,
         dcp_femafloodzoneshadedxQuery,
+        certDateQuery,
         communityDistrictsQuery,
         boroughsQuery,
         actionTypesQuery,
@@ -140,13 +144,15 @@ router.get('/', async (req, res) => {
         paginate: '',
       });
 
-      //create array of projects that have geometry
-      const projectsWithGeometries = projects.filter(project => project.has_centroid)
+      // create array of projects that have geometry
+      const projectsWithGeometries = projects.filter(project => project.has_centroid);
+
 
       // get the bounds for projects with geometry
       // default to a bbox for the whole city
-      //if project list has no geometries (projectsWithGeometries is 0) default to whole city
+      // if project list has no geometries (projectsWithGeometries is 0) default to whole city
       let bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
+
       if (projectsWithGeometries.length > 0) {
         bounds = await db.one(boundingBoxQuery, { tileQuery });
         bounds = bounds.bbox;
