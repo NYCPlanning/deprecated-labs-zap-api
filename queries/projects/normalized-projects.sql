@@ -11,7 +11,7 @@ CREATE MATERIALIZED VIEW normalized_projects AS
       ELSE 'Unknown'
     END AS dcp_publicstatus_simp,
     STRING_AGG(SUBSTRING(actions.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
-    STRING_AGG(actions.dcp_ulurpnumber, ';') AS ulurpnumbers,
+    STRING_AGG(DISTINCT actions.dcp_ulurpnumber, ';') AS ulurpnumbers,
     STRING_AGG(dcp_projectbbl.dcp_validatedblock, ';') AS blocks
   FROM dcp_project
   LEFT JOIN account
