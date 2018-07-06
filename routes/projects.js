@@ -286,32 +286,42 @@ router.post('/feedback', recaptcha.middleware.verify, async (req, res) => {
   }
 });
 
-/* POST /projects/feedback */
-/* Submit feedback about a project */
-router.post('/slack', async (req, res) => {
-  const { text } = req.body;
+/* POST /projects/slack */
+/* A custom slash command for slack that queries this API  */
+router.post('/slack', async (req, res, next) => {
+  const { token, text } = req.body;
 
-  fetch(`http://localhost:3000/projects?project_applicant_text=${text}`)
-    .then(d => d.json())
-    .then((response) => {
-      const projects = response.data.slice(0, 3);
-      res.send({
-        text: `Top 3 ZAP projects matching ${text}`,
-        attachments: projects.map((project) => {
-          console.log(project);
-          const { id: projectid, attributes } = project
-          const {
-            dcp_projectname: projectName,
-            dcp_applicant: applicant,
-            dcp_projectbrief: projectBrief,
-          } = attributes;
-          return {
-            color: 'good',
-            text: `*<https://zap.planning.nyc.gov/${projectid}|${projectName}>* | Applicant:${applicant} | ${projectBrief}`,
-          };
-        }),
+  if (token === process.env.SLACK_VERIFICATION_TOKEN) {
+    fetch(`${host}/projects?applied-filters=project_applicant_text&project_applicant_text=${text}`)
+      .then(d => d.json())
+      .then((response) => {
+        const projects = response.data.slice(0, 5);
+        res.send({
+          text: projects.length ? `Top ${projects.length} ZAP projects matching '${text}'` : `No ZAP projects found matching '${text}'`,
+          attachments: projects.map((project) => {
+            const { id: projectid, attributes } = project;
+            const {
+              dcp_projectname: projectName,
+              dcp_applicant: applicant,
+              dcp_projectbrief: projectBrief,
+              dcp_publicstatus_simp: status,
+            } = attributes;
+            return {
+              color: 'good',
+              text: `*<https://zap.planning.nyc.gov/projects/${projectid}|${projectName}>* \`${status}\` | *Applicant:* ${applicant} | ${projectBrief || 'No Project Brief'}`,
+            };
+          }),
+        });
+      })
+      .catch(() => {
+        next();
       });
+  } else {
+    res.status(403);
+    res.send({
+      status: 'invalid slack token',
     });
+  }
 });
 
 module.exports = router;
