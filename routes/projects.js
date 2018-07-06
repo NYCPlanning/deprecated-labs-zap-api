@@ -297,6 +297,7 @@ router.post('/slack', async (req, res, next) => {
       .then((response) => {
         const projects = response.data.slice(0, 5);
         res.send({
+          response_type: 'in_channel',
           text: projects.length ? `Top ${projects.length} ZAP projects matching '${text}'` : `No ZAP projects found matching '${text}'`,
           attachments: projects.map((project) => {
             const { id: projectid, attributes } = project;
