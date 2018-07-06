@@ -17,6 +17,7 @@ app.all('*', (req, res, next) => {
 
 app.use(logger('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // import routes
 app.use('/projects', projects);

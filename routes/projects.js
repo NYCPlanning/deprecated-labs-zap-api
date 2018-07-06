@@ -8,6 +8,7 @@ const turfBuffer = require('@turf/buffer');
 const turfBbox = require('@turf/bbox');
 const { Recaptcha } = require('express-recaptcha');
 const github = require('octonode');
+const fetch = require('node-fetch');
 
 
 const recaptcha = new Recaptcha(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
@@ -283,6 +284,34 @@ router.post('/feedback', recaptcha.middleware.verify, async (req, res) => {
       status: 'captcha invalid',
     });
   }
+});
+
+/* POST /projects/feedback */
+/* Submit feedback about a project */
+router.post('/slack', async (req, res) => {
+  const { text } = req.body;
+
+  fetch(`http://localhost:3000/projects?project_applicant_text=${text}`)
+    .then(d => d.json())
+    .then((response) => {
+      const projects = response.data.slice(0, 3);
+      res.send({
+        text: `Top 3 ZAP projects matching ${text}`,
+        attachments: projects.map((project) => {
+          console.log(project);
+          const { id: projectid, attributes } = project
+          const {
+            dcp_projectname: projectName,
+            dcp_applicant: applicant,
+            dcp_projectbrief: projectBrief,
+          } = attributes;
+          return {
+            color: 'good',
+            text: `*<https://zap.planning.nyc.gov/${projectid}|${projectName}>* | Applicant:${applicant} | ${projectBrief}`,
+          };
+        }),
+      });
+    });
 });
 
 module.exports = router;
