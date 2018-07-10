@@ -22,11 +22,6 @@ app.db = pgp(process.env.DATABASE_CONNECTION_STRING);
 // use node-cache to store SQL queries
 app.tileCache = new NodeCache({ stdTTL: 3600 });
 
-app.sql = (file) => {
-  const fullPath = path.join(__dirname, file);
-  return new pgp.QueryFile(fullPath, { minify: true });
-};
-
 // allows CORS
 app.all('*', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');

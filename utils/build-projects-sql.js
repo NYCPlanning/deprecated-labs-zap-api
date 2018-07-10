@@ -1,18 +1,12 @@
-const path = require('path');
 const pgp = require('pg-promise');
 const generateDynamicQuery = require('./generate-dynamic-sql');
+const getQueryFile = require('../utils/get-query-file');
 
-// helper for linking to external query files:
-function sql(file) {
-  const fullPath = path.join(__dirname, file);
-  return new pgp.QueryFile(fullPath, { minify: true });
-}
 
 // import sql query templates
-const listProjectsQuery = sql('../queries/projects/index.sql');
-const paginateQuery = sql('../queries/helpers/paginate.sql');
-const standardColumns = sql('../queries/helpers/standard-projects-columns.sql');
-
+const listProjectsQuery = getQueryFile('/projects/index.sql');
+const paginateQuery = getQueryFile('/helpers/paginate.sql');
+const standardColumns = getQueryFile('/helpers/standard-projects-columns.sql');
 
 const buildProjectsSQL = (queryParams, type = 'filter') => {
   const {
@@ -116,6 +110,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       paginate: '',
     });
   }
+
+  return null;
 };
 
 
