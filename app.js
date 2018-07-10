@@ -3,26 +3,23 @@ const path = require('path');
 const logger = require('morgan');
 const NodeCache = require('node-cache');
 
+// use .env for local environment variables
 require('dotenv').config();
 
-const projects = require('./routes/projects');
-const zap = require('./routes/zap');
-const exportRoute = require('./routes/export');
-
+// instantiate express app
 const app = express();
 
-// log the SQL query
-const initOptions = {
-  // query(e) {
-  //    (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
-  // },
-};
-
-const pgp = require('pg-promise')(initOptions);
+// require pg-promise
+const pgp = require('pg-promise')({
+  query(e) {
+     (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
+  },
+});
 
 // initialize database connection
 app.db = pgp(process.env.DATABASE_CONNECTION_STRING);
 
+// use node-cache to store SQL queries
 app.tileCache = new NodeCache({ stdTTL: 3600 });
 
 app.sql = (file) => {
@@ -37,14 +34,15 @@ app.all('*', (req, res, next) => {
   next();
 });
 
+// middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // import routes
-app.use('/projects', projects);
-app.use('/zap', zap);
-app.use('/export', exportRoute);
+app.use('/projects', require('./routes/projects'));
+app.use('/zap', require('./routes/zap'));
+app.use('/export', require('./routes/export'));
 
 app.use((req, res) => {
   res.status(404).json({

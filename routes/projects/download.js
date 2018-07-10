@@ -6,6 +6,8 @@ const JSONStream = require('JSONStream');
 
 const router = express.Router();
 
+/* GET /projects/download.csv */
+/* Download a CSV of projects that match the current query params  */
 router.get('/', async (req, res) => {
   const { app, query } = req;
 

@@ -10,7 +10,7 @@ const getQueryFile = require('../../utils/get-query-file');
 
 const router = express.Router();
 
-
+// import subroutes
 router.use('/download.csv', require('./download'));
 router.use('/feedback', require('./feedback'));
 router.use('/:id', require('./project'));
@@ -19,6 +19,8 @@ router.use('/tiles', require('./tiles'));
 
 const boundingBoxQuery = getQueryFile('helpers/bounding-box-query.sql');
 
+/* GET /projects */
+/* gets a JSON array of projects that match the query params */
 router.get('/', async (req, res) => {
   const { app, query } = req;
 
