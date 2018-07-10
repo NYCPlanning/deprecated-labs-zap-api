@@ -1,11 +1,12 @@
 const express = require('express');
 const pgp = require('pg-promise')();
 
-const db = pgp(process.env.DATABASE_CONNECTION_STRING);
 const router = express.Router();
 
 
 router.get('/projectbbls.json', (req, res) => {
+  const { app } = req;
+
   const SQL = `
     SELECT
       string_agg(dcp_bblnumber, ';') as bbls,
@@ -16,7 +17,7 @@ router.get('/projectbbls.json', (req, res) => {
     GROUP BY p.dcp_name, p.dcp_projectname;
   `;
 
-  db.any(SQL)
+  app.db.any(SQL)
     .then((data) => {
       res.send(data);
     })
