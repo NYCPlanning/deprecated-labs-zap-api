@@ -36,7 +36,7 @@ SELECT
     SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
-    AND b.dcp_bblnumber IS NOT NULL
+    AND b.dcp_bblnumber IS NOT NULL AND statuscode = 'Active'
   ) AS bbls,
 
   (
@@ -191,7 +191,7 @@ SELECT
     ))
     FROM dcp_projectaddress a
     WHERE a.dcp_project = p.dcp_projectid
-      AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL)
+      AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL AND statuscode = 'Active')
   ) AS addresses
 FROM dcp_project p
 LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
