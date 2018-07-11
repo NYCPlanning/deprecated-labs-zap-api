@@ -195,6 +195,7 @@ SELECT
       FROM dcp_projectapplicant
       WHERE dcp_project = p.dcp_projectid
         AND dcp_applicantrole IN ('Applicant', 'Co-Applicant')
+        AND statuscode = 'Active'
       ORDER BY dcp_applicantrole ASC
     ) pa
     LEFT JOIN account
