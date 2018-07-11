@@ -22,7 +22,6 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
 
   // retreive the projectids from the cache
   const tileQuery = await app.tileCache.get(tileId);
-  console.log('tileQuery', tileQuery);
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false);
 
