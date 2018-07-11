@@ -7,7 +7,6 @@ SELECT
   dcp_communitydistricts,
   dcp_ulurp_nonulurp,
   dcp_leaddivision,
-  account.name as dcp_applicant,
   dcp_ceqrtype,
   dcp_ceqrnumber,
   dcp_easeis,
@@ -185,6 +184,23 @@ SELECT
     WHERE k.dcp_project = p.dcp_projectid
   ) AS keywords,
   (
+    SELECT json_agg(
+      json_build_object(
+        'role', pa.dcp_applicantrole,
+        'name', CASE WHEN pa.dcp_name IS NOT NULL THEN pa.dcp_name ELSE account.name END
+      )
+    )
+    FROM (
+      SELECT *
+      FROM dcp_projectapplicant
+      WHERE dcp_project = p.dcp_projectid
+        AND dcp_applicantrole IN ('Applicant', 'Co-Applicant')
+      ORDER BY dcp_applicantrole ASC
+    ) pa
+    LEFT JOIN account
+      ON account.accountid = pa.dcp_applicant_customer
+  ) AS applicantteam,
+  (
     SELECT json_agg(json_build_object(
       'dcp_validatedaddressnumber', a.dcp_validatedaddressnumber,
       'dcp_validatedstreet', a.dcp_validatedstreet
@@ -194,6 +210,5 @@ SELECT
       AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL)
   ) AS addresses
 FROM dcp_project p
-LEFT JOIN account ON p.dcp_applicant_customer = account.accountid
 WHERE dcp_name = '${id:value}'
   AND dcp_visibility = 'General Public'
