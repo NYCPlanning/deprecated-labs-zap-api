@@ -24,7 +24,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     dcp_femafloodzonecoastala = false,
     dcp_femafloodzonea = false,
     dcp_femafloodzoneshadedx = false,
-    dcp_publicstatus = ['Complete', 'Filed', 'In Public Review', 'Unknown'],
+    dcp_publicstatus = ['Completed', 'Filed', 'In Public Review', 'Unknown'],
     dcp_certifiedreferred = [],
     project_applicant_text = '',
     ulurp_ceqr_text = '',
