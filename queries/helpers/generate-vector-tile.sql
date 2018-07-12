@@ -16,4 +16,9 @@ FROM (
     $5^
   ) x, tilebounds
   WHERE ST_Intersects(x.geom, tilebounds.geom)
+  ORDER BY CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
+                WHEN dcp_publicstatus_simp = 'Filed' then 2
+                WHEN dcp_publicstatus_simp = 'Completed' then 3
+                ELSE 4
+           END DESC
 ) q
