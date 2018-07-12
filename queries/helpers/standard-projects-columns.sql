@@ -15,4 +15,5 @@ dcp_femafloodzonev,
 applicants,
 cast(count(dcp_projectid) OVER() as integer) as total_projects,
 CASE WHEN c.geom IS NOT NULL THEN true ELSE false END AS has_centroid,
+ARRAY[ST_X(c.geom), ST_Y(c.geom)] as center,
 string_to_array(ulurpnumbers, ';') as ulurpnumbers
