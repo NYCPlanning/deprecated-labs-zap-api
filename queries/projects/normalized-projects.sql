@@ -5,8 +5,8 @@ SELECT dcp_project.*,
   CASE
     WHEN dcp_project.dcp_publicstatus = 'Filed' THEN 'Filed'
     WHEN dcp_project.dcp_publicstatus = 'Certified' THEN 'In Public Review'
-    WHEN dcp_project.dcp_publicstatus = 'Approved' THEN 'Complete'
-    WHEN dcp_project.dcp_publicstatus = 'Withdrawn' THEN 'Complete'
+    WHEN dcp_project.dcp_publicstatus = 'Approved' THEN 'Completed'
+    WHEN dcp_project.dcp_publicstatus = 'Withdrawn' THEN 'Completed'
     ELSE 'Unknown'
   END AS dcp_publicstatus_simp,
   STRING_AGG(SUBSTRING(actions.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
