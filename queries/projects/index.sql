@@ -23,5 +23,5 @@ ORDER BY CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
               WHEN dcp_publicstatus_simp = 'Filed' then 2
               WHEN dcp_publicstatus_simp = 'Completed' then 3
               ELSE 4
-         END ASC, dcp_certifiedreferred DESC
+         END ASC, lastmilestonedate DESC NULLS LAST
 ${paginate^}

@@ -12,7 +12,8 @@ SELECT dcp_project.*,
   STRING_AGG(SUBSTRING(actions.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
   STRING_AGG(DISTINCT actions.dcp_ulurpnumber, ';') AS ulurpnumbers,
   STRING_AGG(dcp_projectbbl.dcp_validatedblock, ';') AS blocks,
-  STRING_AGG(applicantteams.name, ';') AS applicants
+  STRING_AGG(applicantteams.name, ';') AS applicants,
+  lastmilestonedates.lastmilestonedate
 FROM dcp_project
 LEFT JOIN (
   SELECT * FROM dcp_projectaction
@@ -107,4 +108,33 @@ LEFT JOIN (
   ORDER BY dcp_applicantrole ASC
 ) applicantteams
   ON applicantteams.dcp_project = dcp_project.dcp_projectid
-GROUP BY dcp_project.dcp_projectid, dcp_project.dcp_publicstatus
+LEFT JOIN (
+  SELECT dcp_project, MAX(dcp_actualenddate) as lastmilestonedate FROM (
+    SELECT dcp_project, dcp_milestone.dcp_name, dcp_actualenddate FROM dcp_projectmilestone mm
+    	LEFT JOIN dcp_milestone
+    	   ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
+    	WHERE dcp_milestone.dcp_name IN (
+    	  'Land Use Fee Payment',
+    	  'Land Use Application Filed Review',
+    	  'CEQR Fee Payment',
+    	  'Filed EAS Review',
+    	  'EIS Draft Scope Review',
+    	  'EIS Public Scoping Meeting',
+    	  'Final Scope of Work Issued',
+    	  'NOC of Draft EIS Issued',
+    	  'DEIS Public Hearing Held',
+    	  'Review Session - Certified / Referred',
+    	  'Community Board Referral',
+    	  'Borough President Referral',
+    	  'Borough Board Referral',
+    	  'CPC Public Meeting - Vote',
+    	  'CPC Public Meeting - Public Hearing',
+    	  'City Council Review',
+    	  'Mayoral Veto',
+    	  'Final Letter Sent'
+    	)
+    	AND mm.statuscode <> 'Overridden'
+    )x GROUP BY dcp_project
+) lastmilestonedates
+	ON lastmilestonedates.dcp_project = dcp_project.dcp_projectid
+GROUP BY dcp_project.dcp_projectid, dcp_project.dcp_publicstatus, lastmilestonedates.lastmilestonedate
