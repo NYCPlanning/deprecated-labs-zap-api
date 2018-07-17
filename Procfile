@@ -1,2 +1,2 @@
 web: npm start
-worker: node scripts/refresh-materialized-view
+worker: node scripts/refresh-materialized-view.js
