@@ -28,6 +28,8 @@ You'll need to create a `.env` file in the root of the repo, with the following 
 
 `SLACK_VERIFICATION_TOKEN` - a token for verifying POST requests from a custom slack slash command
 
+`SLACK_WEBHOOK_URL` - url for POSTing messages in a slack channel
+
 ## Architecture
 
 The api connects to a postgis database, and uses MapPLUTO hosted in Carto to retrieve tax lot geometries.  
@@ -90,6 +92,11 @@ This api is easily deployed with dokku.
 
 Create a new remote: `git remote add dokku dokku@{host}:zap-api`
 Deploy with a git push `git push dokku master` or alias another branch to master `git push dokku {other-branch}:master`
+
+## Worker
+
+This api includes a worker process (see `./Procfile`) that connects to the database and refreshes the materialized view `normalized_projects` every 30 minutes.  It will send slack messages to the #labs-bots channel to notify us of its status
+
 
 ## Contact us
 
