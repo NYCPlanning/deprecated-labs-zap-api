@@ -26,6 +26,7 @@
     "request": "^2.87.0",
     "request-promise-native": "^1.0.5",
     "shortid": "^2.2.8",
+    "slack-webhook": "^1.0.0",
     "sphericalmercator": "^1.0.5"
   },
   "devDependencies": {
