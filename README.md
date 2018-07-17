@@ -97,6 +97,8 @@ Deploy with a git push `git push dokku master` or alias another branch to master
 
 This api includes a worker process (see `./Procfile`) that connects to the database and refreshes the materialized view `normalized_projects` every 30 minutes.  It will send slack messages to the #labs-bots channel to notify us of its status
 
+The worker process will not run automatically.  It must be scaled using `dokku ps:scale {appname } worker=1`.
+
 
 ## Contact us
 
