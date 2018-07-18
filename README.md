@@ -82,9 +82,11 @@ Used by the frontend to get JSON data for a single project.  Example:`/projects/
 
 `GET /zap/:zapAcronym` - Get projects for a community district
 
-Used by the [Community Profiles](https://communityprofiles.planning.nyc.gov/) site to list ZAP projects for a given community distric.
+Used by the [Community Profiles](https://communityprofiles.planning.nyc.gov/) site to list ZAP projects for a given community district.
 
-`GET /projects/tiles/:tileid/:z/:x/:y.mvt` - Get a vector tile for the  
+`GET /projects/tiles/:tileid/:z/:x/:y.mvt` - Get a vector tile for the
+
+`GET /projects/:ceqrnumber` - A redirect query to make predictable URLs for zap projects using only a ceqr number.  if the ceqr number matches a project, returns a 301 redirect to the project page.  If the ceqr number cannot be found, returns a 301 redirect to the project filter page.
 
 ## Deployment
 
