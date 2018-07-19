@@ -3,16 +3,30 @@ const fetch = require('node-fetch');
 const cartoUsername = 'planninglabs';
 const cartoDomain = `${cartoUsername}.carto.com`;
 
-const buildSqlUrl = function(cleanedQuery, type = 'json') { // eslint-disable-line
-  return `https://${cartoDomain}/api/v2/sql?q=${cleanedQuery}&format=${type}`;
+const buildSqlUrl = (cleanedQuery, format = 'json', method) => { // eslint-disable-line
+  let url = `https://${cartoUsername}.carto.com/api/v2/sql`;
+  url += method === 'get' ? `?q=${cleanedQuery}&format=${format}` : '';
+  return url;
 };
 
 const carto = {
-  SQL(query, type = 'json') {
+  SQL(query, format = 'json', method = 'get') {
     const cleanedQuery = query.replace('\n', '');
-    const url = buildSqlUrl(cleanedQuery, type);
+    const url = buildSqlUrl(cleanedQuery, format, method);
 
-    return fetch(url)
+    let fetchOptions = {};
+
+    if (method === 'post') {
+      fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: `q=${cleanedQuery}&format=${format}`,
+      };
+    }
+
+    return fetch(url, fetchOptions)
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -20,7 +34,7 @@ const carto = {
         throw new Error('Not found');
       })
       .then((d) => { // eslint-disable-line
-        return type === 'json' ? d.rows : d;
+        return format === 'json' ? d.rows : d;
       });
   },
 };

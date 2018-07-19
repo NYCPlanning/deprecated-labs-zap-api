@@ -12,7 +12,7 @@ function getBblFeatureCollection(bbls) {
     WHERE bbl IN (${mutatedBBLs.join(',')})
   `;
 
-  return carto.SQL(SQL, 'geojson');
+  return carto.SQL(SQL, 'geojson', 'post');
 }
 
 module.exports = getBblFeatureCollection;
