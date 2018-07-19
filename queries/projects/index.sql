@@ -19,9 +19,10 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${projectApplicantTextQuery^}
   ${ulurpCeqrQuery^}
   ${blockQuery^}
-ORDER BY CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
-              WHEN dcp_publicstatus_simp = 'Filed' then 2
-              WHEN dcp_publicstatus_simp = 'Completed' then 3
-              ELSE 4
-         END ASC, lastmilestonedate DESC NULLS LAST
+ORDER BY lastmilestonedate DESC NULLS LAST,
+CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
+      WHEN dcp_publicstatus_simp = 'Filed' then 2
+      WHEN dcp_publicstatus_simp = 'Completed' then 3
+            ELSE 4
+        END ASC
 ${paginate^}
