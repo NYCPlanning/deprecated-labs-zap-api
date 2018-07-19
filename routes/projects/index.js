@@ -17,6 +17,7 @@ router.use('/:id', require('./project'));
 router.use('/slack', require('./slack'));
 router.use('/tiles', require('./tiles'));
 router.use('/ceqr', require('./ceqr'));
+router.use('/ulurp', require('./ulurp'));
 
 const boundingBoxQuery = getQueryFile('helpers/bounding-box-query.sql');
 
