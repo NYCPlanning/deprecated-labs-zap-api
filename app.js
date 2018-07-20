@@ -37,7 +37,6 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
-app.use('/zap', require('./routes/zap'));
 app.use('/export', require('./routes/export'));
 
 app.use((req, res) => {
