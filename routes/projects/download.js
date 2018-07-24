@@ -13,33 +13,43 @@ router.get('/', async (req, res) => {
 
   const SQL = buildProjectsSQL(query, 'download');
 
-  // you can also use pgp.as.format(query, values, options)
-  // to format queries properly, via pg-promise;
-  const qs = new QueryStream(SQL);
+  // see if this query has data
+  const { rowcount } = await app.db.one(`SELECT count(*) AS rowcount FROM (${SQL}) a`);
 
-  const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
-  const json2csv = new Json2csvTransform({}, transformOpts);
+  // only stream a response if there is data
+  if (rowcount > 0) {
+    // you can also use pgp.as.format(query, values, options)
+    // to format queries properly, via pg-promise;
+    const qs = new QueryStream(SQL);
 
-  // Set approrpiate download headers
-  res.setHeader('Content-disposition', 'attachment; filename=projects.csv');
-  res.writeHead(200, { 'Content-Type': 'text/csv' });
+    const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
+    const json2csv = new Json2csvTransform({}, transformOpts);
 
-  // Flush the headers before we start pushing the CSV content
-  res.flushHeaders();
+    // Set approrpiate download headers
+    res.setHeader('Content-disposition', 'attachment; filename=projects.csv');
+    res.writeHead(200, { 'Content-Type': 'text/csv' });
 
-  app.db.stream(qs, (s) => {
-    // initiate streaming into the console:
-    s.pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
-  })
-    .then((data) => {
-      console.log(
-        'Total rows processed:', data.processed,
-        'Duration in milliseconds:', data.duration,
-      );
+    // Flush the headers before we start pushing the CSV content
+    res.flushHeaders();
+
+    app.db.stream(qs, (s) => {
+      // initiate streaming into the console:
+      s.pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
     })
-    .catch((error) => {
-      console.log('ERROR:', error);
+      .then((data) => {
+        console.log(
+          'Total rows processed:', data.processed,
+          'Duration in milliseconds:', data.duration,
+        );
+      })
+      .catch((error) => {
+        console.log('ERROR:', error);
+      });
+  } else {
+    res.status(500).send({
+      error: 'no data',
     });
+  }
 });
 
 module.exports = router;
