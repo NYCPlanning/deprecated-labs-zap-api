@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "devstart": "DEBUG=true nodemon ./bin/www -e js,sql",
-    "test": "NODE_ENV=test nodemon --ext js --watch . --exec 'mocha ./test/**/*.js' --delay 1 || true"
+    "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js --exit"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
