@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/NYCPlanning/labs-zap-api/tree/develop.svg?style=svg)](https://circleci.com/gh/NYCPlanning/labs-zap-api/tree/develop)
+
 # labs-zap-api
 An express.js api that serves project data from the Zoning Application Portal (ZAP).
 
