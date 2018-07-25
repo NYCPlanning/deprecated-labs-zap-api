@@ -18,16 +18,18 @@ router.post('/', recaptcha.middleware.verify, async (req, res) => {
     ghrepo.issue({
       title: `Feedback about ${projectname}`,
       body: `Project ID: [${projectid}](https://zap.planning.nyc.gov/projects/${projectid})\nFeedback: ${text}`,
-    }, (err) => {
-      if (err) {
-        res.status(500);
+    }, (error, { url }) => {
+      if (error) {
+        res.status(500).send({
+          status: 'error',
+          error,
+        });
       } else {
-        res.status(201);
+        res.status(201).send({
+          status: 'success',
+          url,
+        });
       }
-
-      res.send({
-        status: err ? 'error' : 'success',
-      });
     });
   } else {
     res.status(403);
