@@ -20,13 +20,9 @@ slack.send('Hello, World!  What is my purpose?');
 
 const refreshMaterializedView = () => {
   db.query('REFRESH MATERIALIZED VIEW normalized_projects;')
-    .then((data) => {
-      console.log(data);
-      slack.send('The `normalized_projects` materialized view was refreshed!');
-    })
+    .then(() => {})
     .catch((e) => {
-      console.log(e);
-      slack.send('There was a problem updating `normalized_projects`');
+      slack.send(`I'm sorry to report that there was a problem updating \`normalized_projects\`, ${e}`);
     });
 
   // repeat every 30 minutes
