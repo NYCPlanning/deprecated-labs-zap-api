@@ -20,7 +20,9 @@ slack.send('Hello, World!  What is my purpose?');
 
 const refreshMaterializedView = () => {
   db.query('REFRESH MATERIALIZED VIEW normalized_projects;')
-    .then(() => {})
+    .then(() => {
+      console.log('Success! REFRESH MATERIALIZED VIEW normalized_projects;') // eslint-disable-line
+    })
     .catch((e) => {
       slack.send(`I'm sorry to report that there was a problem updating \`normalized_projects\`, ${e}`);
     });
