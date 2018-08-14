@@ -3,6 +3,12 @@ const moment = require('moment');
 
 const api_key = process.env.AIRTABLE_API_KEY;
 
+const timeout = (resolve) => {
+  setTimeout(() => {
+    resolve([{ error: 'Request timed out' }]);
+  }, 1000);
+};
+
 const getVideoLookup = (rows) => {
   const promises = rows.map((row) => {
     const id = row.hearing_video[0];
@@ -31,11 +37,14 @@ const getVideoLookup = (rows) => {
 const getVideoLinks = projectid => new Promise(async (resolve, reject) => {
   const api_call = `https://api.airtable.com/v0/app5fwvDYGjqdMv3B/project%20timestamps?maxRecords=10&view=Grid%20view&filterByFormula=(projectid = '${projectid}')&api_key=${api_key}`;
 
+  timeout(resolve);
+
   try {
     // get the timestamps and video ids associated with this projectid
     const timestamps = await fetch(api_call)
       .then(d => d.json())
       .then(({ records }) => records.map((record) => {
+        clearTimeout(timeout);
         const { fields } = record;
         const { hearing_video, video_timestamp } = fields;
 
