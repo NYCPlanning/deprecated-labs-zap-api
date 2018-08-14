@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 
 const cartoUsername = 'planninglabs';
-const cartoDomain = `${cartoUsername}.carto.com`;
 
 const buildSqlUrl = (cleanedQuery, format = 'json', method) => { // eslint-disable-line
   let url = `https://${cartoUsername}.carto.com/api/v2/sql`;

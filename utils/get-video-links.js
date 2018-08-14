@@ -55,8 +55,6 @@ const getVideoLinks = projectid => new Promise(async (resolve, reject) => {
         hearing_type,
       } = video_lookup[i];
 
-      console.log(video_timestamp);
-
       // concatenate the youtube link with the timestamp
       const seconds = moment.duration(video_timestamp).asSeconds();
       const video_link = `${youtube_link}&t=${seconds}s`;
