@@ -32,8 +32,6 @@ You'll need to create a `.env` file in the root of the repo, with the following 
 
 `SLACK_WEBHOOK_URL` - url for POSTing messages in a slack channel
 
-`AIRTABLE_API_KEY` - api key for accessing the airtable with youtube video references
-
 ## Architecture
 
 The api connects to a postgis database, and uses MapPLUTO hosted in Carto to retrieve tax lot geometries.  
@@ -108,8 +106,6 @@ This api includes a worker process (see `./Procfile`) that connects to the datab
 
 The worker process will not run automatically.  It must be scaled using `dokku ps:scale {appname } worker=1`.
 
-## Airtable
-The `/projects/:projectid` endpoint uses `get-video-links` util to append an array of video links to a project's response.  The util does multiple calls to [this airtable](https://airtable.com/tblV8rUQQVwUoR2AI/) which links project ids with videos and timestamps.
 
 ## Contact us
 

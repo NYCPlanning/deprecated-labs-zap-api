@@ -1,4 +1,5 @@
 const express = require('express');
+const pgp = require('pg-promise')();
 
 const router = express.Router();
 
@@ -21,9 +22,9 @@ router.get('/projectbbls.json', (req, res) => {
       res.send(data);
     })
     .catch((err) => {
-      console.log(err); // eslint-disable-line
+      console.log(err)
       res.status(404).send({
-        error: 'no results found',
+        error: `no results found`,
       });
     });
 });

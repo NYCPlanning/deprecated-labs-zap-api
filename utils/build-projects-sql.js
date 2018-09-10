@@ -39,7 +39,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
   const dcp_femafloodzoneshadedxQuery = dcp_femafloodzoneshadedx === 'true' ? 'AND dcp_femafloodzoneshadedx = true' : '';
 
   const certDateQuery = (!!dcp_certifiedreferred[0] && !!dcp_certifiedreferred[1]) ? pgp.as.format('AND dcp_certifiedreferred BETWEEN to_timestamp($1) AND to_timestamp($2)', dcp_certifiedreferred) : '';
-  const communityDistrictsQuery = communityDistricts[0] ? pgp.as.format('AND dcp_communitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
+  const communityDistrictsQuery =
+    communityDistricts[0] ? pgp.as.format('AND dcp_validatedcommunitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
   const boroughsQuery = boroughs[0] ? pgp.as.format('AND dcp_borough ilike any (array[$1:csv])', [boroughs.map(borough => `%${borough}%`)]) : '';
   const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
   const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%'))", [project_applicant_text]) : '';
@@ -70,7 +71,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
 
   if (type === 'tiles') {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns: 'geom, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
+      standardColumns: 'geom, projectid, dcp_projectname, dcp_publicstatus_simp',
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,
