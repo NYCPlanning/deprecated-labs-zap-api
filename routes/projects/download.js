@@ -1,8 +1,9 @@
 const express = require('express');
-const buildProjectsSQL = require('../../utils/build-projects-sql');
 const Json2csvTransform = require('json2csv').Transform;
 const QueryStream = require('pg-query-stream');
 const JSONStream = require('JSONStream');
+const buildProjectsSQL = require('../../utils/build-projects-sql');
+
 
 const router = express.Router();
 
@@ -37,13 +38,13 @@ router.get('/', async (req, res) => {
       s.pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
     })
       .then((data) => {
-        console.log(
+        console.log( // eslint-disable-line
           'Total rows processed:', data.processed,
           'Duration in milliseconds:', data.duration,
         );
       })
       .catch((error) => {
-        console.log('ERROR:', error);
+        console.log('ERROR:', error); // eslint-disable-line
       });
   } else {
     res.status(500).send({
