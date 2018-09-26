@@ -156,8 +156,8 @@ SELECT
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
     WHERE milestonename IN (
+      'Prepare Filed Land Use Application',
       'Land Use Fee Payment',
-      'Land Use Application Filed Review',
       'CEQR Fee Payment',
       'Filed EAS Review',
       'EIS Draft Scope Review',
