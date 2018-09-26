@@ -181,7 +181,7 @@ SELECT
     SELECT json_agg(dcp_keyword.dcp_keyword)
     FROM dcp_projectkeywords k
     LEFT JOIN dcp_keyword ON k.dcp_keyword = dcp_keyword.dcp_keywordid
-    WHERE k.dcp_project = p.dcp_projectid
+    WHERE k.dcp_project = p.dcp_projectid AND k.statuscode ='Active'
   ) AS keywords,
   (
     SELECT json_agg(
