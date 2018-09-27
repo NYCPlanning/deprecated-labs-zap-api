@@ -156,8 +156,8 @@ SELECT
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
     WHERE milestonename IN (
+      'Prepare Filed Land Use Application',
       'Land Use Fee Payment',
-      'Land Use Application Filed Review',
       'CEQR Fee Payment',
       'Filed EAS Review',
       'EIS Draft Scope Review',
@@ -181,7 +181,7 @@ SELECT
     SELECT json_agg(dcp_keyword.dcp_keyword)
     FROM dcp_projectkeywords k
     LEFT JOIN dcp_keyword ON k.dcp_keyword = dcp_keyword.dcp_keywordid
-    WHERE k.dcp_project = p.dcp_projectid
+    WHERE k.dcp_project = p.dcp_projectid AND k.statuscode ='Active'
   ) AS keywords,
   (
     SELECT json_agg(
