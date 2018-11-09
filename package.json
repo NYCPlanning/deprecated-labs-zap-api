@@ -19,7 +19,7 @@
     "fast-csv": "^2.4.1",
     "json2csv": "^4.1.5",
     "moment": "^2.22.2",
-    "morgan": "^1.9.0",
+    "morgan": "^1.9.1",
     "nock": "^9.6.1",
     "node-cache": "^4.2.0",
     "node-fetch": "^2.2.0",
