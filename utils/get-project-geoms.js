@@ -13,8 +13,8 @@ function getProjectGeoms(bbls) {
     FROM mappluto_18v_1_1
     WHERE bbl IN (${collectedBBLs.join(',')})
   `;
-
-  return carto.SQL(SQL, 'json', 'post');
+  return carto.SQL(SQL, 'json', 'post')
+    .then(d => d[0]); // return first object in carto response
 }
 
 module.exports = getProjectGeoms;
