@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node ./bin/www",
     "devstart": "DEBUG=true nodemon ./bin/www -e js,sql",
-    "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js --exit"
+    "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js --exit",
+    "migrate": "node-pg-migrate"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
@@ -23,7 +24,9 @@
     "nock": "^9.6.1",
     "node-cache": "^4.2.0",
     "node-fetch": "^2.2.0",
+    "node-pg-migrate": "^3.14.2",
     "octonode": "^0.9.3",
+    "pg": "^7.8.0",
     "pg-promise": "^8.4.4",
     "pg-query-stream": "^1.1.1",
     "request": "^2.87.0",

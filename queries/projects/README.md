@@ -9,6 +9,6 @@ The filter queries served at `/projects` depend on a materialized view called `n
 ### Refreshing the materialized view
 The data from zap are updated once an hour, so the materialized view is set up with a cron job to run on the hour.
 
-The host machine should have an environment variable `DATABASE_CONNECTION_STRING`.  
+The host machine should have an environment variable `DATABASE_URL`.  
 
-The cron job runs an ephemeral docker container that links to the postgis container: `docker run -it --rm --link zap-postgis:postgres postgres psql $DATABASE_CONNECTION_STRING -c "REFRESH MATERIALIZED VIEW normalized_projects"`
+The cron job runs an ephemeral docker container that links to the postgis container: `docker run -it --rm --link zap-postgis:postgres postgres psql $DATABASE_URL -c "REFRESH MATERIALIZED VIEW normalized_projects"`

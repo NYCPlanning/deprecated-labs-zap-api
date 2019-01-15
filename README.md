@@ -18,7 +18,7 @@ Start the development server.  `npm run devstart`
 ### Environment Variables
 You'll need to create a `.env` file in the root of the repo, with the following environment variables:
 
-`DATABASE_CONNECTION_STRING` - postgreSQL connection string
+`DATABASE_URL` - postgreSQL connection string
 
 `HOST` - used to build out vector tile URLS, set it to 'http://localhost:3000' if developing locally
 
@@ -110,6 +110,15 @@ The worker process will not run automatically.  It must be scaled using `dokku p
 
 ## Airtable
 The `/projects/:projectid` endpoint uses `get-video-links` util to append an array of video links to a project's response.  The util does multiple calls to [this airtable](https://airtable.com/tblV8rUQQVwUoR2AI/) which links project ids with videos and timestamps.
+
+## Some Helpful Commands
+
+To start a local PostGIS instance, run `docker run --name zap-development -p 5432:5432 -e POSTGRES_PASSWORD=password -d mdillon/postgis`
+Update `.env` to include DATABASE_URL `DATABASE URL=postgres://postgres:password@0.0.0.0:5432/postgres`
+
+Dump database `docker exec {containername} pg_dump -U postgres postgres > {filename}`
+Transfer to local machine `scp {username}@{host}:{path-to-file} {localfilename}`
+Restore database `cat {localfilename} | docker exec -i zap-development psql -U postgres`
 
 ## Contact us
 
