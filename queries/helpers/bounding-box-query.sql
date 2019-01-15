@@ -10,7 +10,7 @@ ARRAY[
   ]
 ] as bbox
 FROM (
-  SELECT ST_Extent(geom) AS bbox
+  SELECT ST_Extent(centroid) AS bbox
   FROM (
     ${tileQuery^}
   ) x

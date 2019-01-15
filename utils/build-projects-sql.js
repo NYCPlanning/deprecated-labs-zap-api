@@ -70,7 +70,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
 
   if (type === 'tiles') {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns: 'geom, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
+      standardColumns: 'centroid, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,
