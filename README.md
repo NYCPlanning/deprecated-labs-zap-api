@@ -20,10 +20,10 @@ Start the development server.  `npm run devstart`
 ### Local Database
 
 - To start a local PostGIS instance, run `docker run --name zap-development -p 5432:5432 -e POSTGRES_PASSWORD=password -d mdillon/postgis`
-- Update `.env` to include DATABASE_URL `DATABASE URL=postgres://postgres:password@0.0.0.0:5432/postgres`
+- Update `.env` to include DATABASE_URL `DATABASE_URL=postgres://postgres:password@0.0.0.0:5432/postgres`
 - ssh onto the server and create a dump file of the PostgreSQL database `docker exec {containername} pg_dump -U postgres postgres > {filename}`
-- Transfer back to local machine `scp {username}@{host}:{path-to-file} {localfilename}`
-- Restore database `cat {localfilename} | docker exec -i zap-development psql -U postgres`
+- Transfer the file back to local machine `scp {username}@{host}:{path-to-file} {localfilename}`
+- Restore database on your local machine `cat {localfilename} | docker exec -i zap-development psql -U postgres`
 
 ### Environment Variables
 You'll need to create a `.env` file in the root of the repo, with the following environment variables:
