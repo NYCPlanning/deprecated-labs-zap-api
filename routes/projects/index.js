@@ -14,6 +14,7 @@ const router = express.Router();
 router.use('/download.csv', require('./download'));
 router.use('/feedback', require('./feedback'));
 router.use('/:id', require('./project'));
+router.use('/update-geometries/:id', require('./update-geometries'));
 router.use('/slack', require('./slack'));
 router.use('/tiles', require('./tiles'));
 router.use('/ceqr', require('./ceqr'));
