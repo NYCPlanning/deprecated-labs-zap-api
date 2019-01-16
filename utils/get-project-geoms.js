@@ -14,7 +14,7 @@ function getProjectGeoms(bbls) {
     WHERE bbl IN (${collectedBBLs.join(',')})
   `;
   return carto.SQL(SQL, 'json', 'post')
-    .then(d => d[0]); // return first object in carto response
+    .then(d => d[0]); // return first object in carto response, carto.sql always return an array
 }
 
 module.exports = getProjectGeoms;
