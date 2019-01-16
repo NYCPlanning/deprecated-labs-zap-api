@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
     if (!id.match(/^P?[0-9]{4}[A-Z]{1}[0-9]{4}$/)) throw new Error('Invalid project id');
     const { bbls } = await app.db.one(matchBBLSQL, { id }); // destructuring
     if (!bbls) {
-        app.db.none('DELETE FROM project_geoms WHERE projectid = \${id}', { id }) // eslint-disable-line
+      app.db.none('DELETE FROM project_geoms WHERE projectid = \${id}', { id }) // eslint-disable-line
         .then(() => {
           res.send({
             status: 'success',
