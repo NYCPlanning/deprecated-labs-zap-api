@@ -35,7 +35,11 @@ router.get('/', async (req, res) => {
       \${centroid}
       )
     ON CONFLICT (projectid)
-    DO NOTHING;
+    DO
+      UPDATE
+        SET
+          polygons = \${polygons},
+          centroid = \${centroid};
   `;
 
   // SQL template to delete records that match the project id
