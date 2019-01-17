@@ -53,29 +53,37 @@ router.get('/', async (req, res) => {
   try {
     if (!id.match(/^P?[0-9]{4}[A-Z]{1}[0-9]{4}$/)) throw new Error('Invalid project id'); // regex match for project id with zero or one 'P', four numbers, 1 letter, and four numbers
     const { bbls } = await app.db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
+    console.log(bbls);
     // if a project has no bbls, remove project
     if (!bbls) {
       app.db.none(deleteProjectSQL, { id }) // eslint-disable-line,
         .then(() => {
           res.send({
-            status: 'success',
-            message: `No BBLs found, project ${id} has no geometries`,
+            status: 'failure',
+            message: `ZAP data does not list any BBLs for project ${id}`,
           });
         });
     } else {
       const { polygons, centroid } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
-      // update geometry on existing project or insert new project with geoms (upsert)
-      await app.db.none(upsertSQL, {
-        id,
-        polygons,
-        centroid,
-      })
-        .then(() => {
-          res.send({
-            status: 'success',
-            message: `Updated geometries for project ${id}`,
-          });
+      if (polygons == null) {
+        res.send({
+          status: 'failure',
+          message: `MapPLUTO does not contain matching BBLs for project ${id}`,
         });
+      } else {
+      // update geometry on existing project or insert new project with geoms (upsert)
+        await app.db.none(upsertSQL, {
+          id,
+          polygons,
+          centroid,
+        })
+          .then(() => {
+            res.send({
+              status: 'success',
+              message: `Updated geometries for project ${id}`,
+            });
+          });
+      }
     }
   } catch (e) {
     res.status(404).send({
