@@ -8,7 +8,7 @@ function getProjectGeoms(bbls) {
 
   const SQL = `
     SELECT
-      ST_Union(the_geom) AS polygons,
+      ST_Multi(ST_Union(the_geom)) AS polygons,
       ST_Centroid(ST_Union(the_geom)) AS centroid
     FROM mappluto_18v_1_1
     WHERE bbl IN (${collectedBBLs.join(',')})
