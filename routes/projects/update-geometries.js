@@ -55,13 +55,11 @@ router.get('/', async (req, res) => {
     const { bbls } = await app.db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
     // if a project has no bbls, remove project
     if (!bbls) {
-      app.db.none(deleteProjectSQL, { id }) // eslint-disable-line,
-        .then(() => {
-          res.send({
-            status: 'failure',
-            message: `ZAP data does not list any BBLs for project ${id}`,
-          });
-        });
+      await app.db.none(deleteProjectSQL, { id }); // eslint-disable-line,
+      res.send({
+        status: 'failure',
+        message: `ZAP data does not list any BBLs for project ${id}`,
+      });
     } else {
       const { polygons, centroid } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
       if (polygons == null) {
@@ -75,17 +73,16 @@ router.get('/', async (req, res) => {
           id,
           polygons,
           centroid,
-        })
-          .then(() => {
-            res.send({
-              status: 'success',
-              message: `Updated geometries for project ${id}`,
-            });
-          });
+        });
+
+        res.send({
+          status: 'success',
+          message: `Updated geometries for project ${id}`,
+        });
       }
     }
   } catch (e) {
-    res.status(404).send({
+    res.status(500).send({
       error: e.toString(),
     });
   }
