@@ -31,13 +31,17 @@ SELECT
     WHEN dcp_publicstatus = 'Withdrawn' THEN 'Completed'
     ELSE 'Unknown'
   END AS dcp_publicstatus_simp,
- (
+  (
     SELECT json_agg(b.dcp_bblnumber)
     FROM dcp_projectbbl b
     WHERE b.dcp_project = p.dcp_projectid
     AND b.dcp_bblnumber IS NOT NULL AND statuscode = 'Active'
   ) AS bbls,
-
+  (
+    SELECT ST_ASGeoJSON(b.polygons, 6)
+    FROM project_geoms b
+    WHERE b.projectid = p.dcp_name
+  ) AS bbl_multipolygon,
   (
     SELECT json_agg(json_build_object(
       'dcp_name', SUBSTRING(a.dcp_name FROM '-{1}\s*(.*)'), -- use regex to pull out action name -{1}(.*)
