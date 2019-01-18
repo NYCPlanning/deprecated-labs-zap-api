@@ -53,7 +53,6 @@ router.get('/', async (req, res) => {
   try {
     if (!id.match(/^P?[0-9]{4}[A-Z]{1}[0-9]{4}$/)) throw new Error('Invalid project id'); // regex match for project id with zero or one 'P', four numbers, 1 letter, and four numbers
     const { bbls } = await app.db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
-    console.log(bbls);
     // if a project has no bbls, remove project
     if (!bbls) {
       app.db.none(deleteProjectSQL, { id }) // eslint-disable-line,
