@@ -10,7 +10,7 @@ function getProjectGeoms(bbls) {
     SELECT
       ST_Multi(ST_Union(the_geom)) AS polygons,
       ST_Centroid(ST_Union(the_geom)) AS centroid
-    FROM mappluto_18v_1_1
+    FROM mappluto_18v2
     WHERE bbl IN (${collectedBBLs.join(',')})
   `;
   return carto.SQL(SQL, 'json', 'post')
