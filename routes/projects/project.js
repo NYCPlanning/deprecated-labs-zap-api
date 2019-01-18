@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
   try {
     const project = await app.db.one(findProjectQuery, { id });
     project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
-    project.test_project_geoms = await getProjectGeoms(project.bbls);
+    project.project_geoms = await getProjectGeoms(project.bbls);
     project.video_links = await getVideoLinks(project.dcp_name);
 
     res.send({
