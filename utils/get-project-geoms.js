@@ -9,9 +9,11 @@ function getProjectGeoms(bbls) {
   const SQL = `
     SELECT
       ST_Multi(ST_Union(the_geom)) AS polygons,
-      ST_Centroid(ST_Union(the_geom)) AS centroid
+      ST_Centroid(ST_Union(the_geom)) AS centroid,
+      version AS mappluto_v
     FROM mappluto_18v2
     WHERE bbl IN (${collectedBBLs.join(',')})
+    GROUP BY version
   `;
   return carto.SQL(SQL, 'json', 'post')
     .then(d => d[0]); // return first object in carto response, carto.sql always return an array

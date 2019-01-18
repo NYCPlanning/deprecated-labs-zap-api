@@ -27,19 +27,21 @@ router.get('/', async (req, res) => {
 
   // SQL template, upsert command to insert rows that don't exist and update rows that do exist
   const upsertSQL = `
-    INSERT INTO project_geoms(projectid, polygons, centroid)
+    INSERT INTO project_geoms(projectid, polygons, centroid, mappluto_v)
     VALUES
       (
       \${id},
       \${polygons},
-      \${centroid}
+      \${centroid},
+      \${mappluto_v}
       )
     ON CONFLICT (projectid)
     DO
       UPDATE
         SET
           polygons = \${polygons},
-          centroid = \${centroid};
+          centroid = \${centroid},
+          mappluto_v = \${mappluto_v};
   `;
 
   // SQL template to delete records that match the project id
@@ -61,7 +63,7 @@ router.get('/', async (req, res) => {
         message: `ZAP data does not list any BBLs for project ${id}`,
       });
     } else {
-      const { polygons, centroid } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
+      const { polygons, centroid, mappluto_v } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
       if (polygons == null) {
         res.send({
           status: 'failure',
@@ -73,6 +75,7 @@ router.get('/', async (req, res) => {
           id,
           polygons,
           centroid,
+          mappluto_v,
         });
 
         res.send({
