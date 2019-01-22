@@ -8,7 +8,7 @@ function getBblFeatureCollection(bbls) {
 
   const SQL = `
     SELECT the_geom
-    FROM mappluto_v1711
+    FROM mappluto_18v2
     WHERE bbl IN (${mutatedBBLs.join(',')})
   `;
 

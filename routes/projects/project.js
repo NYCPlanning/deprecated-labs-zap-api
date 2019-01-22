@@ -1,6 +1,5 @@
 const express = require('express');
 const getQueryFile = require('../../utils/get-query-file');
-const getBblFeatureCollection = require('../../utils/get-bbl-feature-collection');
 const getVideoLinks = require('../../utils/get-video-links');
 
 const router = express.Router({ mergeParams: true });
@@ -17,7 +16,14 @@ router.get('/', async (req, res) => {
 
   try {
     const project = await app.db.one(findProjectQuery, { id });
-    project.bbl_featurecollection = await getBblFeatureCollection(project.bbls);
+    project.bbl_featurecollection = {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: JSON.parse(project.bbl_multipolygon),
+      }],
+    };
+
     project.video_links = await getVideoLinks(project.dcp_name);
 
     res.send({
