@@ -13,6 +13,7 @@ const router = express.Router();
 // import subroutes
 router.use('/download.csv', require('./download'));
 router.use('/feedback', require('./feedback'));
+router.use('/new-filed', require('./new-filed'));
 router.use('/:id', require('./project'));
 router.use('/update-geometries/:id', require('./update-geometries'));
 router.use('/slack', require('./slack'));
