@@ -41,6 +41,7 @@ router.get('/', async (req, res) => {
 
   await Promise.all(projects.map(async (project) => {
     const response = await upsertGeoms(project, app.db);
+
     if (response.error) errorMessages.push(response.error);
     if (response.status === 'failure') failureMessages.push(response.message);
   }));
