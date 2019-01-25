@@ -52,7 +52,10 @@ async function injectSupportDocumentURLs(project) {
         milestone.milestoneLinks = foundDocuments.map((doc) => {
           const { Key: [filename] } = doc;
 
-          return `${S3_BUCKET_HOST}/${filename}`;
+          return {
+            filename: filename.split('/')[1],
+            url: `${S3_BUCKET_HOST}/${filename}`,
+          };
         });
       }
     }
