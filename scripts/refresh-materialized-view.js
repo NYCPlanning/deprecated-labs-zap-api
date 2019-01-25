@@ -15,7 +15,7 @@ const db = pgp(DATABASE_URL);
 // initialize slack webhook
 const slack = new SlackWebhook(SLACK_WEBHOOK_URL);
 
-slack.send('Hello, World!  What is my purpose?');
+slack.send('Initializing materialized view refresh task with 30 min interval');
 
 
 const refreshMaterializedView = () => {
