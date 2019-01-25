@@ -15,7 +15,7 @@ describe('support documents', () => {
       milestones: [
         {
           dcp_name: 'ZM-Prepare Filed Land Use Application',
-          milestonename: 'Prepare Filed Land Use Application',
+          milestonename: 'Community Board Referral',
           dcp_plannedstartdate: '2018-01-18T05:00:00',
           dcp_plannedcompletiondate: '2018-01-28T05:00:00',
           dcp_actualstartdate: '2018-01-18T05:00:00',
@@ -26,7 +26,7 @@ describe('support documents', () => {
         },
         {
           dcp_name: 'ZM-Filed EAS Review',
-          milestonename: 'Filed EAS Review',
+          milestonename: 'Borough President Referral',
           dcp_plannedstartdate: '2018-04-06T04:00:00',
           dcp_plannedcompletiondate: '2018-06-05T04:00:00',
           dcp_actualstartdate: '2018-04-06T04:00:00',

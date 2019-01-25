@@ -5,12 +5,12 @@ const { promisify } = require('util');
 const parseStringAsync = promisify(parseString);
 
 const S3_BUCKET_HOST = 'https://labs-zap-supporting-documents.sfo2.digitaloceanspaces.com';
-const MILESTONE_TYPES = [
-  ['Community Board Referral', 'CB'],
-  ['Borough President Referral', 'BP'],
-  ['Borough Board Referral', 'BB'],
-  ['Final Letter Sent', 'F'],
-];
+const MILESTONE_TYPES = {
+  'Community Board Referral': /.*_[A-Z]{1}[0-9]{2}/,
+  'Borough President Referral': /.*_[A-Z]{1}BP/,
+  'Borough Board Referral': /.*_[A-Z]{1}BB/,
+  'Final Letter Sent': /.*_(HPD|DOB)/,
+};
 
 async function injectSupportDocumentURLs(project) {
   // extract trimmed ULURP number
@@ -36,10 +36,26 @@ async function injectSupportDocumentURLs(project) {
     .filter(Boolean)
     .reduce((acc, curr) => acc.concat(curr), []);
 
-  console.log(allSupportingDocs);
-
   project.milestones.forEach((milestone) => {
-    milestone
+    const { milestonename } = milestone;
+    // MILESTONE_TYPES
+    const regex = MILESTONE_TYPES[milestonename];
+
+    if (regex) {
+      const foundDocuments = allSupportingDocs.filter(({ Key: key }) => {
+        const [filename] = key;
+
+        return filename.match(regex);
+      });
+
+      if (foundDocuments.length) {
+        milestone.milestoneLinks = foundDocuments.map((doc) => {
+          const { Key: [filename] } = doc;
+
+          return `${S3_BUCKET_HOST}/${filename}`;
+        });
+      }
+    }
   });
 }
 
