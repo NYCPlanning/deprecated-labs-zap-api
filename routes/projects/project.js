@@ -1,6 +1,7 @@
 const express = require('express');
 const getQueryFile = require('../../utils/get-query-file');
 const getVideoLinks = require('../../utils/get-video-links');
+const normalizeSupportDocs = require('../../utils/inject-supporting-document-urls');
 
 const router = express.Router({ mergeParams: true });
 
@@ -24,6 +25,7 @@ router.get('/', async (req, res) => {
       }],
     };
 
+    await normalizeSupportDocs(project);
     project.video_links = await getVideoLinks(project.dcp_name);
 
     res.send({
