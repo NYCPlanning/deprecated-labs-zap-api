@@ -1,8 +1,4 @@
-const pgp = require('pg-promise')();
 const carto = require('../utils/carto');
-
-const { DATABASE_URL } = process.env;
-const db = pgp(DATABASE_URL);
 
 const matchBBLSQL = `
   SELECT
@@ -73,7 +69,7 @@ const getProjectGeoms = async (bbls) => {
   return cartoResponse[0]; // return first object in carto response, carto.sql always return an array
 };
 
-async function upsertGeoms(id) {
+async function upsertGeoms(id, db) {
   try {
     const { bbls } = await db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
     // if a project has no bbls, remove project
@@ -86,6 +82,7 @@ async function upsertGeoms(id) {
     }
 
     const { polygons, centroid, mappluto_v } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
+
     if (polygons == null) {
       return {
         status: 'failure',
