@@ -1,4 +1,3 @@
-const nock = require('nock');
 const injectSupportDocuments = require('../../utils/inject-supporting-document-urls');
 
 describe('support documents', () => {
