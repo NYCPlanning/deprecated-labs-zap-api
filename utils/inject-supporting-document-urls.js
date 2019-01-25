@@ -38,7 +38,6 @@ async function injectSupportDocumentURLs(project) {
 
   project.milestones.forEach((milestone) => {
     const { milestonename } = milestone;
-    // MILESTONE_TYPES
     const regex = MILESTONE_TYPES[milestonename];
 
     if (regex) {
