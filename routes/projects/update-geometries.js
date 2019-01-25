@@ -8,7 +8,7 @@ const router = express.Router({ mergeParams: true });
 /* GET /projects/update-geometries/:id */
 /* Retreive a single project and the API key */
 router.get('/', async (req, res) => {
-  const { params, query } = req; // request, connect to the database with app in app.js
+  const { app, params, query } = req; // request, connect to the database with app in app.js
   const { id } = params;
   const { API_KEY } = query;
   const { USER_API_KEY } = process.env; // retrieve the approved user API key defined in .env
