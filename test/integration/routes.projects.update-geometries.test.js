@@ -10,7 +10,7 @@ chai.use(chaiHttp);
 const server = require('../../app');
 // const upsertGeoms = require('../../utils/upsert-geoms');
 
-describe('GET /projects', () => {
+describe('update-geometries route', () => {
   it('should respond with failure if id does not meet regex requirements', (done) => {
     chai.request(server)
       .get('/projects/update-geometries/P201RQ0293')
