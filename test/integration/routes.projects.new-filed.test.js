@@ -8,7 +8,6 @@ chai.use(chaiHttp);
 const should = chai.should();
 
 const server = require('../../app');
-// const upsertGeoms = require('../../utils/upsert-geoms');
 
 describe('new-filed route', () => {
   it('should respond with message object', (done) => {
