@@ -56,7 +56,6 @@ We are also able to serve vector tiles directly from postGIS using `st_asmvt()`,
 Use query Parameters for filtering:
 
 
-
 `page` *default '1'* - page offset
 
 `itemsPerPage` *default 30* - the number of projects to return with each request
@@ -100,10 +99,32 @@ Used by the frontend to get JSON data for a single project.  Example:`/projects/
 
 `GET /projects/:ulurpnumber` - A redirect query to make predictable URLs for zap projects using only a ulurp number.  if the ulurp number matches a project, returns a 301 redirect to the project page.  If the ulurp number cannot be found, returns a 301 redirect to the project filter page.
 
+`GET /projects/update-geometries/:id` - Updates new geometries for projects using upsert-geoms utility. Updates are manually triggered through an API call URL.
+
+`GET /projects/new-filed` - Update new geometries for projects that are in the 'Prepare Filed Land Use Application' milestone stage. Queries the database for project ID's that do not already exist in the project-geoms table, then updates this table with new projects using upsert-geoms utility. Update done automatically on time intervals.
 
 `GET /zap/:zapAcronym` - Get projects for a community district
 
 Used by the [Community Profiles](https://communityprofiles.planning.nyc.gov/) site to list ZAP projects for a given community district.
+
+## Updating documents in Cyberduck
+For uploading milestone documents we use Cyberduck, which is an FTP client that connects to Amazon S3 and allows for uploading new documents to Digital Ocean Spaces.
+
+In order to upload new documents:
+  -open the Cyberduck app
+  -click on "Open Connection" button on the top left
+  -in subsequent popup, select Amazon S3 from dropdown menu
+  -Enter Server, Port, Access ID, Secret Access Key, and select checkbox for "Add to Keychain"
+  -Once connected, open "labs-zap-supporting-documents" folder
+
+## Updating geometries in the database manually
+In the case of needing to update a project's geometry after is has passed the "Prepare Filed Land Use Application" milestone stage, users will need to update geometries manually (update-geometries route)
+
+Project geometries are updated automatically when projects pass through the "Prepare Filed Land Use Application" (new-filed route)
+
+After editing a project on the database (adding/editing associated bbls), navigate to https://zap-api-staging.planninglabs.nyc/projects/update-geometries/{your project id here}?API_KEY={your API key here}
+
+This will return an object with a status of either "success" if your project was updated or "failure" if the project was not updated.
 
 ## Deployment
 
