@@ -5,6 +5,7 @@ const upsertGeoms = require('../../utils/upsert-geoms');
 
 const router = express.Router({ mergeParams: true });
 
+// This route will update the database automatically when projects pass through the milestone "Prepare Filed Land Use Applications"
 // QUERY FOR PROJECTS
 const getProjectsSQL = `
   SELECT
