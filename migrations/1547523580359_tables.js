@@ -45,11 +45,4 @@ exports.up = (pgm) => {
       level: 'ROW',
     },
   );
-
-  pgm.sql(`
-    INSERT INTO project_geoms(projectid, centroid)
-    SELECT projectid, geom FROM project_centroids;
-  `);
-
-  pgm.dropTable('project_centroids', {});
 };
