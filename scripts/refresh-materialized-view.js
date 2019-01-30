@@ -7,15 +7,15 @@ const pgp = require('pg-promise')({
   },
 });
 
-const { DATABASE_CONNECTION_STRING, SLACK_WEBHOOK_URL } = process.env;
+const { DATABASE_URL, SLACK_WEBHOOK_URL } = process.env;
 
 // initialize database connection
-const db = pgp(DATABASE_CONNECTION_STRING);
+const db = pgp(DATABASE_URL);
 
 // initialize slack webhook
 const slack = new SlackWebhook(SLACK_WEBHOOK_URL);
 
-slack.send('Hello, World!  What is my purpose?');
+slack.send('Initializing materialized view refresh task with 30 min interval');
 
 
 const refreshMaterializedView = () => {

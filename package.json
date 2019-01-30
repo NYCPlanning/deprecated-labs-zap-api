@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node ./bin/www",
     "devstart": "DEBUG=true nodemon ./bin/www -e js,sql",
-    "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js --exit"
+    "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js --exit",
+    "migrate": "node-pg-migrate"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
@@ -18,10 +19,14 @@
     "express-recaptcha": "^4.0.2",
     "fast-csv": "^2.4.1",
     "json2csv": "^4.1.5",
+    "moment": "^2.22.2",
     "morgan": "^1.9.0",
+    "nock": "^9.6.1",
     "node-cache": "^4.2.0",
-    "node-fetch": "^2.1.2",
+    "node-fetch": "^2.2.0",
+    "node-pg-migrate": "^3.14.2",
     "octonode": "^0.9.3",
+    "pg": "^7.8.0",
     "pg-promise": "^8.4.4",
     "pg-query-stream": "^1.1.1",
     "request": "^2.87.0",
@@ -29,7 +34,8 @@
     "save-dev": "^2.0.0",
     "shortid": "^2.2.8",
     "slack-webhook": "^1.0.0",
-    "sphericalmercator": "^1.0.5"
+    "sphericalmercator": "^1.0.5",
+    "xml2js": "0.4.19"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
@@ -41,10 +47,11 @@
     "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
+    "glob": "^7.1.2",
     "mocha": "^5.2.0",
     "nodemon": "^1.17.5"
   },
   "engines": {
-    "node": "8.11.3"
+    "node": "^8.11.3"
   }
 }

@@ -17,7 +17,7 @@ const pgp = require('pg-promise')({
 });
 
 // initialize database connection
-app.db = pgp(process.env.DATABASE_CONNECTION_STRING);
+app.db = pgp(process.env.DATABASE_URL);
 
 // use node-cache to store SQL queries
 app.tileCache = new NodeCache({ stdTTL: 3600 });
@@ -37,7 +37,6 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
-app.use('/zap', require('./routes/zap'));
 app.use('/export', require('./routes/export'));
 
 app.use((req, res) => {

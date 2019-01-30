@@ -23,7 +23,7 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
   // retreive the projectids from the cache
   const tileQuery = await app.tileCache.get(tileId);
   // calculate the bounding box for this tile
-  const bbox = mercator.bbox(x, y, z, false);
+  const bbox = mercator.bbox(x, y, z, false, '900913');
 
   try {
     const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery]);

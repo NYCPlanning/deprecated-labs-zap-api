@@ -1,6 +1,9 @@
-DATABASE_CONNECTION_STRING=postgres://{username}:{password}@{domain}:{port}/{database}
+DATABASE_URL=postgres://{username}:{password}@{domain}:{port}/{database}
 HOST={host to use for vector tile urls}
 RECAPTCHA_SITE_KEY=
 RECAPTCHA_SECRET_KEY=
 GITHUB_ACCESS_TOKEN=
 SLACK_VERIFICATION_TOKEN=
+SLACK_WEBHOOK_URL=
+AIRTABLE_API_KEY=
+USER_API_KEY=
