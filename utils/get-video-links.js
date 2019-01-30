@@ -43,7 +43,7 @@ const getVideoLinks = projectid => new Promise(async (resolve, reject) => {
     // get the timestamps and video ids associated with this projectid
     const timestamps = await fetch(api_call)
       .then(d => d.json())
-      .then(({ records }) => records.map((record) => {
+      .then(({ records = [] }) => records.map((record) => {
         clearTimeout(timeout);
         const { fields } = record;
         const { hearing_video, video_timestamp } = fields;
