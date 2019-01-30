@@ -9,14 +9,19 @@ exports.up = (pgm) => {
     },
     centroid: { type: 'geometry(point)' },
     polygons: { type: 'geometry(multipolygon)' },
-    createdAt: {
+    created_at: {
       type: 'timestamp',
       notNull: true,
       default: pgm.func('current_timestamp'),
     },
-    updatedAt: {
+    updated_at: {
       type: 'timestamp',
+      notNull: true,
+      default: pgm.func('current_timestamp'),
     },
+    mappluto_v: {
+      type: 'text',
+    }
   });
 
   pgm.createFunction(
@@ -29,7 +34,7 @@ exports.up = (pgm) => {
     },
     `
       BEGIN
-        NEW."updatedAt" = NOW();
+        NEW.updated_at = NOW();
         RETURN NEW;
       END;
     `,
