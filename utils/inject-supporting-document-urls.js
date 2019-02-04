@@ -15,6 +15,7 @@ const MILESTONE_TYPES = {
 async function injectSupportDocumentURLs(project) {
   // extract trimmed ULURP number
   const ulurpNumbers = project.actions
+    .filter(({ dcp_ulurpnumber }) => dcp_ulurpnumber) // filter out nulls
     .map(({ dcp_ulurpnumber }) => dcp_ulurpnumber.match(/[A-Z]?([A-Z0-9]{6,7})[A-Z]{3}/))
     .map(ulurpNumber => (ulurpNumber || [])[1]);
 
