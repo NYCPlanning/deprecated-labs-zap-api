@@ -52,7 +52,7 @@ const getProjectGeoms = async (bbls) => {
       ST_Multi(ST_Union(the_geom)) AS polygons,
       ST_Centroid(ST_Union(the_geom)) AS centroid,
       version AS mappluto_v
-    FROM mappluto_18v2
+    FROM mappluto
     WHERE bbl IN (${collectedBBLs.join(',')})
     GROUP BY version
   `;
