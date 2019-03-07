@@ -5,15 +5,14 @@ const normalizeSupportDocs = require('../../utils/inject-supporting-document-url
 
 const router = express.Router({ mergeParams: true });
 
+// import sql query templates
+const findProjectQuery = getQueryFile('/projects/show.sql');
 
 /* GET /projects/:id */
 /* Retreive a single project */
 router.get('/', async (req, res) => {
   const { app, params } = req;
   const { id } = params;
-
-  // import sql query templates
-  const findProjectQuery = getQueryFile('/projects/show.sql');
 
   try {
     const project = await app.db.one(findProjectQuery, { id });
