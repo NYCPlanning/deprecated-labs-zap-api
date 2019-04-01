@@ -160,24 +160,25 @@ SELECT
       ORDER BY mm.dcp_milestonesequence ASC
     ) m
     WHERE milestonename IN (
-      'Prepare Filed Land Use Application',
-      'Land Use Fee Payment',
-      'CEQR Fee Payment',
-      'Filed EAS Review',
-      'EIS Draft Scope Review',
-      'EIS Public Scoping Meeting',
-      'Final Scope of Work Issued',
-      'NOC of Draft EIS Issued',
-      'DEIS Public Hearing Held',
-      'Review Session - Certified / Referred',
-      'Community Board Referral',
-      'Borough President Referral',
       'Borough Board Referral',
-      'CPC Public Meeting - Vote',
-      'CPC Public Meeting - Public Hearing',
+      'Borough President Referral', 
+      'Prepare CEQR Fee Payment',
       'City Council Review',
+      'Community Board Referral',
+      'CPC Public Meeting - Public Hearing',
+      'CPC Public Meeting - Vote',
+      'DEIS Public Hearing Held',
+      'Review Filed EAS and EIS Draft Scope of Work',
+      'DEIS Public Scoping Meeting',
+      'Prepare and Review FEIS', 
+      'Review Filed EAS',
+      'Final Letter Sent',
+      'Issue Final Scope of Work',
+      'Prepare Filed Land Use Application',
+      'Prepare Filed Land Use Fee Payment',
       'Mayoral Veto',
-      'Final Letter Sent'
+      'DEIS Notice of Completion Issued',
+      'Review Session - Certified / Referred'
     )
     AND statuscode <> 'Overridden'
   ) AS milestones,
