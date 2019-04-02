@@ -11,16 +11,16 @@ const generateVectorTile = getQueryFile('/helpers/generate-vector-tile.sql');
 /* GET /projects/tiles/:tileId/:z/:x/:y.mvt */
 /* Retreive a vector tile by tileid */
 router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
-  const { app, params } = req;
+  const { app, params, query } = req;
 
   const {
     tileId,
     z,
     x,
     y,
-    type = 'centroid',
   } = params;
 
+  const { type = 'centroid' } = query;
   // retreive the projectids from the cache
   const tileQuery = await app.tileCache.get(tileId);
   // calculate the bounding box for this tile
