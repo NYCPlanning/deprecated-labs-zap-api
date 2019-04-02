@@ -18,6 +18,7 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
     z,
     x,
     y,
+    type = 'centroid',
   } = params;
 
   // retreive the projectids from the cache
@@ -26,7 +27,7 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
   const bbox = mercator.bbox(x, y, z, false, '900913');
 
   try {
-    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery]);
+    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery, type]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
