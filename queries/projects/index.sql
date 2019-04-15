@@ -18,7 +18,7 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${actionTypesQuery^}
   ${projectApplicantTextQuery^}
   ${ulurpCeqrQuery^}
-  ${radiusQuery^}
+  ${radiusDistanceQuery^}
   ${blockQuery^}
 ORDER BY lastmilestonedate DESC NULLS LAST,
 CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
