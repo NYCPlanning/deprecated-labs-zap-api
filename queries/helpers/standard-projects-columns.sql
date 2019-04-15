@@ -1,5 +1,6 @@
 dcp_name,
 dcp_ceqrnumber,
+dcp_ceqrtype,
 dcp_projectname,
 dcp_projectbrief,
 dcp_publicstatus_simp,
