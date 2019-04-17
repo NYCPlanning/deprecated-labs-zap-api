@@ -29,6 +29,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     project_applicant_text = '',
     ulurp_ceqr_text = '',
     block = '',
+    distance_from_point = [],
+    radius_from_point = 10,
   } = queryParams;
 
   // special handling for FEMA flood zones
@@ -45,6 +47,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
   const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%'))", [project_applicant_text]) : '';
   const ulurpCeqrQuery = ulurp_ceqr_text ? pgp.as.format("AND ((ulurpnumbers ILIKE '%$1:value%') OR dcp_ceqrnumber ILIKE '%$1:value%')", [ulurp_ceqr_text]) : '';
   const blockQuery = block ? pgp.as.format("AND (blocks ilike '%$1:value%')", [block]) : '';
+  const radiusQuery = distance_from_point[0] ? pgp.as.format('AND ST_Distance_Sphere(c.polygons, ST_MakePoint($1,$2)) <= $3', [...distance_from_point, ((radius_from_point / 5280) * 1609.34)]) : '';
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
 
   if (type === 'filter') {
@@ -64,13 +67,14 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       projectApplicantTextQuery,
       ulurpCeqrQuery,
       blockQuery,
+      radiusQuery,
       paginate,
     });
   }
 
   if (type === 'tiles') {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns: 'centroid, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
+      standardColumns: 'centroid, polygons, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,
@@ -85,6 +89,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       projectApplicantTextQuery,
       ulurpCeqrQuery,
       blockQuery,
+      radiusQuery,
       paginate: '',
     });
   }
@@ -106,6 +111,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       projectApplicantTextQuery,
       ulurpCeqrQuery,
       blockQuery,
+      radiusQuery,
       paginate: '',
     });
   }

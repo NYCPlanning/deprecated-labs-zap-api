@@ -11,7 +11,7 @@ const generateVectorTile = getQueryFile('/helpers/generate-vector-tile.sql');
 /* GET /projects/tiles/:tileId/:z/:x/:y.mvt */
 /* Retreive a vector tile by tileid */
 router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
-  const { app, params } = req;
+  const { app, params, query } = req;
 
   const {
     tileId,
@@ -20,13 +20,14 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
     y,
   } = params;
 
+  const { type = 'centroid' } = query;
   // retreive the projectids from the cache
   const tileQuery = await app.tileCache.get(tileId);
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false, '900913');
 
   try {
-    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery]);
+    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery, type]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 
