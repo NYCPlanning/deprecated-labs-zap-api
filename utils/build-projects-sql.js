@@ -7,6 +7,7 @@ const getQueryFile = require('../utils/get-query-file');
 const listProjectsQuery = getQueryFile('/projects/index.sql');
 const paginateQuery = getQueryFile('/helpers/paginate.sql');
 const standardColumns = getQueryFile('/helpers/standard-projects-columns.sql');
+const spatialColumns = getQueryFile('/helpers/shp-projects-columns.sql');
 
 const buildProjectsSQL = (queryParams, type = 'filter') => {
   const {
@@ -115,9 +116,9 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     });
   }
 
-  if (type === 'download') {
+  if (type.includes('download')) {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns,
+      standardColumns: type === 'spatial_download' ? spatialColumns : standardColumns,
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,
@@ -138,6 +139,5 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
 
   return null;
 };
-
 
 module.exports = buildProjectsSQL;

@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const logger = require('morgan');
 const NodeCache = require('node-cache');
 
@@ -35,6 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // import routes
+app.use('/projects.:filetype', require('./routes/projects/download'));
 app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
