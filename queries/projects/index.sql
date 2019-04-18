@@ -4,8 +4,6 @@ FROM normalized_projects p
 LEFT JOIN project_geoms c
   ON p.dcp_name = c.projectid
 WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
-  AND coalesce(dcp_ceqrtype, 'Unknown') IN (${dcp_ceqrtype:csv})
-  AND coalesce(dcp_ulurp_nonulurp, 'Unknown') IN (${dcp_ulurp_nonulurp:csv})
   AND dcp_visibility = 'General Public'
   ${dcp_femafloodzonevQuery^}
   ${dcp_femafloodzonecoastalaQuery^}
@@ -16,7 +14,6 @@ WHERE coalesce(dcp_publicstatus_simp, 'Unknown') IN (${dcp_publicstatus:csv})
   ${boroughsQuery^}
   ${actionTypesQuery^}
   ${projectApplicantTextQuery^}
-  ${ulurpCeqrQuery^}
   ${radiusDistanceQuery^}
   ${blockQuery^}
 ORDER BY lastmilestonedate DESC NULLS LAST,
