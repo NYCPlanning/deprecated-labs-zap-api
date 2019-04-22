@@ -43,7 +43,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
   const communityDistrictsQuery = communityDistricts[0] ? pgp.as.format('AND dcp_communitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
   const boroughsQuery = boroughs[0] ? pgp.as.format('AND dcp_borough ilike any (array[$1:csv])', [boroughs.map(borough => `%${borough}%`)]) : '';
   const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
-  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (p.dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%') OR (ulurpnumbers ILIKE '%$1:value%') OR (dcp_ceqrnumber ILIKE '%$1:value%'))", [project_applicant_text]) : '';
+  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (p.dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%') OR (ulurpnumbers ILIKE '%$1:value%') OR (dcp_ceqrnumber ILIKE '%$1:value%') OR (bbls ILIKE '%$1:value%') OR (keywords ILIKE '%$1:value%'))", [project_applicant_text]) : '';
   const blockQuery = block ? pgp.as.format("AND (blocks ilike '%$1:value%')", [block]) : '';
 
   /**
