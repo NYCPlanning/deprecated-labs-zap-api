@@ -27,7 +27,7 @@ describe('update-geometries route', () => {
 
   it('should respond failure message if project does not have BBLs', (done) => {
     chai.request(server)
-      .get('/projects/update-geometries/P2017R0354')
+      .get('/projects/update-geometries/P1984Y0176')
       .end((err, res) => {
         should.not.exist(err);
         res.status.should.equal(200);
@@ -35,7 +35,7 @@ describe('update-geometries route', () => {
 
 
         // app response should include message
-        res.body.response.message.should.equal('ZAP data does not list any BBLs for project P2017R0354');
+        res.body.response.message.should.equal('ZAP data does not list any BBLs for project P1984Y0176');
         done();
       });
   });
