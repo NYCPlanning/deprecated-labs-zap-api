@@ -9,10 +9,12 @@ SELECT dcp_project.*,
     WHEN dcp_project.dcp_publicstatus = 'Withdrawn' THEN 'Completed'
     ELSE 'Unknown'
   END AS dcp_publicstatus_simp,
-  STRING_AGG(SUBSTRING(actions.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
+  STRING_AGG(DISTINCT SUBSTRING(actions.dcp_name FROM '^(\w+)'), ';') AS actiontypes,
   STRING_AGG(DISTINCT actions.dcp_ulurpnumber, ';') AS ulurpnumbers,
-  STRING_AGG(dcp_projectbbl.dcp_validatedblock, ';') AS blocks,
-  STRING_AGG(applicantteams.name, ';') AS applicants,
+  STRING_AGG(DISTINCT dcp_projectbbl.dcp_validatedblock, ';') AS blocks,
+  STRING_AGG(DISTINCT dcp_projectbbl.dcp_bblnumber, ';') as bbls,
+  STRING_AGG(DISTINCT applicantteams.name, ';') AS applicants,
+  STRING_AGG(DISTINCT keywords.dcp_keyword, ';') AS keywords,
   lastmilestonedates.lastmilestonedate
 FROM dcp_project
 LEFT JOIN (
@@ -108,6 +110,13 @@ LEFT JOIN (
   ORDER BY dcp_applicantrole ASC
 ) applicantteams
   ON applicantteams.dcp_project = dcp_project.dcp_projectid
+LEFT JOIN (
+    SELECT dcp_project, dcp_keyword.dcp_keyword
+    FROM dcp_projectkeywords
+    LEFT JOIN dcp_keyword
+    ON dcp_projectkeywords.dcp_keyword = dcp_keyword.dcp_keywordid
+) keywords
+ON keywords.dcp_project = dcp_project.dcp_projectid
 LEFT JOIN (
   SELECT dcp_project, MAX(dcp_actualenddate) as lastmilestonedate FROM (
     SELECT dcp_project, dcp_milestone.dcp_name, dcp_actualenddate FROM dcp_projectmilestone mm
