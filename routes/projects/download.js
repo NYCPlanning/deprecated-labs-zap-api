@@ -2,8 +2,8 @@ const express = require('express');
 const Json2csvTransform = require('json2csv').Transform;
 const QueryStream = require('pg-query-stream');
 const JSONStream = require('JSONStream');
-const { Transform } = require('stream');
 const buildProjectsSQL = require('../../utils/build-projects-sql');
+const transformActions = require('../../utils/transform-actions');
 
 
 const router = express.Router();
@@ -27,21 +27,6 @@ router.get('/', async (req, res) => {
     const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
     const json2csv = new Json2csvTransform({}, transformOpts);
 
-    // deduplicates actiontypes for objects in an object stream
-    const dedupeActions = new Transform({
-      objectMode: true,
-
-      transform(chunk, encoding, callback) {
-        if (chunk.actiontypes) {
-          const { actiontypes } = chunk;
-          const typesArray = actiontypes.split(';');
-          const dedupedTypesArray = [...new Set(typesArray)];
-          chunk.actiontypes = dedupedTypesArray.join(';');
-        }
-        callback(null, chunk);
-      },
-    });
-
     // Set approrpiate download headers
     res.setHeader('Content-disposition', 'attachment; filename=projects.csv');
     res.writeHead(200, { 'Content-Type': 'text/csv' });
@@ -51,8 +36,8 @@ router.get('/', async (req, res) => {
 
     app.db.stream(qs, (s) => {
       // initiate streaming into the console:
-      // objects are transformed (dedupeActions), then serialized from JSON, then converted to CSV before being returned
-      s.pipe(dedupeActions).pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
+      // objects are transformed, then serialized from JSON, then converted to CSV before being returned
+      s.pipe(transformActions).pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
     })
       .then((data) => {
         console.log( // eslint-disable-line
