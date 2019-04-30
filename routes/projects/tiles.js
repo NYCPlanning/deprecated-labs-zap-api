@@ -26,8 +26,10 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false, '900913');
 
+  const geomColumn = (type === 'centroid') ? 'centroid_3857' : 'polygons_3857';
+
   try {
-    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery, type]);
+    const tile = await app.db.one(generateVectorTile, [...bbox, tileQuery, geomColumn]);
 
     res.setHeader('Content-Type', 'application/x-protobuf');
 

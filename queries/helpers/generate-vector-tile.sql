@@ -7,7 +7,7 @@ FROM (
     dcp_publicstatus_simp,
     lastmilestonedate,
     ST_AsMVTGeom(
-      ST_Transform(x.$6^, 3857),
+      x.$6^,
       tileBounds.geom,
       4096,
       256,
@@ -16,7 +16,7 @@ FROM (
   FROM (
     $5^
   ) x, tilebounds
-  WHERE ST_Transform(x.$6^, 3857) && tilebounds.geom
+  WHERE x.$6^ && tilebounds.geom
   ORDER BY CASE WHEN dcp_publicstatus_simp = 'In Public Review' then 1
                 WHEN dcp_publicstatus_simp = 'Filed' then 2
                 WHEN dcp_publicstatus_simp = 'Completed' then 3
