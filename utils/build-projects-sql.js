@@ -93,9 +93,10 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     });
   }
 
-  if (type === 'tiles') {
+  // returns only projectids that match the query params, without pagination
+  if (type === 'projectids') {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns: 'centroid, polygons, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
+      standardColumns: 'projectid',
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,

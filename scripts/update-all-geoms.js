@@ -30,7 +30,7 @@ const getProjectsSQL = `
 
   let i = 0;
   const updateGeoms = async () => {
-    const apiUrl = `http://localhost:3000/projects/update-geometries/${projects[i]}`;
+    const apiUrl = `http://localhost:${process.env.PORT}/projects/update-geometries/${projects[i]}`;
     const status = await fetch(apiUrl)
       .then(d => d.json())
       .catch(() => {
