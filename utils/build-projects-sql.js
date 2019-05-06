@@ -27,7 +27,6 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     dcp_publicstatus = ['Completed', 'Filed', 'In Public Review', 'Unknown'],
     dcp_certifiedreferred = [],
     project_applicant_text = '',
-    ulurp_ceqr_text = '',
     block = '',
     distance_from_point = [],
     radius_from_point = 10,
@@ -44,10 +43,33 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
   const communityDistrictsQuery = communityDistricts[0] ? pgp.as.format('AND dcp_communitydistricts ilike any (array[$1:csv])', [communityDistricts.map(district => `%${district}%`)]) : '';
   const boroughsQuery = boroughs[0] ? pgp.as.format('AND dcp_borough ilike any (array[$1:csv])', [boroughs.map(borough => `%${borough}%`)]) : '';
   const actionTypesQuery = actionTypes[0] ? pgp.as.format('AND actiontypes ilike any (array[$1:csv])', [actionTypes.map(actionType => `%${actionType}%`)]) : '';
-  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%'))", [project_applicant_text]) : '';
-  const ulurpCeqrQuery = ulurp_ceqr_text ? pgp.as.format("AND ((ulurpnumbers ILIKE '%$1:value%') OR dcp_ceqrnumber ILIKE '%$1:value%')", [ulurp_ceqr_text]) : '';
+  const projectApplicantTextQuery = project_applicant_text ? pgp.as.format("AND ((dcp_projectbrief ilike '%$1:value%') OR (p.dcp_projectname ilike '%$1:value%') OR (applicants ilike '%$1:value%') OR (ulurpnumbers ILIKE '%$1:value%') OR (dcp_ceqrnumber ILIKE '%$1:value%') OR (bbls ILIKE '%$1:value%') OR (keywords ILIKE '%$1:value%'))", [project_applicant_text]) : '';
   const blockQuery = block ? pgp.as.format("AND (blocks ilike '%$1:value%')", [block]) : '';
-  const radiusQuery = distance_from_point[0] ? pgp.as.format('AND ST_Distance_Sphere(c.polygons, ST_MakePoint($1,$2)) <= $3', [...distance_from_point, ((radius_from_point / 5280) * 1609.34)]) : '';
+
+  /**
+   * radiusDistanceQuery is the query for our radius distance filter --> in the frontend, a user can click
+   * a point on the map and filter for all projects located within a distance from that point. When a user
+   * creates this point with a click event, query parameters are changed. When query parameters are changed,
+   * fetchData occurs. The distance_from_point (the coordinates) and radius_from_point (the distance) values
+   * are sent to the backend. The backend then performs the filtering with this query.
+   *
+   * -  ST_DWithin queries all geometries within the specified distance from a point, with the 1st parameter
+   *    being the origin point, the 2nd parameter being the geometries to query based on the input distance,
+   *    and the 3rd parameter being the distance
+   * -  in pgp.as.format the 1st parameter is the query, the 2nd parameter is the values (which take the place
+   *     of $1, $2, and $3 here)
+   * -  $1 and $2 are the coordinates of the point (distance_from_point)
+   * -  $3 is the distance from the point (radius_from_point)
+   * -  ::geography converts the value from geometry data type to geography data type (geography data type
+   *    should be used if you have points that are more than a mile apart)
+   * -  the radius_from_point value is set in the frontend as feet, we convert it to meters to run this query
+   */
+
+  const METERS_TO_FEET_FACTOR = 3.28084;
+
+  const radiusDistanceQuery = distance_from_point[0] ? pgp.as.format('AND ST_DWithin(ST_MakePoint($1,$2)::geography, c.polygons::geography, $3)', [...distance_from_point, (radius_from_point / METERS_TO_FEET_FACTOR)]) : '';
+
+
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
 
   if (type === 'filter') {
@@ -65,16 +87,16 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       boroughsQuery,
       actionTypesQuery,
       projectApplicantTextQuery,
-      ulurpCeqrQuery,
       blockQuery,
-      radiusQuery,
+      radiusDistanceQuery,
       paginate,
     });
   }
 
-  if (type === 'tiles') {
+  // returns only projectids that match the query params, without pagination
+  if (type === 'projectids') {
     return pgp.as.format(listProjectsQuery, {
-      standardColumns: 'centroid, polygons, projectid, dcp_projectname, dcp_publicstatus_simp,lastmilestonedate',
+      standardColumns: 'projectid',
       dcp_publicstatus,
       dcp_ceqrtype,
       dcp_ulurp_nonulurp,
@@ -87,9 +109,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       boroughsQuery,
       actionTypesQuery,
       projectApplicantTextQuery,
-      ulurpCeqrQuery,
       blockQuery,
-      radiusQuery,
+      radiusDistanceQuery,
       paginate: '',
     });
   }
@@ -109,9 +130,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       boroughsQuery,
       actionTypesQuery,
       projectApplicantTextQuery,
-      ulurpCeqrQuery,
       blockQuery,
-      radiusQuery,
+      radiusDistanceQuery,
       paginate: '',
     });
   }

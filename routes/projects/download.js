@@ -3,6 +3,7 @@ const Json2csvTransform = require('json2csv').Transform;
 const QueryStream = require('pg-query-stream');
 const JSONStream = require('JSONStream');
 const buildProjectsSQL = require('../../utils/build-projects-sql');
+const transformActions = require('../../utils/transform-actions');
 
 
 const router = express.Router();
@@ -35,7 +36,8 @@ router.get('/', async (req, res) => {
 
     app.db.stream(qs, (s) => {
       // initiate streaming into the console:
-      s.pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
+      // objects are transformed, then serialized from JSON, then converted to CSV before being returned
+      s.pipe(transformActions).pipe(JSONStream.stringify()).pipe(json2csv).pipe(res);
     })
       .then((data) => {
         console.log( // eslint-disable-line
