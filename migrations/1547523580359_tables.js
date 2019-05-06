@@ -21,7 +21,7 @@ exports.up = (pgm) => {
     },
     mappluto_v: {
       type: 'text',
-    }
+    },
   });
 
   pgm.createFunction(
