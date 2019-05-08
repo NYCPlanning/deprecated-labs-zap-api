@@ -1,10 +1,8 @@
 Database Notes
 
 ## normalized_projects (materialized view)
-The filter queries served at `/projects` depend on a materialized view called `normalized_projects`.  The SQL for this materialized view is maintained in `./normalized]-projects.sql`, but there is no automated way of updating it in the database when this sql is modified.  
-
-### Updating the materialized view
-`DROP MATERIALIZED VIEW normalized_projects`, then run the command to CREATE it again using the sql in `./normalized-projects.sql`
+The filter queries served at `/projects` depend on a materialized view called `normalized_projects`.  The SQL for this materialized view is maintained in the `/migrations` directory, with all other DB schemas.
+To update the materialized view, create appropriate migrations in that directory, and run them against necessary databases.
 
 ### Refreshing the materialized view
 The data from zap are updated once an hour, so the materialized view is set up with a cron job to run on the hour.
