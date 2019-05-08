@@ -1,5 +1,3 @@
-const { Transform } = require('stream');
-
 /**
  * Lookup map for actiontype codes to description strings
  */
@@ -81,30 +79,13 @@ const actionTypesLookup = {
 };
 
 /**
- * decodes a string of action-type codes into description strings
+ * transforms a string of action-type codes into description strings
  * first, separates the string into an array, then does the lookup,
  * then joins back into a ';'-separated string
  * @param {string} actiontypes - ';'-separated list of action types as a string
  * @returns {string}
  */
 
-const decode = actiontypes => actiontypes.split(';').map(actiontype => actionTypesLookup[actiontype]).join(';');
+const transform = (row) => { row.actiontypes = row.actiontypes ? row.actiontypes.split(';').map(at => actionTypesLookup[at]).join(';') : ''; };
 
-/*
- * typesArray is an array of chunk.actiontypes (string) property of stream "chunk"
- * transformActions transforms typesArray by
- * deduplicating the array of action codes, translating them to human readable strings,
- * and then joining the strings into a ';'-separated list string
- */
-const transformActions = new Transform({
-  objectMode: true,
-
-  transform(chunk, encoding, callback) {
-    if (chunk.actiontypes) {
-      chunk.actiontypes = decode(chunk.actiontypes);
-    }
-    callback(null, chunk);
-  },
-});
-
-module.exports = transformActions;
+module.exports = transform;
