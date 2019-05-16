@@ -124,7 +124,7 @@ exports.up = (pgm) => {
     ON keywords.dcp_project = dcp_project.dcp_projectid
     LEFT JOIN (
       SELECT dcp_project, MAX(dcp_actualenddate) as lastmilestonedate FROM (
-        SELECT dcp_project, dcp_milestone.dcp_name, dcp_actualenddate FROM dcp_projectmilestone mm
+        SELECT dcp_project, dcp_milestone.dcp_name, dcp_actualenddate, dcp_milestone.dcp_milestoneid FROM dcp_projectmilestone mm
           LEFT JOIN dcp_milestone
              ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
           WHERE dcp_milestone.dcp_milestoneid IN (
