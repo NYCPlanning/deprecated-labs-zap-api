@@ -127,25 +127,25 @@ exports.up = (pgm) => {
         SELECT dcp_project, dcp_milestone.dcp_name, dcp_actualenddate FROM dcp_projectmilestone mm
           LEFT JOIN dcp_milestone
              ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
-          WHERE dcp_milestone.dcp_name IN (
-            'Land Use Fee Payment',
-            'Land Use Application Filed Review',
-            'CEQR Fee Payment',
-            'Filed EAS Review',
-            'EIS Draft Scope Review',
-            'EIS Public Scoping Meeting',
-            'Final Scope of Work Issued',
-            'NOC of Draft EIS Issued',
-            'DEIS Public Hearing Held',
-            'Review Session - Certified / Referred',
-            'Community Board Referral',
-            'Borough President Referral',
-            'Borough Board Referral',
-            'CPC Public Meeting - Vote',
-            'CPC Public Meeting - Public Hearing',
-            'City Council Review',
-            'Mayoral Veto',
-            'Final Letter Sent'
+          WHERE dcp_milestone.dcp_milestoneid IN (
+            '683beec4-dad0-e711-8116-1458d04e2fb8',
+            '6c3beec4-dad0-e711-8116-1458d04e2fb8',
+            '743beec4-dad0-e711-8116-1458d04e2fb8',
+            '783beec4-dad0-e711-8116-1458d04e2fb8',
+            '7c3beec4-dad0-e711-8116-1458d04e2fb8',
+            '7e3beec4-dad0-e711-8116-1458d04e2fb8',
+            '823beec4-dad0-e711-8116-1458d04e2fb8',
+            '903beec4-dad0-e711-8116-1458d04e2fb8',
+            '863beec4-dad0-e711-8116-1458d04e2fb8',
+            '8e3beec4-dad0-e711-8116-1458d04e2fb8',
+            '923beec4-dad0-e711-8116-1458d04e2fb8',
+            '943beec4-dad0-e711-8116-1458d04e2fb8',
+            '963beec4-dad0-e711-8116-1458d04e2fb8',
+            'a43beec4-dad0-e711-8116-1458d04e2fb8',
+            '9e3beec4-dad0-e711-8116-1458d04e2fb8',
+            'a63beec4-dad0-e711-8116-1458d04e2fb8',
+            'a83beec4-dad0-e711-8116-1458d04e2fb8',
+            'aa3beec4-dad0-e711-8116-1458d04e2fb8'
           )
           AND mm.statuscode <> 'Overridden'
         AND mm.dcp_actualenddate::date <= CURRENT_DATE
