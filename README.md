@@ -44,6 +44,18 @@ You'll need to create a `.env` file in the root of the repo, with the following 
 
 `AIRTABLE_API_KEY` - api key for accessing the airtable with youtube video references
 
+### GDAL Dependency
+
+The shapefile download endpoint requires the gdal `ogr2ogr` command to be available in the environment.  
+
+For local development on a Mac, use `brew install gdal` and make sure the command `ogr2ogr` works in your terminal.
+
+You can also use docker to run the api on port 3000 in development:
+
+`docker run -it -v $PWD:/zap-api -p 3000:3000 -w /zap-api geodatagouv/node-gdal npm run devstart`
+
+This mounts your code in the docker container, and will use nodemon to restart when you save changes.
+
 ## Architecture
 
 The api connects to a postgis database, and uses MapPLUTO hosted in Carto to retrieve tax lot geometries.  
@@ -56,39 +68,45 @@ We are also able to serve vector tiles directly from postGIS using `st_asmvt()`,
 Use query Parameters for filtering:
 
 
+    `page` *default '1'* - page offset
 
-`page` *default '1'* - page offset
+    `itemsPerPage` *default 30* - the number of projects to return with each request
 
-`itemsPerPage` *default 30* - the number of projects to return with each request
+    `community-districts[]` - array of community district codes (mn01, bx02)
 
-`community-districts[]` - array of community district codes (mn01, bx02)
+    `action-types[]` - array of action types
 
-`action-types[]` - array of action types
+    `boroughs[]` - array of borough names, including 'Citywide'
 
-`boroughs[]` - array of borough names, including 'Citywide'
+    `dcp_ceqrtype[]` - array of CEQR types
 
-`dcp_ceqrtype[]` - array of CEQR types
+    `dcp_ulurp_nonulurp[]` - array of 'ULURP' or 'Non-ULURP'
 
-`dcp_ulurp_nonulurp[]` - array of 'ULURP' or 'Non-ULURP'
+    `dcp_femafloodzonev` *default false* - flood zone boolean
 
-`dcp_femafloodzonev` *default false* - flood zone boolean
+    `dcp_femafloodzonecoastala` *default false* - flood zone boolean
 
-`dcp_femafloodzonecoastala` *default false* - flood zone boolean
+    `dcp_femafloodzonea` *default false* - flood zone boolean
 
-`dcp_femafloodzonea` *default false* - flood zone boolean
+    `dcp_femafloodzoneshadedx` *default false* - flood zone boolean
 
-`dcp_femafloodzoneshadedx` *default false* - flood zone boolean
+    `dcp_publicstatus[] ` *default ['Complete', 'Filed', 'In Public Review', 'Unknown']* - the project's public status
 
-`dcp_publicstatus[] ` *default ['Complete', 'Filed', 'In Public Review', 'Unknown']* - the project's public status
+    `dcp_certifiedreferred[]` - array of unix epoch timestamps to filter for date range
 
-`dcp_certifiedreferred[]` - array of unix epoch timestamps to filter for date range
+    `project_applicant_text` - string for text match filtering against the project name, project brief, and applicant name
 
-`project_applicant_text` - string for text match filtering against the project name, project brief, and applicant name
+    `ulurp_ceqr_text` - string for text match filtering against a project's ULURP numbers and CEQR number
 
-`ulurp_ceqr_text` - string for text match filtering against a project's ULURP numbers and CEQR number
+    `block` - string for text match filtering against the tax blocks associated with a project
 
-`block` - string for text match filtering against the tax blocks associated with a project
 
+`GET /projects.{filetype}` - Start a download of projects data
+
+    Available filetypes:
+        - `csv` - tabular data only
+        - `shp` - tabular data with polygon geometries
+        - `geojson` - tabular data with polygon geometries
 
 `GET /projects/:projectid` - Get one project
 
@@ -112,6 +130,9 @@ This api is easily deployed with dokku.
 Create a new remote: `git remote add dokku dokku@{host}:zap-api`
 Deploy with a git push `git push dokku master` or alias another branch to master `git push dokku {other-branch}:master`
 
+### Dockerfile Deployment
+  This repo includes a `Dockerfile` which dokku will use to run the API.  See dokku's [Dockerfile Deployment](http://dokku.viewdocs.io/dokku/deployment/methods/dockerfiles/) docs for more info.
+
 ## Worker
 
 This api includes a worker process (see `./Procfile`) that connects to the database and refreshes the materialized view `normalized_projects` every 30 minutes.  It will send slack messages to the #labs-bots channel to notify us of its status
@@ -120,6 +141,7 @@ The worker process will not run automatically.  It must be scaled using `dokku p
 
 ## Airtable
 The `/projects/:projectid` endpoint uses `get-video-links` util to append an array of video links to a project's response.  The util does multiple calls to [this airtable](https://airtable.com/tblV8rUQQVwUoR2AI/) which links project ids with videos and timestamps.
+
 
 ## Contact us
 

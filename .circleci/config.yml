@@ -6,9 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:8.11.3-browsers
-        environment:
-            CHROME_BIN: "/usr/bin/google-chrome"
+      - image: geodatagouv/node-gdal
 
     working_directory: ~/repo
 
@@ -34,8 +32,11 @@ jobs:
 
       # deploy
       - run:
+          name: Install ssh and git
+          command: apt-get -yq update && apt-get -yqq install ssh && apt-get -yqq install git
+      - run:
           name: Avoid hosts unknown for github
-          command: ssh-keyscan zap-api.planninglabs.nyc >> ~/.ssh/known_hosts
+          command: mkdir ~/.ssh && touch ~/.ssh/known_hosts && ssh-keyscan zap-api.planninglabs.nyc >> ~/.ssh/known_hosts
       - deploy:
           name: Deployment
           command: |
