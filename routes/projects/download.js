@@ -69,7 +69,8 @@ router.get('/', async (req, res) => {
       }
     }
   } catch (error) {
-    res.status(500).json({ error });
+    console.log('Error downloading project data:', error); // eslint-disable-line
+    res.status(500).json({ error: 'Unable to complete download' });
   }
 });
 

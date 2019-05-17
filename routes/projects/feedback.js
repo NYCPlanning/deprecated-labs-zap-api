@@ -20,6 +20,7 @@ router.post('/', recaptcha.middleware.verify, async (req, res) => {
       body: `Project ID: [${projectid}](https://zap.planning.nyc.gov/projects/${projectid})\nFeedback: ${text}`,
     }, (error, { url }) => {
       if (error) {
+        console.log('Error submitting feedback', error); // eslint-disable-line
         res.status(500).send({
           status: 'error',
           error,
@@ -32,8 +33,7 @@ router.post('/', recaptcha.middleware.verify, async (req, res) => {
       }
     });
   } else {
-    res.status(403);
-    res.send({
+    res.status(403).send({
       status: 'captcha invalid',
     });
   }

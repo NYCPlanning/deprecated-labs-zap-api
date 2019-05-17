@@ -35,8 +35,7 @@ router.post('/', async (req, res, next) => {
         next();
       });
   } else {
-    res.status(403);
-    res.send({
+    res.status(403).send({
       status: 'invalid slack token',
     });
   }

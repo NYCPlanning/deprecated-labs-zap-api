@@ -35,7 +35,6 @@ router.get('/', async (req, res) => {
   console.log(`Found ${projects.length} projects`); // eslint-disable-line
 
   // RUN API CALL FOR EACH PROJECT RECORD
-
   const errorMessages = [];
   const failureMessages = [];
 

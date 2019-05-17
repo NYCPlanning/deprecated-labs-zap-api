@@ -34,10 +34,9 @@ router.get('/', async (req, res) => {
         attributes: project,
       },
     });
-  } catch (e) {
-    res.status(404).send({
-      error: e.toString(),
-    });
+  } catch (error) {
+    console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
+    res.status(404).send({ error: 'Unable to retrieve project' });
   }
 });
 

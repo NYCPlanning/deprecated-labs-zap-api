@@ -27,9 +27,8 @@ router.get('/', async (req, res) => {
           response,
         });
       } catch (e) {
-        res.status(500).send({
-          error: e.toString(),
-        });
+        console.log('Error updating geometries', error); // eslint-disable-line
+        res.status(500).send({ error: e.toString() });
       }
     }
   } else {
