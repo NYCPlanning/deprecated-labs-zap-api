@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
 
       // create a shortid for this query and store it in the cache
       const tileId = shortid.generate();
-      await app.tileCache.set(tileId, tileQuery);
+      await app.tileCache.set(tileId, tileSQL);
 
       tileMeta = {
         tiles: [`${process.env.HOST}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],

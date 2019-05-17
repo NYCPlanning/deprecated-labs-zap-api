@@ -23,6 +23,7 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
   const { type = 'centroid' } = query;
   // retreive the projectids from the cache
   const tileQuery = await app.tileCache.get(tileId);
+
   // calculate the bounding box for this tile
   const bbox = mercator.bbox(x, y, z, false, '900913');
 
@@ -37,10 +38,9 @@ router.get('/:tileId/:z/:x/:y.mvt', async (req, res) => {
       res.status(204);
     }
     res.send(tile.st_asmvt);
-  } catch (e) {
-    res.status(404).send({
-      error: e.toString(),
-    });
+  } catch (error) {
+    console.log('Error generating tile', error); // eslint-disable-line
+    res.status(500).send({ error: 'Unable to create tile' });
   }
 });
 
