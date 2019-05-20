@@ -11,6 +11,11 @@ jobs:
     working_directory: ~/repo
 
     steps:
+     # install ssh and git to ensure 'checkout' step proceeds correctly
+      - run:
+          name: Install ssh and git
+          command: apt-get -yq update && apt-get -yqq install ssh && apt-get -yqq install git
+
       - checkout
 
       # Download and cache dependencies
@@ -31,12 +36,6 @@ jobs:
       - run: yarn test
 
       # deploy
-      - run:
-          name: Install ssh and git
-          command: apt-get -yq update && apt-get -yqq install ssh && apt-get -yqq install git
-      - run:
-          name: Avoid hosts unknown for github
-          command: mkdir ~/.ssh && touch ~/.ssh/known_hosts && ssh-keyscan zap-api.planninglabs.nyc >> ~/.ssh/known_hosts
       - deploy:
           name: Deployment
           command: |
