@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
   } else {
     res.send({
       status: 'failure',
-      message: 'Invalid API key',
+      message: 'Invalid query params - check API_KEY!',
     });
   }
 });
