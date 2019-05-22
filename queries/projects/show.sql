@@ -182,6 +182,8 @@ SELECT
           WHEN mm.dcp_milestone = '843beec4-dad0-e711-8116-1458d04e2fb8' THEN 'Draft Environmental Impact Statement Completed'
           WHEN mm.dcp_milestone = '8e3beec4-dad0-e711-8116-1458d04e2fb8' THEN 'Application Reviewed at City Planning Commission Review Session'
           WHEN mm.dcp_milestone = '780593bb-ecc2-e811-8156-1458d04d0698' THEN 'CPC Review of Council Modification'
+          WHEN mm.dcp_milestone = '483beec4-dad0-e711-8116-1458d04e2fb8' THEN 'DEIS Scope of Work Released'
+          WHEN mm.dcp_milestone = '4a3beec4-dad0-e711-8116-1458d04e2fb8' THEN 'Scoping Meeting'
         END) AS display_name,
         (CASE
           WHEN mm.dcp_milestone = '963beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualstartdate
@@ -204,6 +206,8 @@ SELECT
           WHEN mm.dcp_milestone = '843beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
           WHEN mm.dcp_milestone = '8e3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
           WHEN mm.dcp_milestone = '780593bb-ecc2-e811-8156-1458d04d0698' THEN mm.dcp_actualenddate
+          WHEN mm.dcp_milestone = '483beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualstartdate
+          WHEN mm.dcp_milestone = '4a3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualstartdate
           ELSE NULL
         END) AS display_date,
         -- If the project is not yet in public review, we don't want to display dates for certain milestones
@@ -228,6 +232,8 @@ SELECT
           WHEN mm.dcp_milestone = '843beec4-dad0-e711-8116-1458d04e2fb8' THEN NULL
           WHEN mm.dcp_milestone = '8e3beec4-dad0-e711-8116-1458d04e2fb8' THEN NULL
           WHEN mm.dcp_milestone = '780593bb-ecc2-e811-8156-1458d04d0698' THEN NULL
+          WHEN mm.dcp_milestone = '483beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN COALESCE(mm.dcp_actualenddate, mm.dcp_plannedcompletiondate)
+          WHEN mm.dcp_milestone = '4a3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN COALESCE(mm.dcp_actualenddate, mm.dcp_plannedcompletiondate)
           ELSE NULL
         END) AS display_date_2,
         -- display_date_2 is only populated for milestones that have date ranges. It captures the end of the date range. If the milestone is in-progress and dcp_actualenddate hasn't been populated yet, we use the planned end date instead.
@@ -254,31 +260,50 @@ SELECT
         ON mm.dcp_milestone = dcp_milestone.dcp_milestoneid
       LEFT JOIN dcp_milestoneoutcome
         ON mm.dcp_milestoneoutcome = dcp_milestoneoutcomeid
+      -- create new column to indicate whether a project has an action that matches "Study" ID --
+      -- which is used to optionally include milestones only displayed for projects with Study actions --
+      LEFT JOIN (
+        SELECT true AS has_study_action,
+                dcp_project
+        FROM dcp_projectaction
+        WHERE dcp_projectaction.dcp_project = p.dcp_projectid
+        AND dcp_projectaction.dcp_action = '526ede3a-dad0-e711-8125-1458d04e2f18'
+      ) studyaction
+      ON mm.dcp_project = studyaction.dcp_project
       WHERE
         mm.dcp_project = p.dcp_projectid
         AND mm.statuscode <> 'Overridden'
-        AND dcp_milestone.dcp_name IN (
-          'Borough Board Referral',
-          'Borough President Referral', 
-          'Prepare CEQR Fee Payment',
-          'City Council Review',
-          'Community Board Referral',
-          'CPC Public Meeting - Public Hearing',
-          'CPC Public Meeting - Vote',
-          'DEIS Public Hearing Held',
-          'Review Filed EAS and EIS Draft Scope of Work',
-          'DEIS Public Scoping Meeting',
-          'Prepare and Review FEIS', 
-          'Review Filed EAS',
-          'Final Letter Sent',
-          'Issue Final Scope of Work',
-          'Prepare Filed Land Use Application',
-          'Prepare Filed Land Use Fee Payment',
-          'Mayoral Veto',
-          'DEIS Notice of Completion Issued',
-          'Review Session - Certified / Referred',
-          'CPC Review of Modification Scope'
-        )
+        AND (
+            dcp_milestone.dcp_milestoneid IN (
+              '963beec4-dad0-e711-8116-1458d04e2fb8', --Borough Board Referral--
+              '943beec4-dad0-e711-8116-1458d04e2fb8', --Borough President Referral--
+              '763beec4-dad0-e711-8116-1458d04e2fb8', --Prepare CEQR Fee Payment--
+              'a63beec4-dad0-e711-8116-1458d04e2fb8', --City Council Review--
+              '923beec4-dad0-e711-8116-1458d04e2fb8', --Community Board Referral--
+              '9e3beec4-dad0-e711-8116-1458d04e2fb8', --CPC Public Meeting - Public Hearing--
+              'a43beec4-dad0-e711-8116-1458d04e2fb8', --CPC Public Meeting - Vote--
+              '863beec4-dad0-e711-8116-1458d04e2fb8', --DEIS Public Hearing Held--
+              '7c3beec4-dad0-e711-8116-1458d04e2fb8', --Review Filed EAS and EIS Draft Scope of Work--
+              '7e3beec4-dad0-e711-8116-1458d04e2fb8', --DEIS Public Scoping Meeting--
+              '883beec4-dad0-e711-8116-1458d04e2fb8', --Prepare and Review FEIS--
+              '783beec4-dad0-e711-8116-1458d04e2fb8', --Review Filed EAS--
+              'aa3beec4-dad0-e711-8116-1458d04e2fb8', --Final Letter Sent--
+              '823beec4-dad0-e711-8116-1458d04e2fb8', --Issue Final Scope of Work--
+              '663beec4-dad0-e711-8116-1458d04e2fb8', --Prepare Filed Land Use Application--
+              '6a3beec4-dad0-e711-8116-1458d04e2fb8', --Prepare Filed Land Use Fee Payment--
+              'a83beec4-dad0-e711-8116-1458d04e2fb8', --Mayoral Veto--
+              '843beec4-dad0-e711-8116-1458d04e2fb8', --DEIS Notice of Completion Issued--
+              '8e3beec4-dad0-e711-8116-1458d04e2fb8', --Review Session - Certified / Referred--
+              '780593bb-ecc2-e811-8156-1458d04d0698' --CPC Review of Modification Scope--
+            )
+            OR (
+              studyaction.has_study_action -- project has Study action --
+              AND dcp_milestone.dcp_milestoneid IN ( -- milestone is a study action milestone --
+                '483beec4-dad0-e711-8116-1458d04e2fb8', --DEIS Scope of Work Released--
+                '4a3beec4-dad0-e711-8116-1458d04e2fb8' --Scoping Hearing--
+              )
+            )
+          )
       ORDER BY
         display_sequence,
         display_date
