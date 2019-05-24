@@ -13,6 +13,11 @@ const MILESTONE_TYPES = {
 };
 
 async function injectSupportDocumentURLs(project) {
+// only projects with actions have supporting documents
+  if (!project.actions) {
+    return;
+  }
+
   // extract trimmed ULURP number
   const ulurpNumbers = project.actions
     .filter(({ dcp_ulurpnumber }) => dcp_ulurpnumber) // filter out nulls
