@@ -36,9 +36,12 @@ jobs:
       - run: yarn test
 
       # deploy
+<<<<<<< HEAD
       - run:
           name: Avoid hosts unknown for github
           command: ssh-keyscan zap-api.planninglabs.nyc >> ~/.ssh/known_hosts
+=======
+>>>>>>> parent of dfe0068... update known hosts for circlCI
       - deploy:
           name: Deployment
           command: |
