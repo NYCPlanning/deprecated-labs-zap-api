@@ -91,21 +91,4 @@ describe('Upsert Geometries utility', () => {
       throw new Error(e);
     }
   });
-
-  it('should catch exceptions for database queries and carto', async () => {
-    try {
-      const db = {
-        async one() {
-          throw new Error('peanut butter!');
-        },
-        async none() { return null; },
-      };
-
-      const response = await upsertGeoms('123467XXX', db);
-
-      response.error.should.equal('Error: peanut butter!');
-    } catch (e) {
-      throw new Error(e);
-    }
-  });
 });

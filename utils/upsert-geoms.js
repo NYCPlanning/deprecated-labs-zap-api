@@ -70,43 +70,37 @@ const getProjectGeoms = async (bbls) => {
 };
 
 async function upsertGeoms(id, db) {
-  try {
-    const { bbls } = await db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
-    // if a project has no bbls, remove project
-    if (!bbls) {
-      await db.none(deleteProjectSQL, { id }); // eslint-disable-line,
-      return {
-        status: 'failure',
-        message: `ZAP data does not list any BBLs for project ${id}`,
-      };
-    }
-
-    const { polygons, centroid, mappluto_v } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
-
-    if (polygons == null) {
-      return {
-        status: 'failure',
-        message: `MapPLUTO does not contain matching BBLs for project ${id}`,
-      };
-    }
-
-    // update geometry on existing project or insert new project with geoms (upsert)
-    await db.none(upsertSQL, {
-      id,
-      polygons,
-      centroid,
-      mappluto_v,
-    });
-
+  const { bbls } = await db.one(matchBBLSQL, { id }); // an array of bbls that match the project id
+  // if a project has no bbls, remove project
+  if (!bbls) {
+    await db.none(deleteProjectSQL, { id }); // eslint-disable-line,
     return {
-      status: 'success',
-      message: `Updated geometries for project ${id}`,
-    };
-  } catch (e) {
-    return {
-      error: e.toString(),
+      status: 'failure',
+      message: `ZAP data does not list any BBLs for project ${id}`,
     };
   }
+
+  const { polygons, centroid, mappluto_v } = await getProjectGeoms(bbls); // get geoms from carto that match array of bbls
+
+  if (polygons == null) {
+    return {
+      status: 'failure',
+      message: `MapPLUTO does not contain matching BBLs for project ${id}`,
+    };
+  }
+
+  // update geometry on existing project or insert new project with geoms (upsert)
+  await db.none(upsertSQL, {
+    id,
+    polygons,
+    centroid,
+    mappluto_v,
+  });
+
+  return {
+    status: 'success',
+    message: `Updated geometries for project ${id}`,
+  };
 }
 
 module.exports = upsertGeoms;
