@@ -6,6 +6,8 @@
     "no-param-reassign": [0],
     "radix": [0],
     "camelcase": [0],
+    "no-use-before-define": [0],
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }],
   },
   "env": {
     "node": true,
