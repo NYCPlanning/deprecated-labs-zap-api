@@ -39,13 +39,10 @@ router.get('/', async (req, res) => {
   const failureMessages = [];
 
   await Promise.all(projects.map(async (project) => {
-    try {
-      const response = await upsertGeoms(project, app.db);
-      if (response.status === 'failure') failureMessages.push(response.message);
-    } catch (e) {
-      console.log(e); // eslint-disable-line
-      errorMessages.push(e.toString());
-    }
+    const response = await upsertGeoms(project, app.db);
+
+    if (response.error) errorMessages.push(response.error);
+    if (response.status === 'failure') failureMessages.push(response.message);
   }));
 
   const message = {

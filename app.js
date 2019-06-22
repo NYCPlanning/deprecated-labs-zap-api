@@ -1,9 +1,14 @@
-const express = require('express');
-const logger = require('morgan');
-const NodeCache = require('node-cache');
+/*eslint-disable*/
 
 // use .env for local environment variables
 require('dotenv').config();
+
+
+const express = require('express');
+const logger = require('morgan');
+const NodeCache = require('node-cache');
+const cors_config = require('./middleware/cors');
+
 
 // instantiate express app
 const app = express();
@@ -27,6 +32,7 @@ app.all('*', (req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
   next();
 });
+app.use(cors_config());
 
 // middleware
 app.use(logger('dev'));
@@ -36,6 +42,20 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 app.use('/projects.:filetype', require('./routes/projects/download'));
 app.use('/projects', require('./routes/projects'));
+
+
+//////////////////////////////////////////////////////////////////////////////////
+
+const router = express.Router();
+router.use('/', require('./routes/projects/projects_XML'));
+router.use('/:id', require('./routes/projects/project_XML'));
+
+/////////////////////////////////////////////////////////////////////////////////
+
+
+
+app.use('/project-xmls', router);
+
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
 

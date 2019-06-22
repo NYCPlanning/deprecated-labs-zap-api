@@ -1,5 +1,5 @@
 const express = require('express');
-const { Recaptcha } = require('express-recaptcha');
+const Recaptcha = require('express-recaptcha').RecaptchaV3;
 const github = require('octonode');
 
 const router = express.Router();

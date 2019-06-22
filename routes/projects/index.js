@@ -5,6 +5,9 @@ const router = express.Router();
 // base routes
 router.use('/', require('./projects'));
 router.use('/:id', require('./project'));
+router.use('/xml', require('./projects_XML'));
+router.use('/xml/:id', require('./project_XML'));
+router.use('/milestone/:id', require('./demoUpdate'));
 
 // subordinate routes
 router.use('/feedback', require('./feedback'));
