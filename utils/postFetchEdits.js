@@ -63,8 +63,18 @@ const postFetchEdits = {
   keywords: keywords => keywordsPostFetchEdits(keywords),
   applicantTeams: applicantTeams => applicantTeamPostFetchEdits(applicantTeams)
 };
+const projectsPostFetchEdits = project => {
+  project = projectPostFetchEdits(project);
+
+
+
+  return project;
+};
 const projectPostFetchEdits = project => {
   switch(project.dcp_publicstatus_formatted){
+    case 'Filed':
+      project.dcp_publicstatus_simp = 'Filed';
+      break;
     case 'Certified':
       project.dcp_publicstatus_simp = 'In Public Review';
       break;
@@ -287,6 +297,7 @@ const applicantTeamPostFetchEdits = applicantTeams => {
 };
 
 module.exports = {
+  projectsPostFetchEdits,
   projectPostFetchEdits,
   getEntity
 };

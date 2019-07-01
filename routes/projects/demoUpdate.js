@@ -6,7 +6,7 @@ const ADALService = require('../../utils/ADALServices');
 const crmWebAPI = require('../../utils/crmWebAPI');
 
 
-router.patch('/', async (req, res) => {
+router.post('/', async (req, res) => {
     let { params, body } = req;
     const { id } = params;
 

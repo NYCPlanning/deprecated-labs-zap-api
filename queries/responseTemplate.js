@@ -30,7 +30,7 @@ const fillProjectsTemplate = (data) => {
           {
               type: 'projects',
               id: project.dcp_name,
-              attributes: (fillTemplate(projectsTemplate, postFetchEdits.projectPostFetchEdits(project)))[0]
+              attributes: (fillTemplate(projectsTemplate, postFetchEdits.projectsPostFetchEdits(project)))[0]
           }
         ));
 };

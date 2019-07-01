@@ -7,7 +7,8 @@ router.use('/', require('./projects'));
 router.use('/:id', require('./project'));
 router.use('/xml', require('./projects_XML'));
 router.use('/xml/:id', require('./project_XML'));
-router.use('/milestone/:id', require('./demoUpdate'));
+router.use('/demoUpdate/:id', require('./demoUpdate'));
+router.use('/demoGet/:id', require('./demoGet'));
 
 // subordinate routes
 router.use('/feedback', require('./feedback'));

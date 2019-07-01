@@ -12,9 +12,20 @@ const ADAL_CONFIG = {
     tokenPath: process.env.tokenPath
 };
 
-const ADAL_Services = {  };
+const ADAL_Services = {
+    token: null,
+    expirationDate: null
+};
     ADAL_Services.acquireToken = async () => {
         return new Promise((resolve, reject) => {
+            if(ADAL_Services.expirationDate){
+                const tokenLimit = new Date(ADAL_Services.expirationDate.getTime() - (30*60*1000));
+                const now = new Date();
+                if(now <= tokenLimit){
+                    resolve(ADAL_Services.token);
+                    return;
+                }
+            }
             //  server to server
             const { AuthenticationContext } = adal_node;
 
@@ -27,11 +38,12 @@ const ADAL_Services = {  };
                     console.log(`well that didn't work: ${err.stack}`);
                     reject(err);
                 }
+                ADAL_Services.token = tokenResponse.accessToken;
+                ADAL_Services.expirationDate = tokenResponse.expiresOn;
                 resolve(tokenResponse.accessToken);
             });
         })
     };
-    // ADAL_Services.refreshToken = async () => {}; // todo: add method
 
 
 module.exports = ADAL_Services;
