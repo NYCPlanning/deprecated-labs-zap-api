@@ -6,7 +6,6 @@ const crmWebAPI = require('../../utils/crmWebAPI');
 const fetchXmls = require('../../queries/fetchXmls');
 const responseTemplate = require('../../queries/responseTemplate');
 const router = express.Router({ mergeParams: true });
-const postFetchEdits = require('../../utils/postFetchEdits');
 
 
 /* GET /projects-xmls */
@@ -37,15 +36,8 @@ router.post('/', async (req, res) => {
     const projectsAssembled = assembleResponse(projectResult);
 
 
-    // send the response with a tile template
     res.send({
       data: fillProjectsTemplate(projectsAssembled)
-      // data: projects['value'].map(project => fillProjectsTemplate(projectsTemplate, project))
-      // meta: {
-      //   total,
-      //   pageTotal: length,
-      //   ...tileMeta,
-      // },
     });
   } catch (e) {
     console.log(e); // eslint-disable-line

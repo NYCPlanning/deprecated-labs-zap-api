@@ -67,7 +67,7 @@ const crmWebAPI = { };
     if (json && json.error) return json.error.message;
     return "Error";
     };
-    const fixLongODataAnnotations = function (dataObj) {  //return dataObj;
+    const fixLongODataAnnotations = function (dataObj) {
     const newObj = {};
     for (let name in dataObj) {
         const formattedValuePrefix = name.indexOf("@OData.Community.Display.V1.FormattedValue");
@@ -76,12 +76,10 @@ const crmWebAPI = { };
 
         if (formattedValuePrefix >= 0) {
             const newName = name.substring(0, formattedValuePrefix);
-            // if (newName && !(newName in hardcode)) changedKeys[newName] = dataObj[name];
             if(newName) newObj[`${newName}_formatted`] = dataObj[name];
         }
         else if (logicalNamePrefix >= 0) {
             const newName = name.substring(0, logicalNamePrefix);
-            // if (newName && !(newName in hardcode)) changedKeys[newName] = dataObj[name];
             if(newName) newObj[`${newName}_logical`] = dataObj[name];
         }
         else if (navigationPropertyPrefix >= 0) {
@@ -128,7 +126,7 @@ const crmWebAPI = { };
                             // retrieve single
                             result = fixLongODataAnnotations(result);
                         }
-                        else if (result.value ) {       //&& $.isArray(result.value)
+                        else if (result.value ) {
                             // retrieve multiple
                             var array = [];
                             for (var i = 0; i < result.value.length; i++) {
@@ -321,8 +319,8 @@ const crmWebAPI = { };
             if(error){
                 const parseError = jsonText => {
                     const json_string = jsonText.toString('utf-8');
-                    var result = JSON.parse(json_string, dateReviver);
-                    var err = parseErrorMessage(result);
+                    const result = JSON.parse(json_string, dateReviver);
+                    const err = parseErrorMessage(result);
                     reject(err);
                 };
                 if (encoding && encoding.indexOf('gzip') >= 0) {

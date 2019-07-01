@@ -19,7 +19,7 @@ const ADAL_Services = {
     ADAL_Services.acquireToken = async () => {
         return new Promise((resolve, reject) => {
             if(ADAL_Services.expirationDate){
-                const tokenLimit = new Date(ADAL_Services.expirationDate.getTime() - (30*60*1000));
+                const tokenLimit = new Date(ADAL_Services.expirationDate.getTime() - (15*60*1000));
                 const now = new Date();
                 if(now <= tokenLimit){
                     resolve(ADAL_Services.token);

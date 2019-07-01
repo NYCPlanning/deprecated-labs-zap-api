@@ -1,5 +1,7 @@
 /*eslint-disable */
 
+const crmWebAPI = require('../utils/crmWebAPI');
+
 module.exports = {
 
     fetchProjects: (queryParams, page=1, itemsPerPage=30) => {
@@ -9,9 +11,7 @@ module.exports = {
             'action-types': actionTypes = [],
             boroughs = [],
             dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
-            // dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
-            dcp_ulurp_nonulurp = [],
-
+            dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
             dcp_femafloodzonev = false,
             dcp_femafloodzonecoastala = false,
             dcp_femafloodzonea = false,
@@ -22,8 +22,9 @@ module.exports = {
             block = '',
             distance_from_point = [],
             radius_from_point = 10,
+            applicant_name = '',
+            ulurp_number = ''
         } = queryParams;
-        // const mistake = '717170003';
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //  Set project filters
@@ -44,7 +45,7 @@ module.exports = {
 
             if(communityDistricts.length > 0){
                 projectFilters += `<filter type="or">`;
-                communityDistricts.forEach( cd => projectFilters += `<condition attribute="dcp_communitydistricts" operator="like" value="%${cd}%" />`);
+                communityDistricts.forEach( cd => projectFilters += `<condition attribute="dcp_communitydistricts" operator="like" value="${escapeFetchParam("%" + cd + "%")}" />`);
                 projectFilters += `</filter>`;
             }
 
@@ -58,33 +59,40 @@ module.exports = {
                     'Citywide': 717170005
                 };
                 projectFilters += `<filter type="or">`;
-                boroughs.forEach( b => projectFilters += `<condition attribute="dcp_borough" operator="eq" value="${boroughOptions[b]}" />`);
+                boroughs.forEach( borough => projectFilters += `<condition attribute="dcp_borough" operator="eq" value="${boroughOptions[borough]}" />`);
                 projectFilters += `</filter>`;
             }
 
         if(block){
             linkFilters += `<link-entity name="dcp_projectbbl" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ad">`;
             linkFilters += `<filter type="and">`;
-            linkFilters += `<condition attribute="dcp_validatedblock" operator="like" value="%${block}%"/>`;
+            linkFilters += `<condition attribute="dcp_validatedblock" operator="like" value="${escapeFetchParam("%" + block + "%")}"/>`;
             linkFilters += `</filter>`;
             linkFilters += `</link-entity>`;
         }
 
         if(project_applicant_text){
             projectFilters += `<filter type="or">`;
-            projectFilters += `<condition attribute="dcp_projectbrief" operator="like" value="%${project_applicant_text}%"/>`;
-            projectFilters += `<condition attribute="dcp_projectname" operator="like" value="%${project_applicant_text}%"/>`;
-            projectFilters += `<condition attribute="dcp_ceqrnumber" operator="like" value="%${project_applicant_text}%"/>`;
+            projectFilters += `<condition attribute="dcp_projectbrief" operator="like" value="${escapeFetchParam("%" + project_applicant_text + "%")}"/>`;
+            projectFilters += `<condition attribute="dcp_projectname" operator="like" value="${escapeFetchParam("%" + project_applicant_text + "%")}"/>`;
+            projectFilters += `<condition attribute="dcp_ceqrnumber" operator="like" value="${escapeFetchParam("%" + project_applicant_text + "%")}"/>`;
             projectFilters += `</filter>`; //   todo: applicants, ulurpnumbers, bbls, keywords
         }
 
-        if(actionTypes.length > 0){
+        if(actionTypes.length > 0 || ulurp_number){
             linkFilters += `<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`;
-            linkFilters += `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="af">`;
-            linkFilters += `<filter type="and">`;
-            actionTypes.forEach( action => linkFilters += `<condition attribute="dcp_name" operator="eq" value="${action}"/>`);
-            linkFilters += `</filter>`;
-            linkFilters += `</link-entity>`;
+            if(ulurp_number) {
+                linkFilters += `<filter type="and">`;
+                linkFilters += `<condition attribute="dcp_ulurpnumber" operator="like" value="${escapeFetchParam("%"+ ulurp_number + "%")}"/>`;
+                linkFilters += `</filter>`;
+            }
+            if(actionTypes.length > 0){
+                linkFilters += `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="at">`;
+                linkFilters += `<filter type="and">`;
+                actionTypes.forEach( action => linkFilters += `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(action)}"/>`);
+                linkFilters += `</filter>`;
+                linkFilters += `</link-entity>`;
+            }
             linkFilters += `</link-entity>`;
         }
 
@@ -94,7 +102,7 @@ module.exports = {
                 'Non-ULURP': 717170001
             };
             projectFilters += `<condition attribute="dcp_ulurp_nonulurp" operator="in">`;
-            dcp_ulurp_nonulurp.forEach( ul => projectFilters += `<value>${ulurpOptions[ul]}</value>`);
+            dcp_ulurp_nonulurp.forEach( ulurp => projectFilters += `<value>${ulurpOptions[ulurp]}</value>`);
             projectFilters += `</condition>`;
         }
 
@@ -136,20 +144,15 @@ module.exports = {
             }
             projectFilters += `</filter>`;
         }
-
-
-
-        // switch(project.dcp_publicstatus_formatted){
-        //     case 'Certified':
-        //         project.dcp_publicstatus_simp = 'In Public Review';
-        //         break;
-        //     case 'Approved':
-        //     case 'Withdrawn':
-        //         project.dcp_publicstatus_simp = 'Completed';
-        //         break;
-        //     default:
-        //         project.dcp_publicstatus_simp = 'Unknown';
-        // }
+        if(applicant_name){
+            linkFilters += `<link-entity name="dcp_projectapplicant" from="dcp_project" to="dcp_projectid" link-type="inner" alias="an">`;
+            linkFilters += `<link-entity name="account" from="accountid" to="dcp_applicant_customer" link-type="inner" alias="af">`;
+            linkFilters += `<filter type="and">`;
+            linkFilters += `<condition attribute="name" operator="like" value="${escapeFetchParam("%" + applicant_name + "%")}"/>`;
+            linkFilters += `</filter>`;
+            linkFilters += `</link-entity>`;
+            linkFilters += `</link-entity>`;
+        }
 
         return [
             `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}" returntotalrecordcount="true">`,
@@ -164,39 +167,15 @@ module.exports = {
                     `<attribute name="dcp_ulurp_nonulurp"/>`,
                     `<attribute name="dcp_communitydistricts"/>`,
                     `<attribute name="dcp_publicstatus"/>`,
-
-                    // actiontypes
-
                     `<attribute name="dcp_certifiedreferred"/>`,
                     `<attribute name="dcp_femafloodzonea"/>`,
                     `<attribute name="dcp_femafloodzonecoastala"/>`,
                     `<attribute name="dcp_femafloodzoneshadedx"/>`,
                     `<attribute name="dcp_femafloodzonev"/>`,
-                    //  applicants
-                    //  lastmilestonedate
-                    //  count of projectid as total projects
-                    //  centroid
-                    //  center
-                    //  ulurpnumbers
-
-                    // `<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="outer" alias="projectAction">`,
-                    //     `<attribute name="dcp_name" />`,
-                    //     `<attribute name="dcp_ulurpnumber" />`,
-                    //     actionFilters,  //  filters is string with all action filter condition tags
-                    // `</link-entity>`,
-                    //
-                    // `<link-entity name="dcp_projectmilestone" from="dcp_project" to="dcp_projectid" link-type="outer" alias="projectMilestone">`,
-                    //     // `<attribute name='dcp_actualenddate' alias='lastmilestonedate' aggregate='max' />`,
-                    //     `<link-entity name="dcp_milestone" from="dcp_milestoneid" to="dcp_milestone" link-type="outer" alias="milestone"/>`,
-                    // `</link-entity>`,
-                    //
-                    // projectFilters,    //  filters is string with all project filter condition tags
                     `<filter type="and">`,
-                        // `<condition attribute="dcp_name" operator="like" value="2018%" />`,          // testing purpose
-                    projectFilters,
+                        projectFilters,
                     `</filter>`,
                     linkFilters,
-                    // `<order attribute="dcp_publicstatus" desc="false"/>`,
                 `</entity>`,
             `</fetch>`
         ].join('')
@@ -235,7 +214,7 @@ module.exports = {
                   `<attribute name="dcp_publicstatus"/>`,
                   `<attribute name="dcp_currentmilestone"/>`,
                   `<filter type="and">`,
-                      `<condition attribute="dcp_name" operator="eq" value="${projectName}" />`,
+                      `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(projectName)}" />`,
                       `<condition attribute="dcp_visibility" operator="eq" value="${general_public}" />`,
                   `</filter>`,
               `</entity>`,
@@ -301,14 +280,9 @@ module.exports = {
 
     fetchActionForProjects: (projectIDs) => {
         const mistake = '717170003';
-        const filterActionCode = ['BD', 'BF', 'CM', 'CP', 'DL', 'DM', 'EB', 'EC', 'EE', 'EF', 'EM', 'EN', 'EU', 'GF', 'HA', 'HC', 'HD', 'HF', 'HG', 'HI', 'HK', 'HL', 'HM', 'HN', 'HO', 'HP', 'HR', 'HS', 'HU', 'HZ', 'LD', 'MA', 'MC', 'MD', 'ME', 'MF', 'ML', 'MM', 'MP', 'MY', 'NP', 'PA', 'PC', 'PD', 'PE', 'PI', 'PL', 'PM', 'PN', 'PO', 'PP', 'PQ', 'PR', 'PS', 'PX', 'RA', 'RC', 'RS', 'SC', 'TC', 'TL', 'UC', 'VT', 'ZA', 'ZC', 'ZD', 'ZJ', 'ZL', 'ZM', 'ZP', 'ZR', 'ZS', 'ZX', 'ZZ'];
-
 
         let projectFilter = '';
         projectIDs.forEach( projectID => projectFilter += `<value>{${projectID}}</value>`);
-
-        let actionFilter = '';
-        filterActionCode.forEach( actionType => actionFilter += `<condition attribute="dcp_name" operator="eq" value="${actionType}"/>`);
 
         return[
             `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -343,18 +317,8 @@ module.exports = {
                     `<attribute name="dcp_actualstartdate" />`,
                     `<attribute name="dcp_actualenddate" />`,
                     `<attribute name="statuscode" />`,
-
                     `<attribute name="dcp_goalduration" />`,
                     `<attribute name="dcp_milestonesequence" />`,
-
-                    // `<attribute name="dcp_nextlumilestone" />`,
-                    // `<attribute name="dcp_nextceqrmilestone" />`,
-                    // `<attribute name="statecode" />`,
-                    // `<attribute name="dcp_actualduration" />`,
-                    // `<attribute name="dcp_milestonetype" />`,
-                    // `<attribute name="dcp_project" />`,
-                    // `<attribute name="ownerid" />`,
-                    // `<attribute name="dcp_projectmilestoneid" />`,
                     `<link-entity name="dcp_milestone" from="dcp_milestoneid" to="dcp_milestone" link-type="outer" alias="ac" >`,
                         `<attribute name="dcp_sequence" />`,
                     `</link-entity>`,
@@ -483,38 +447,7 @@ module.exports = {
                 `</filter>`,
             `</entity>`,
         `</fetch>`
-    ].join(''),
-
-    fetchDemo: projectName => [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true">`,
-        `<entity name="dcp_project">`,
-            `<attribute name="dcp_name"/>`,
-            `<attribute name="statuscode"/>`,
-            `<attribute name="dcp_projectname"/>`,
-            `<attribute name="dcp_borough"/>`,
-            `<attribute name="dcp_certificationtargetdate"/>`,
-            `<attribute name="dcp_ulurp_nonulurp"/>`,
-            `<attribute name="dcp_leadplanner"/>`,
-            `<attribute name="dcp_leadaction"/>`,
-            `<attribute name="dcp_currentmilestone"/>`,
-            `<attribute name="dcp_projectid"/>`,
-
-            `<link-entity name="dcp_projectmilestone" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ac"/>`,
-            `<link-entity name="dcp_projectmilestone" from="dcp_projectmilestoneid" to="dcp_currentmilestone" visible="false" link-type="outer" alias="a_f96bc092c831e811812a1458d04d06c8">`,
-                `<attribute name="dcp_plannedcompletiondate"/>`,
-                `<attribute name="dcp_goalduration"/>`,
-                `<attribute name="dcp_actualstartdate"/>`,
-                `<attribute name="dcp_actualenddate"/>`,
-            `</link-entity>`,
-            `<filter type="and">`,
-                `<condition attribute="dcp_name" operator="eq" value="${projectName}" />`,
-            `</filter>`,
-        `</entity>`,
-    `</fetch>`
     ].join('')
 };
 
-
-//  name value for testing
-//  projectname => P1984Y0176    OR     P2013K0364
-//  projectID => d850d35b-1433-e811-812a-1458d04d06c8
+const escapeFetchParam = str => encodeURIComponent(crmWebAPI.escape(str));

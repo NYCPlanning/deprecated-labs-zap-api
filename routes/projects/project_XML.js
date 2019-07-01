@@ -66,18 +66,6 @@ router.get('/', async (req, res) => {
                 )
             }
         });
-
-    // project.bbl_featurecollection = {
-    //   type: 'FeatureCollection',
-    //   features: [{
-    //     type: 'Feature',
-    //     geometry: JSON.parse(project.bbl_multipolygon),
-    //   }],
-    // };
-    //
-    //
-    // await normalizeSupportDocs(project);
-    // project.video_links = await getVideoLinks(project.dcp_name);
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
     res.status(404).send({ error: 'Unable to retrieve project' });

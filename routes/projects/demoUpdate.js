@@ -2,7 +2,6 @@
 
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const ADALService = require('../../utils/ADALServices');
 const crmWebAPI = require('../../utils/crmWebAPI');
 
 

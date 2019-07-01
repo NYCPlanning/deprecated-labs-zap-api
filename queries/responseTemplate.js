@@ -9,7 +9,6 @@ const fillTemplate = (template, data) => {
         return fillTemplate(template, [data])
     }
 
-    // return data; // uncomment to get untemplated data
 
     return data.map(
         entity => {
@@ -120,10 +119,6 @@ const applicantTeamTemplate = {
     "role": null,
     "name": null
 };
-const keywordsTemplate = {
-
-};
-
 
 module.exports = {
     projectsTemplate,
