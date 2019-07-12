@@ -1,6 +1,8 @@
 /*eslint-disable*/
 
 const fetchXmls = require('../queries/fetchXmls');
+const projectXMLs = require('../queries/project-xmls');
+const postProcess = require('../utils/post-process');
 const crmWebAPI = require('../utils/crmWebAPI');
 
 function pluralize(entity) {
@@ -11,33 +13,34 @@ function pluralize(entity) {
   else
     return entity + 'ses';
 }
+
 function getEntity(project, entity, headers) {
   const projectID = project.dcp_projectid;
 
   const dictionary = {
     'bbl': {
-      edit: postFetchEdits.bbls,
-      fetch: projectID => fetchXmls.fetchBBL(projectID)
+      edit: postProcess.bbl,
+      fetch: projectID => projectXMLs.bbl(projectID)
     },
     'action': {
-      edit: postFetchEdits.actions,
-      fetch: projectID => fetchXmls.fetchAction(projectID)
+      edit: postProcess.action,
+      fetch: projectID => projectXMLs.action(projectID)
     },
     'milestone': {
-      edit: postFetchEdits.milestones,
-      fetch: projectID => fetchXmls.fetchMilestone(projectID)
+      edit: postProcess.milestone,
+      fetch: projectID => projectXMLs.milestone(projectID)
     },
     'keyword': {
-      edit: postFetchEdits.keywords,
-      fetch: projectID => fetchXmls.fetchKeywords(projectID)
+      edit: postProcess.keyword,
+      fetch: projectID => projectXMLs.keyword(projectID)
     },
     'applicant': {
-      edit: postFetchEdits.applicantTeams,
-      fetch: projectID => fetchXmls.fetchApplicantTeam(projectID)
+      edit: postProcess.applicantTeam,
+      fetch: projectID => projectXMLs.applicantTeam(projectID)
     },
     'address': {
-      edit: null,
-      fetch: projectID => fetchXmls.fetchAddress(projectID)
+      edit: postProcess.address,
+      fetch: projectID => projectXMLs.address(projectID)
     }
   };
 
@@ -49,7 +52,7 @@ function getEntity(project, entity, headers) {
         if(entity !== 'milestone')
           return dictionary[entity].edit(result['value']);
         else
-          return dictionary[entity].edit(result['value'], project);
+          return dictionary[entity].edit(result['value'], project['dcp_publicstatus_formatted'], project['dcp_ulurp_nonulurp_formatted']);
       }
       else
         return result['value'];
@@ -63,6 +66,7 @@ const postFetchEdits = {
   keywords: keywords => keywordsPostFetchEdits(keywords),
   applicantTeams: applicantTeams => applicantTeamPostFetchEdits(applicantTeams)
 };
+
 const projectsPostFetchEdits = project => {
   project = projectPostFetchEdits(project);
 

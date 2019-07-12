@@ -1,7 +1,6 @@
 const { AuthenticationContext } = require('adal-node');
 const validateConfig = require('./validate-config');
 
-
 const DEFAULT_TOKEN_EXPIRATION_BUFFER_MSEC = 15 * 60 * 1000; // 15 minutes
 const TOKEN_EXPIRATION_BUFFER_MSEC = process.env.TOKEN_EXPIRATION_BUFFER_MSEC || DEFAULT_TOKEN_EXPIRATION_BUFFER_MSEC;
 
@@ -17,7 +16,8 @@ const ADAL_CONFIG = validateConfig({
 
 class ADALClient {
   constructor() {
-    const { AUTHORITY_HOST_URL,
+    const {
+      AUTHORITY_HOST_URL,
       TENANT_ID,
       TOKEN_PATH,
       CRM_HOST,
@@ -32,6 +32,11 @@ class ADALClient {
     this.expiresOn = null;
   }
 
+  /**
+   * Returns a token for connecting to the CRM.
+   * If a valid token exists, returns that. Otherwise, retrieves a new token via ADAL
+   * (Azure Active Direction Authentication) libraries using the provided config.
+   */
   async acquireToken() {
     return new Promise((resolve, reject) => {
       // Return existing token if it is valid
@@ -58,7 +63,8 @@ class ADALClient {
   }
 
   /**
-   * Checks that token exists and is still valid, with TOKEN_EXPIRATION_BUFFER subtracted from expiresOn
+   * Checks that token exists and is still valid, with TOKEN_EXPIRATION_BUFFER
+   * subtracted from expiresOn (recommended by CRM consultants)
    */
   tokenIsValid() {
     if (this.token && this.expiresOn) {

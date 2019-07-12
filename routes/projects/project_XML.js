@@ -1,8 +1,10 @@
 /*eslint-disable */
 
 const express = require('express');
-const crmWebAPI = require('../../utils/crmWebAPI');
+const CRMClient = require('../../utils/crm-client');
+const postProcess = require('../../utils/post-process');
 const fetchXmls = require('../../queries/fetchXmls');
+const projectXMLs = require('../../queries/project-xmls');
 const responseTemplate = require('../../queries/responseTemplate');
 const router = express.Router({ mergeParams: true });
 const postFetchEdits = require('../../utils/postFetchEdits');
@@ -29,25 +31,24 @@ router.get('/', async (req, res) => {
   } = responseTemplate;
 
   try {
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  get project
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const project = await crmWebAPI.get(`dcp_projects?fetchXml=${fetchXmls.fetchProject(id)}`, 1)
-        .then( project => projectPostFetchEdits(project["value"][0]) );
+    const crmClient = new CRMClient();
+    const projectResponse = await crmClient.doGet(`dcp_projects?fetchXml=${projectXMLs.project(id)}`, 1);
+    const {value : [project] } = projectResponse;
+    postProcess.project(project); 
 
-    const bbls = getEntity(project, 'bbl');
-    const actions = getEntity(project, 'action');
-    const milestones = getEntity(project, 'milestone');
-    const keywords = getEntity(project, 'keyword');
-    const applicantTeams = getEntity(project, 'applicant');
-    const addresses = getEntity(project, 'address');
+    const projectId = project.dcp_projectid;
+    const projectResult = await Promise.all([
+      getChildEntity(crmClient, 'bbl', project),
+      getChildEntity(crmClient, 'action', project),
+      getChildEntity(crmClient, 'milestone', project),
+      getChildEntity(crmClient, 'keyword', project),
+      getChildEntity(crmClient, 'applicant', project),
+      getChildEntity(crmClient, 'address', project),
+    ]);
 
-
-    const projectResult = await Promise.all([bbls, actions, milestones, keywords, applicantTeams, addresses]);
 
         res.send({
-            "data": {
-                "type": 'projects',
+            "data": { "type": 'projects',
                 "id": id,
                 "attributes": Object.assign(
                     {},
@@ -71,5 +72,28 @@ router.get('/', async (req, res) => {
     res.status(404).send({ error: 'Unable to retrieve project' });
   }
 });
+
+function pluralizeChildEntity(entityType) {
+  if (entityType === 'address') {
+    return entityType + 'es'; 
+  }
+
+  if (entityType === 'keyword') {
+    return entityType + 'ses';
+  }
+
+  return entityType + 's';
+}
+
+function getChildEntity(crmClient, entityType, project) {
+  const projectId = project.dcp_projectid;
+  const entityName = `dcp_project${pluralizeChildEntity(entityType)}`;
+  const entityXML = projectXMLs[entityType](projectId);
+
+  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => {
+    const { value } = result;
+    return postProcess[entityType](value, project);
+  });
+}
 
 module.exports = router;
