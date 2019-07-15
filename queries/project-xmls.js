@@ -1,7 +1,8 @@
-const escape = (str) => str.replace(/'/g, "''");
+/* eslint-disable indent */
+const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
 
-const projectXMLs= {
+const projectXMLs = {
   project: projectXML,
   bbl: bblsXML,
   action: actionsXML,
@@ -48,7 +49,7 @@ function projectXML(projectName) {
           `<condition attribute="dcp_visibility" operator="eq" value="${GENERAL_PUBLIC}" />`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
@@ -86,7 +87,7 @@ function actionsXML(projectId) {
           `<attribute name="dcp_zoningresolution"/>`,
         `</link-entity>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
@@ -116,7 +117,7 @@ function milestonesXML(projectId) {
           `<condition attribute="statuscode" operator="ne" value="${OVERRIDDEN}" />`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
@@ -133,7 +134,7 @@ function keywordsXML(projectId) {
           `<condition attribute="statecode" operator="eq" value="${ACTIVE}" />`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
@@ -156,7 +157,7 @@ function applicantTeamXML(projectId) {
           `<condition attribute="dcp_applicantrole" operator="eq" value="${COAPPLICANT}" />`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
@@ -174,7 +175,7 @@ function addressXML(projectId) {
           `<condition attribute="statuscode" operator="eq" value="1"/>`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 

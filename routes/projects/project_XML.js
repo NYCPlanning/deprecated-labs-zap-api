@@ -1,99 +1,104 @@
-/*eslint-disable */
-
 const express = require('express');
 const CRMClient = require('../../utils/crm-client');
-const postProcess = require('../../utils/post-process');
-const fetchXmls = require('../../queries/fetchXmls');
+const { projectPostProcess: postProcess } = require('../../utils/post-process');
 const projectXMLs = require('../../queries/project-xmls');
 const responseTemplate = require('../../queries/responseTemplate');
+const pluralizeProjectEntity = require('../../utils/pluralize-project-entity');
+
 const router = express.Router({ mergeParams: true });
-const postFetchEdits = require('../../utils/postFetchEdits');
 
-
-/* GET /project-xmls/:id */
-/* Retreive a single project */
 router.get('/', async (req, res) => {
-  const { params } = req;
-  const { id } = params;
-
-  const {
-      getEntity,
-      projectPostFetchEdits
-  } = postFetchEdits;
-
-  const {
-      actionTemplate,
-      addressTemplate,
-      applicantTeamTemplate,
-      fillTemplate,
-      milestoneTemplate,
-      projectTemplate
-  } = responseTemplate;
-
+  const { params: { id } } = req; 
   try {
     const crmClient = new CRMClient();
-    const projectResponse = await crmClient.doGet(`dcp_projects?fetchXml=${projectXMLs.project(id)}`, 1);
-    const {value : [project] } = projectResponse;
-    postProcess.project(project); 
+    const { value: [project] } = await crmClient.doGet(`dcp_projects?fetchXml=${projectXMLs.project(id)}`);
 
-    const projectId = project.dcp_projectid;
-    const projectResult = await Promise.all([
-      getChildEntity(crmClient, 'bbl', project),
-      getChildEntity(crmClient, 'action', project),
-      getChildEntity(crmClient, 'milestone', project),
-      getChildEntity(crmClient, 'keyword', project),
-      getChildEntity(crmClient, 'applicant', project),
-      getChildEntity(crmClient, 'address', project),
-    ]);
+    if (!project) {
+      console.log(`Project ${id} not found`); // eslint-disable-line
+      res.status(404).send({ error: `Project ${id} not found` });
+      return;
+    }
 
+    const entities = await getEntities(crmClient, project);
+    postProcess.project(project);
 
-        res.send({
-            "data": { "type": 'projects',
-                "id": id,
-                "attributes": Object.assign(
-                    {},
-                    fillTemplate(projectTemplate, project)[0],
-                    {
-                        bbls: projectResult[0],
-                        bbl_multipolygon: {  },
-                        actions: fillTemplate(actionTemplate, projectResult[1]),
-                        milestones: fillTemplate(milestoneTemplate, projectResult[2]),
-                        keywords: projectResult[3],
-                        applicantteam: fillTemplate(applicantTeamTemplate, projectResult[4]),
-                        addresses: fillTemplate(addressTemplate, projectResult[5]),
-                        bbl_featurecollection: {},
-                        video_links: []
-                    }
-                )
-            }
-        });
+    res.send({
+      data: {
+        type: 'projects',
+        id,
+        attributes: buildAttributes(project, entities),
+      },
+    });
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
-    res.status(404).send({ error: 'Unable to retrieve project' });
+    res.status(500).send({ error: 'Unable to retrieve project' });
   }
 });
 
-function pluralizeChildEntity(entityType) {
-  if (entityType === 'address') {
-    return entityType + 'es'; 
-  }
+async function getEntities(crmClient, project) {
+  const [
+    bbls,
+    actions,
+    milestones,
+    keywords,
+    applicants,
+    addresses,
+  ] = await Promise.all([
+    getProjectEntity(crmClient, 'bbl', project),
+    getProjectEntity(crmClient, 'action', project),
+    getProjectEntity(crmClient, 'milestone', project),
+    getProjectEntity(crmClient, 'keyword', project),
+    getProjectEntity(crmClient, 'applicant', project),
+    getProjectEntity(crmClient, 'address', project),
+  ]);
 
-  if (entityType === 'keyword') {
-    return entityType + 'ses';
-  }
-
-  return entityType + 's';
+  return {
+    bbls,
+    actions,
+    milestones,
+    keywords,
+    applicants,
+    addresses,
+  };
 }
 
-function getChildEntity(crmClient, entityType, project) {
+function getProjectEntity(crmClient, entityType, project) {
   const projectId = project.dcp_projectid;
-  const entityName = `dcp_project${pluralizeChildEntity(entityType)}`;
+  const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
   const entityXML = projectXMLs[entityType](projectId);
 
-  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => {
+  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then((result) => {
     const { value } = result;
     return postProcess[entityType](value, project);
   });
+}
+
+function buildAttributes(project, entities) {
+  const {
+    projectTemplate,
+    actionTemplate,
+    addressTemplate,
+    applicantTeamTemplate,
+    milestoneTemplate,
+    fillTemplate,
+  } = responseTemplate;
+
+  const [projectAttributes] = fillTemplate(projectTemplate, project);
+
+  return Object.assign(
+    {}, {
+      ...projectAttributes,
+      bbls: entities.bbls,
+      bbl_multipolygon: {},
+      bbl_featurecollection: {},
+      actions: fillTemplate(actionTemplate, entities.actions),
+      milestones: fillTemplate(milestoneTemplate, entities.milestones),
+      keywords: entities.keywords,
+      applicantteam: fillTemplate(applicantTeamTemplate, entities.applicants),
+      addresses: fillTemplate(addressTemplate, entities.addresses),
+      video_links: [],
+    },
+  );
 }
 
 module.exports = router;

@@ -1,97 +1,73 @@
-/*eslint-disable*/
-
 const express = require('express');
-const ADALService = require('../../utils/ADALServices');
-const crmWebAPI = require('../../utils/crmWebAPI');
-const fetchXmls = require('../../queries/fetchXmls');
+const CRMClient = require('../../utils/crm-client');
+const { projectsPostProcess: postProcess } = require('../../utils/post-process');
+const projectsXMLs = require('../../queries/projects-xmls');
 const responseTemplate = require('../../queries/responseTemplate');
+const pluralizeProjectEntity = require('../../utils/pluralize-project-entity');
+
 const router = express.Router({ mergeParams: true });
 
 
-/* GET /projects-xmls */
 /* gets a JSON array of projects that match the query params */
-router.post('/', async (req, res) => {
-  const { queryParams } = req.body; //  temporary declaration for postman param use
+router.get('/', async (req, res) => {
+  const { query } = req;
   const { fillProjectsTemplate } = responseTemplate;
 
-  const {page, itemsPerPage} = queryParams;
-
-
   try {
-    const projectFetchXML = fetchXmls.fetchProjects(queryParams, page, itemsPerPage);
-    const projects = await crmWebAPI.get(`dcp_projects?fetchXml=${projectFetchXML}`, 1);
-    const projectIDs = projects['value'].map( project => project.dcp_projectid);
+    const crmClient = new CRMClient();
+    const {
+      value: projects,
+      '@Microsoft.Dynamics.CRM.totalrecordcount': totalProjects,
+      '@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded': limitExceeded,
+    } = await crmClient.doGet(
+      `dcp_projects?fetchXml=${projectsXMLs.project(query)}`,
+    );
 
-
-    let milestones, actions, bbls, applicantTeams;
-    if(projectIDs.length > 0){
-      milestones = crmWebAPI.get(`dcp_projectmilestones?fetchXml=${fetchXmls.fetchMilestoneForProjects(projectIDs)}`, 1);
-      actions = crmWebAPI.get(`dcp_projectactions?fetchXml=${fetchXmls.fetchActionForProjects(projectIDs)}`, 1);
-      bbls = crmWebAPI.get(`dcp_projectbbls?fetchXml=${fetchXmls.fetchBBLForProjects(projectIDs)}`, 1);
-      applicantTeams = crmWebAPI.get(`dcp_projectapplicants?fetchXml=${fetchXmls.fetchApplicantTeamForProjects(projectIDs)}`, 1);
+    if (!projects.length) {
+      console.log(`No projects found`); // eslint-disable-line
+      res.status(404).send({ error: `No projects found` });
+      return;
     }
 
-    const projectResult = await Promise.all([projects, milestones, actions, bbls, applicantTeams]);
-
-    const projectsAssembled = assembleResponse(projectResult);
-
+    const projectIds = projects.map(project => project.dcp_projectid);
+    const entities = await getEntities(crmClient, projectIds);
+    const projectsData = postProcess.project(projects, entities);
 
     res.send({
-      data: fillProjectsTemplate(projectsAssembled)
+      data: fillProjectsTemplate(projectsData),
+      meta: {
+        total: totalProjects,
+        totalLimitExceeded: limitExceeded,
+        pageTotal: query.itemsPerPage || 30,
+      },
     });
   } catch (e) {
     console.log(e); // eslint-disable-line
-    res.status(404).send({
+    res.status(500).send({
       error: e.toString(),
     });
   }
 });
 
-module.exports = router;
+async function getEntities(crmClient, projectIds) {
+  const [actions, milestones, applicants] = await Promise.all([
+    getProjectEntities(crmClient, 'action', projectIds),
+    getProjectEntities(crmClient, 'milestone', projectIds),
+    getProjectEntities(crmClient, 'applicant', projectIds),
+  ]);
 
-
-function assembleResponse(projectResult){
-  let [
-    projects,
-    milestones,
+  return {
     actions,
-    bbls,
-    applicantTeams
-  ] = projectResult;
-
-  return projects['value'].map( project => {
-    const filterActionCode = ['BD', 'BF', 'CM', 'CP', 'DL', 'DM', 'EB', 'EC', 'EE', 'EF', 'EM', 'EN', 'EU', 'GF', 'HA', 'HC', 'HD', 'HF', 'HG', 'HI', 'HK', 'HL', 'HM', 'HN', 'HO', 'HP', 'HR', 'HS', 'HU', 'HZ', 'LD', 'MA', 'MC', 'MD', 'ME', 'MF', 'ML', 'MM', 'MP', 'MY', 'NP', 'PA', 'PC', 'PD', 'PE', 'PI', 'PL', 'PM', 'PN', 'PO', 'PP', 'PQ', 'PR', 'PS', 'PX', 'RA', 'RC', 'RS', 'SC', 'TC', 'TL', 'UC', 'VT', 'ZA', 'ZC', 'ZD', 'ZJ', 'ZL', 'ZM', 'ZP', 'ZR', 'ZS', 'ZX', 'ZZ'];
-    actions['value'] = actions['value'].filter( action => filterActionCode.includes(action['action_code']));
-
-    const projectAction = findByID(project.dcp_projectid, actions);
-    let actionTypes = [];
-    let ulurpnumbers = [];
-
-    projectAction.forEach( action => {
-      const actionType = action['_dcp_action_value_formatted'];
-      const ulurpNumber = action.dcp_ulurpnumber;
-
-      if(actionType && actionTypes.indexOf(actionType)) actionTypes.push(actionType);
-      if(ulurpNumber && ulurpnumbers.indexOf(ulurpNumber)) ulurpnumbers.push(ulurpNumber);
-    });
-
-    const actionCodes = actionTypes.join(';');
-    const lastmilestonedates = findByID(project.dcp_projectid, milestones);
-    const projectbbls = findByID(project.dcp_projectid, bbls).map( bbl => bbl.blocks).join(';');
-    const applicants = findByID(project.dcp_projectid, applicantTeams).map( applicant => applicant['_dcp_applicant_customer_value_formatted']).filter( applicant => !!applicant).join(';');
-
-    return {
-      ...project,
-      actiontypes: actionCodes,
-      lastmilestonedate: lastmilestonedates.length !== 0 ? lastmilestonedates[0].actualenddate : [],
-      bbls: projectbbls.length !== 0 ? projectbbls : [],
-      applicants: applicants,
-      ulurpnumbers,
-      total_projects: projects['@Microsoft.Dynamics.CRM.totalrecordcount']
-    };
-  })
+    milestones,
+    applicants,
+  };
 }
 
-function findByID(id, entities){
-  return entities['value'].filter( entity => entity.projectid === id);
+function getProjectEntities(crmClient, entityType, projectIds) {
+  const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
+  const entityXML = projectsXMLs[entityType](projectIds);
+
+  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => result.value);
 }
+
+module.exports = router;

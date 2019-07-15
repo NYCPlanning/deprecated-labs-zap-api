@@ -42,20 +42,6 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 app.use('/projects.:filetype', require('./routes/projects/download'));
 app.use('/projects', require('./routes/projects'));
-
-
-//////////////////////////////////////////////////////////////////////////////////
-
-const router = express.Router();
-router.use('/', require('./routes/projects/projects_XML'));
-router.use('/:id', require('./routes/projects/project_XML'));
-
-/////////////////////////////////////////////////////////////////////////////////
-
-
-
-app.use('/project-xmls', router);
-
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
 

@@ -1,33 +1,18 @@
-const escape = (str) => str.replace(/'/g, "''");
-const escapeFetchParam = str => encodeURIComponent(crmWebAPI.escape(str));
+/* eslint-disable indent */
+const escape = str => str.replace(/'/g, `''`);
+const escapeFetchParam = str => encodeURIComponent(escape(str));
+const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
 
-const projectsXMLs= {
+const projectsXMLs = {
   project: projectsXML,
-  bbl: bblsXML,
   action: actionsXML,
   milestone: milestonesXML,
-  applicantTeam: applicantTeamXML,
+  applicant: applicantTeamXML,
 };
-
-function bblsXML(projectIds) {
-  return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
-      `<entity name="dcp_projectbbl">`,
-        `<attribute name="dcp_project" alias="projectid" />`,
-        `<attribute name="dcp_validatedblock" alias="blocks"/>`,
-        `<filter type="and">`,
-          `<condition attribute="dcp_project" operator="in">`,
-            ...projectIds.map(projectId => `<value>{${projectId}}</value>`),
-          `</condition>`,
-        `</filter>`,
-      `</entity>`,
-    `</fetch>`
-  ].join('');
-}
 
 function actionsXML(projectIds) {
   const MISTAKE = '717170003';
-  return[
+  return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectaction">`,
         `<attribute name="dcp_project" alias="projectid" />`,
@@ -42,8 +27,8 @@ function actionsXML(projectIds) {
         `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="aa">`,
           `<attribute name="dcp_name" alias="action_code"/>`,
         `</link-entity>`,
-    `</entity>`,
-  `</fetch>`
+      `</entity>`,
+    `</fetch>`,
   ].join('');
 }
 
@@ -82,14 +67,14 @@ function milestonesXML(projectIds) {
       `</filter>`,
       `<link-entity name="dcp_milestone" from="dcp_milestoneid" to="dcp_milestone" link-type="inner" alias="al">`,
         `<filter type="and">`,
-          `<condition attribute="statuscode" operator="ne" value="${overridden}" />`,
-            `<filter type="or">`,
-              ...MILESTONE_NAMES.map(msName => `<condition attribute="dcp_name" operator="eq" value="${msName}" />`),
-            `</filter>`,
+          `<condition attribute="statuscode" operator="ne" value="${OVERRIDDEN}" />`,
+          `<filter type="or">`,
+            ...MILESTONE_NAMES.map(msName => `<condition attribute="dcp_name" operator="eq" value="${msName}" />`),
           `</filter>`,
-        `</link-entity>`,
-      `</entity>`,
-    `</fetch>`,
+        `</filter>`,
+      `</link-entity>`,
+    `</entity>`,
+  `</fetch>`,
   ].join('');
 }
 
@@ -104,7 +89,7 @@ function applicantTeamXML(projectIds) {
         `<attribute name="dcp_applicant_customer" />`,
         `<filter type="and">`,
           `<condition attribute="dcp_project" operator="in">`,
-
+            ...projectIds.map(projectId => `<value>{${projectId}}</value>`),
           `</condition>`,
         `</filter>`,
         `<filter type="or">`,
@@ -112,16 +97,18 @@ function applicantTeamXML(projectIds) {
           `<condition attribute="dcp_applicantrole" operator="eq" value="${COAPPLICANT}" />`,
         `</filter>`,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
-function projectsXML(queryParams, page = 1, pageSize = 30) {
+function projectsXML(queryParams) {
   const {
+    page = 1,
+    itemsPerPage = 30,
     'community-districts': community_districts = [],
     'action-types': action_types = [],
     boroughs = [],
-    dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
+    // dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
     dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
     dcp_femafloodzonev = false,
     dcp_femafloodzonecoastala = false,
@@ -131,12 +118,13 @@ function projectsXML(queryParams, page = 1, pageSize = 30) {
     dcp_certifiedreferred = [],
     project_applicant_text = '',
     block = '',
-    distance_from_point = [],
-    radius_from_point = 10,
+    // distance_from_point = [],
+    // radius_from_point = 10,
     applicant_name = '',
-    ulurp_number = ''
+    ulurp_number = '',
   } = queryParams;
-  const projectFilters =  buildProjectFilters(
+
+  const projectFilters = buildProjectFilters(
     dcp_femafloodzonea,
     dcp_femafloodzonecoastala,
     dcp_femafloodzoneshadedx,
@@ -146,18 +134,18 @@ function projectsXML(queryParams, page = 1, pageSize = 30) {
     boroughs,
     project_applicant_text,
     dcp_ulurp_nonulurp,
-    dcp_publicstatus
+    dcp_publicstatus,
   );
 
   const linkFilters = buildLinkFilters(
     block,
     action_types,
     ulurp_number,
-    applicant_name
+    applicant_name,
   );
 
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${pageSize}" returntotalrecordcount="true">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}" returntotalrecordcount="true">`,
       `<entity name="dcp_project">`,
         `<attribute name="dcp_name"/>`,
         `<attribute name="dcp_projectid"/>`,
@@ -175,15 +163,15 @@ function projectsXML(queryParams, page = 1, pageSize = 30) {
         `<attribute name="dcp_femafloodzoneshadedx"/>`,
         `<attribute name="dcp_femafloodzonev"/>`,
         `<filter type="and">`,
-        ...projectFilters,
+          ...projectFilters,
         `</filter>`,
         ...linkFilters,
       `</entity>`,
-    `</fetch>`
+    `</fetch>`,
   ].join('');
 }
 
-/** Helper functions to build project filter XMLs **/
+/* Helper functions to build project filter XMLs */
 function buildProjectFilters(
   dcp_femafloodzonea,
   dcp_femafloodzonecoastala,
@@ -203,7 +191,7 @@ function buildProjectFilters(
     ...buildBoroughFilters(boroughs),
     ...buildProjectApplicantTextFilter(project_applicant_text),
     ...buildULURPNonULURPFilter(dcp_ulurp_nonulurp),
-    ...buildPublicStatusFilter(dcp_publicstatus)
+    ...buildPublicStatusFilter(dcp_publicstatus),
   ];
 }
 
@@ -211,7 +199,7 @@ function buildLinkFilters(
   block,
   action_types,
   ulurp_number,
-  applicant_name
+  applicant_name,
 ) {
   return [
     ...buildBlockFilters(block),
@@ -222,21 +210,21 @@ function buildLinkFilters(
 
 function buildFloodzoneFilters(a, v, coastal_a, shaded_x) {
   const filter = [];
-  if(a) filters.push(`<condition attribute="dcp_femafloodzonea" operator="eq" value="true" />`);
-  if(v) filters.push(`<condition attribute="dcp_femafloodzonev" operator="eq" value="true" />`);
-  if(coastal_a) filters.push(`<condition attribute="dcp_femafloodzonecoastala" operator="eq" value="true" />`);
-  if(shaded_x) filters.push(`<condition attribute="dcp_femafloodzoneshadedx" operator="eq" value="true" />`); 
+  if (a) filter.push(`<condition attribute="dcp_femafloodzonea" operator="eq" value="true" />`);
+  if (v) filter.push(`<condition attribute="dcp_femafloodzonev" operator="eq" value="true" />`);
+  if (coastal_a) filter.push(`<condition attribute="dcp_femafloodzonecoastala" operator="eq" value="true" />`);
+  if (shaded_x) filter.push(`<condition attribute="dcp_femafloodzoneshadedx" operator="eq" value="true" />`);
 
   return filter;
 }
 
 function buildCertifiedReferredFilters(certifiedReferred) {
-  if(certifiedReferred.length) {
+  if (certifiedReferred.length) {
     const start = new Date(certifiedReferred[0] * 1000);
     const end = new Date(certifiedReferred[1] * 1000);
     return [
-      `<condition attribute="dcp_certifiedreferred" operator="ge" value="${start.toISOString()}" />`,
-      `<condition attribute="dcp_certifiedreferred" operator="le" value="${end.toISOString()}" />`,
+      `<condition attribute="dcp_certifiedreferred" operator="ge" value="${escapeFetchParam(start.toISOString())}" />`,
+      `<condition attribute="dcp_certifiedreferred" operator="le" value="${escapeFetchParam(end.toISOString())}" />`,
     ];
   }
 
@@ -247,8 +235,8 @@ function buildCommunityDistrictsFilters(communityDistricts) {
   if (communityDistricts.length) {
     return [
       `<filter type="or">`,
-      ...communityDistricts.map(cd => `<condition attribute="dcp_communitydistricts" operator="like" value="${escapeFetchParam("%" + cd + "%")}" />`)
-      `</filter>``
+        ...communityDistricts.map(cd => `<condition attribute="dcp_communitydistricts" operator="like" value="${formatLikeOperator(cd)}" />`),
+      `</filter>`,
     ];
   }
 
@@ -257,18 +245,18 @@ function buildCommunityDistrictsFilters(communityDistricts) {
 
 function buildBoroughFilters(boroughs) {
   const BOROUGHS = {
-    'Bronx': 717170000,
-    'Brooklyn': 717170002,
-    'Manhattan': 717170001,
-    'Queens': 717170003,
+    Bronx: 717170000,
+    Brooklyn: 717170002,
+    Manhattan: 717170001,
+    Queens: 717170003,
     'Staten Island': 717170004,
-    'Citywide': 717170005
+    Citywide: 717170005,
   };
 
-  if (borough.length) {
+  if (boroughs.length) {
     return [
       `<filter type="or">`,
-      ...boroughs.map(b => `<condition attribute="dcp_borough" operator="eq" value="${BOROUGHS[b]}" />`),
+        ...boroughs.map(b => `<condition attribute="dcp_borough" operator="eq" value="${BOROUGHS[b]}" />`),
       `</filter>`,
     ];
   }
@@ -277,13 +265,13 @@ function buildBoroughFilters(boroughs) {
 }
 
 function buildProjectApplicantTextFilter(applicantText) {
-  if(applicantText) {
+  if (applicantText) {
     return [
       `<filter type="or">`,
-      `<condition attribute="dcp_projectbrief" operator="like" value="${escapeFetchParam("%" + applicantText + "%")}"/>`,
-      `<condition attribute="dcp_projectname" operator="like" value="${escapeFetchParam("%" + applicantText + "%")}"/>`,
-      `<condition attribute="dcp_ceqrnumber" operator="like" value="${escapeFetchParam("%" + applicantText + "%")}"/>`,
-      `</filter>,`
+        `<condition attribute="dcp_projectbrief" operator="like" value="${formatLikeOperator(applicantText)}"/>`,
+        `<condition attribute="dcp_projectname" operator="like" value="${formatLikeOperator(applicantText)}"/>`,
+        `<condition attribute="dcp_ceqrnumber" operator="like" value="${formatLikeOperator(applicantText)}"/>`,
+      `</filter>,`,
     ];
   }
 
@@ -292,25 +280,27 @@ function buildProjectApplicantTextFilter(applicantText) {
 
 function buildULURPNonULURPFilter(ulurpNonulurp) {
   const ULURP = {
-    'ULURP': 717170000,
-    'Non-ULURP': 717170001
+    ULURP: 717170001,
+    'Non-ULURP': 717170000,
   };
 
-  if(ulurpNonulurp.length) {
+  if (ulurpNonulurp.length) {
     return [
       `<condition attribute="dcp_ulurp_nonulurp" operator="in">`,
-      ulurpNonulurp.map( ulurp => projectFilters += `<value>${ULURP[ulurp]}</value>`),
-      `</condition>`
-    ]   
+        ...ulurpNonulurp.map(ulurp => `<value>${ULURP[ulurp]}</value>`),
+      `</condition>`,
+    ];
   }
+
+  return [];
 }
 
 function buildPublicStatusFilter(publicStatus) {
   const STATUS = {
-    'Filed': 717170000,
-    'Certified': 717170001,
-    'Approved': 717170002,
-    'Withdrawn': 717170003
+    Filed: 717170000,
+    Certified: 717170001,
+    Approved: 717170002,
+    Withdrawn: 717170003,
   };
 
   const KNOWN_STATUSES = Object.keys(STATUS);
@@ -320,41 +310,43 @@ function buildPublicStatusFilter(publicStatus) {
   if (publicStatus.includes('Unknown')) {
     filter.push(
      `<condition attribute="dcp_publicstatus" operator="not-in">`,
-     ...knownStatuses.map(status => `<value>${status}</value>`),
-    `</condition>`
+      ...KNOWN_STATUSES.map(status => `<value>${STATUS[status]}</value>`),
+    `</condition>`,
     );
   }
 
   // build filter for known statuses
-  const knownStatus = publicStatus.filter(status => KNOWN_STATUES.includes(status)); 
-  if(knownStatus.length) {
-    filter.push(`<condition attribute="dcp_publicstatus" operator="in">`);  
+  const knownStatus = publicStatus.filter(status => KNOWN_STATUSES.includes(status));
+  if (knownStatus.length) {
+    filter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
     if (publicStatus.includes('Filed')) {
-      filter.push(`<value>${STATUS['Filed']}</value>`);
+      filter.push(`<value>${STATUS.Filed}</value>`);
     }
-  
+
     if (publicStatus.includes('In Public Review')) {
-      filter.push(`<value>${STATUS['Certified']}</value>`);
+      filter.push(`<value>${STATUS.Certified}</value>`);
     }
-  
+
     if (publicStatus.includes('Completed')) {
       filter.push(
-        `<value>${STATUS['Approved']}</value>`,
-        `<value>${STATUS['Withdrawn']}</value>`,
+        `<value>${STATUS.Approved}</value>`,
+        `<value>${STATUS.Withdrawn}</value>`,
       );
     }
+    filter.push(`</condition>`);
   }
 
+  filter.push(`</filter>`);
   return filter;
 }
 
 function buildBlockFilters(block) {
-  if(block) {
+  if (block) {
     return [
       `<link-entity name="dcp_projectbbl" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ad">`,
-      `<filter type="and">`,
-      `<condition attribute="dcp_validatedblock" operator="like" value="${escapeFetchParam("%" + block + "%")}"/>`,
-      `</filter>`,
+        `<filter type="and">`,
+          `<condition attribute="dcp_validatedblock" operator="like" value="${formatLikeOperator(block)}"/>`,
+        `</filter>`,
       `</link-entity>`,
     ];
   }
@@ -363,47 +355,48 @@ function buildBlockFilters(block) {
 }
 
 function buildActionFilters(actionTypes, ulurpNumber) {
-  const filter = [];
+  if (actionTypes.length || ulurpNumber) {
+    const filter = [`<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`];
 
-  if(actionTypes.length || ulurpNumber) {
-    filter.push(`<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`);
-
-    if(ulurpNumber) {
+    if (ulurpNumber) {
       filter.push(
         `<filter type="and">`,
-        `<condition attribute="dcp_ulurpnumber" operator="like" value="${escapeFetchParam("%"+ ulurpNumber + "%")}"/>`,
+          `<condition attribute="dcp_ulurpnumber" operator="like" value="${formatLikeOperator(ulurpNumber)}"/>`,
         `</filter>`,
       );
     }
 
-    if(actionTypes.length) {
+    if (actionTypes.length) {
       filter.push(
         `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="at">`,
-        `<filter type="and">`,
-        ...actionTypes.map(action => `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(action)}"/>`),
-        `</filter>`,
+          `<filter type="and">`,
+            ...actionTypes.map(action => `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(action)}"/>`),
+          `</filter>`,
         `</link-entity>`,
       );
     }
 
-    filter.push(`</link-entity>`); 
+    filter.push(`</link-entity>`);
+    return filter;
   }
 
-  return filter;
+  return [];
 }
 
 function buildApplicantNameFilters(applicantName) {
-  if(applicantName) {
+  if (applicantName) {
     return [
       `<link-entity name="dcp_projectapplicant" from="dcp_project" to="dcp_projectid" link-type="inner" alias="an">`,
-      `<link-entity name="account" from="accountid" to="dcp_applicant_customer" link-type="inner" alias="af">`,
-      `<filter type="and">`,
-      `<condition attribute="name" operator="like" value="${escapeFetchParam("%" + applicantName + "%")}"/>`,
-      `</filter>`,
-      `</link-entity>`,
+        `<link-entity name="account" from="accountid" to="dcp_applicant_customer" link-type="inner" alias="af">`,
+          `<filter type="and">`,
+            `<condition attribute="name" operator="like" value="${formatLikeOperator(applicantName)}"/>`,
+          `</filter>`,
+        `</link-entity>`,
       `</link-entity>`,
     ];
   }
 
   return [];
 }
+
+module.exports = projectsXMLs;

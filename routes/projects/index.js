@@ -3,10 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 // base routes
-router.use('/', require('./projects'));
-router.use('/:id', require('./project'));
-router.use('/xml', require('./projects_XML'));
-router.use('/xml/:id', require('./project_XML'));
+router.use('/', require('./projects_XML'));
+router.use('/:id', require('./project_XML'));
 router.use('/demoUpdate/:id', require('./demoUpdate'));
 router.use('/demoGet/:id', require('./demoGet'));
 

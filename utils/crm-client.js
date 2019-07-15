@@ -60,7 +60,7 @@ class CRMClient {
         return { status: res.status, content: json };
       } catch {
         // some HTTP errors are returned as a string, not a JSON response
-        return { status: res.status, content: { error: text } };
+        return { status: res.status, content: { error: { message: text  } } };
       }
     } catch (err) {
       console.log(err);  // eslint-disable-line
@@ -92,7 +92,7 @@ class CRMClient {
       res = await this.doFetch(method, query, data);  // eslint-disable-line
 
       // Retry on object reference error
-      if (res.content.error && this.isObjectReferenceError(res.content.error)) {
+      if (res.content.error && CRMClient.isObjectReferenceError(res.content.error)) {
         tries -= tries;
         continue; // eslint-disable-line
       }
@@ -123,8 +123,8 @@ class CRMClient {
     if (!res.content.error && res.status === 200) {
       return CRMClient.processGetResponse(res.content);
     }
-
-    console.log(`GET request failed with status: ${res.status}, error: ${res.content.error}`); // eslint-disable-line
+    
+    console.log(`GET request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 
@@ -137,7 +137,7 @@ class CRMClient {
       return res.content;
     }
 
-    console.log(`PATCH request failed with status: ${res.status}, error: ${res.content.error}`); // eslint-disable-line
+    console.log(`PATCH request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 
@@ -150,7 +150,7 @@ class CRMClient {
       return res.content;
     }
 
-    console.log(`POST request failed with status: ${res.status}, error: ${res.content.error}`); // eslint-disable-line
+    console.log(`POST request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 
@@ -163,7 +163,7 @@ class CRMClient {
       return res.content;
     }
 
-    console.log(`DELETE request failed with status: ${res.status}, error: ${res.content.error}`); // eslint-disable-line
+    console.log(`DELETE request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 
