@@ -2,16 +2,6 @@
 const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
 
-const projectXMLs = {
-  project: projectXML,
-  bbl: bblsXML,
-  action: actionsXML,
-  milestone: milestonesXML,
-  keyword: keywordsXML,
-  applicant: applicantTeamXML,
-  address: addressXML,
-};
-
 function projectXML(projectName) {
   const GENERAL_PUBLIC = '717170003';
 
@@ -179,4 +169,16 @@ function addressXML(projectId) {
   ].join('');
 }
 
-module.exports = projectXMLs;
+const projectXMLs = {
+  bbl: bblsXML,
+  action: actionsXML,
+  milestone: milestonesXML,
+  keyword: keywordsXML,
+  applicant: applicantTeamXML,
+  address: addressXML,
+};
+
+module.exports = {
+  projectXMLs,
+  projectXML,
+};

@@ -1,73 +1,55 @@
 const express = require('express');
+const shortid = require('shortid');
+
 const CRMClient = require('../../utils/crm-client');
-const { projectsPostProcess: postProcess } = require('../../utils/post-process');
-const projectsXMLs = require('../../queries/projects-xmls');
-const responseTemplate = require('../../queries/responseTemplate');
-const pluralizeProjectEntity = require('../../utils/pluralize-project-entity');
+const { projectsXML } = require('../../queries/projects-xmls');
+const { getProjectsEntities } = require('../../utils/get-entities');
+const { postProcessProjects } = require('../../utils/post-process');
+const { getProjectsGeo, getRadiusBoundedProjects } = require('../../utils/get-geo');
+
 
 const router = express.Router({ mergeParams: true });
 
-
 /* gets a JSON array of projects that match the query params */
 router.get('/', async (req, res) => {
-  const { query } = req;
-  const { fillProjectsTemplate } = responseTemplate;
+  const { app: { db, filterCache }, query } = req;
 
   try {
     const crmClient = new CRMClient();
-    const {
-      value: projects,
-      '@Microsoft.Dynamics.CRM.totalrecordcount': totalProjects,
-      '@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded': limitExceeded,
-    } = await crmClient.doGet(
-      `dcp_projects?fetchXml=${projectsXMLs.project(query)}`,
-    );
+    const radiusBoundedProjectIds = await getRadiusBoundedProjects(db, query);
+    const { value: projects } = await crmClient.doBatchPost('dcp_projects', projectsXML(query, radiusBoundedProjectIds));
 
-    if (!projects.length) {
-      console.log(`No projects found`); // eslint-disable-line
-      res.status(404).send({ error: `No projects found` });
-      return;
-    }
+    const projectUUIDs = projects.map(project => project.dcp_projectid);
+    const projectIds = projects.map(project => project.dcp_name);
 
-    const projectIds = projects.map(project => project.dcp_projectid);
-    const entities = await getEntities(crmClient, projectIds);
-    const projectsData = postProcess.project(projects, entities);
+    const entities = await getProjectsEntities(crmClient, projectUUIDs);
+    const filterId = shortid.generate();
+    await filterCache.set(filterId, projectIds); 
+    const { projectsCenters, bounds, tiles } = await getProjectsGeo(db, filterId, projectIds);
+
+    postProcessProjects(projects, entities, projectsCenters);
 
     res.send({
-      data: fillProjectsTemplate(projectsData),
+      data: projects.map((project) => {
+        return {
+          type: 'projects',
+          id: project.dcp_name,
+          attributes: project,
+        };
+      }),
       meta: {
-        total: totalProjects,
-        totalLimitExceeded: limitExceeded,
+        total: projects.length,
+        totalLimitExceeded: projects.length === 5000,
         pageTotal: query.itemsPerPage || 30,
+        tiles,
+        bounds,
+        filterId,
       },
     });
   } catch (e) {
     console.log(e); // eslint-disable-line
-    res.status(500).send({
-      error: e.toString(),
-    });
+    res.status(500).send({ error: e.toString() });
   }
 });
-
-async function getEntities(crmClient, projectIds) {
-  const [actions, milestones, applicants] = await Promise.all([
-    getProjectEntities(crmClient, 'action', projectIds),
-    getProjectEntities(crmClient, 'milestone', projectIds),
-    getProjectEntities(crmClient, 'applicant', projectIds),
-  ]);
-
-  return {
-    actions,
-    milestones,
-    applicants,
-  };
-}
-
-function getProjectEntities(crmClient, entityType, projectIds) {
-  const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
-  const entityXML = projectsXMLs[entityType](projectIds);
-
-  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => result.value);
-}
 
 module.exports = router;

@@ -24,7 +24,7 @@ const pgp = require('pg-promise')({
 app.db = pgp(process.env.DATABASE_URL);
 
 // use node-cache to store SQL queries
-app.tileCache = new NodeCache({ stdTTL: 3600 });
+app.filterCache = new NodeCache({ stdTTL: 3600 });
 
 // allows CORS
 app.all('*', (req, res, next) => {
@@ -40,7 +40,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // import routes
-app.use('/projects.:filetype', require('./routes/projects/download'));
+app.use('/projects.:fileType', require('./routes/projects/download-new'));
 app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));

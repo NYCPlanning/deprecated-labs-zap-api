@@ -1,19 +1,5 @@
-const projectPostProcess = {
-  project: postProcessProject,
-  bbl: postProcessProjectBbls,
-  action: postProcessProjectActions,
-  milestone: postProcessProjectMilestones,
-  keyword: postProcessProjectKeywords,
-  applicant: postProcessProjectApplicantTeam,
-  address: noopPostProcess,
-};
-
-const projectsPostProcess = {
-  project: postProcessProjects,
-};
-
 /* POST PROCESS FUNCTIONS FOR SINGLE PROJECT */
-function postProcessProject(project) {
+function postProcessProject(project, entities, geo) {
   switch (project.dcp_publicstatus_formatted) {
     case 'Filed':
       project.dcp_publicstatus_simp = 'Filed';
@@ -32,6 +18,18 @@ function postProcessProject(project) {
   project.jdcp_easeis = project.dcp_easeis_formatted; project.dcp_borough = project.dcp_borough_formatted; project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
   project.dcp_leaddivision = project.dcp_leaddivision_formatted; project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
   project.dcp_leadagencyforenvreview = project._dcp_leadagencyforenvreview_value; // eslint-disable-line
+
+  // add entities
+  project.bbls = entities.bbls;
+  project.actions = entities.actions;
+  project.milestones = entities.milestones;
+  project.keywords = entities.keywords;
+  project.applicantteam = entities.applicants;
+  project.addresses = entities.addresses;
+
+  // add geo
+  project.bbl_multipolygon = geo.bblMultipolygon;
+  project.bbl_featurecollection = geo.bblFeatureCollection;
 }
 
 function postProcessProjectBbls(bbls) { return bbls.map(bbl => bbl.dcp_bblnumber); }
@@ -74,7 +72,10 @@ function postProcessProjectMilestones(milestones, project) {
       const USE_END = ['a43beec4-dad0-e711-8116-1458d04e2fb8', '863beec4-dad0-e711-8116-1458d04e2fb8', '7e3beec4-dad0-e711-8116-1458d04e2fb8', 'aa3beec4-dad0-e711-8116-1458d04e2fb8', '823beec4-dad0-e711-8116-1458d04e2fb8', '843beec4-dad0-e711-8116-1458d04e2fb8', '8e3beec4-dad0-e711-8116-1458d04e2fb8'];
 
       if (USE_ACTUAL.includes(id)) {
-        milestone.display_date = id === USE_START ? milestone.dcp_actualstartdate : milestone.dcp_actualenddate; } else if (publicStatus === 'Filed') { milestone.display_date = USE_END.includes(id) ? milestone.dcp_actualenddate : milestone.dcp_actualstartdate; }
+        milestone.display_date = id === USE_START ? milestone.dcp_actualstartdate : milestone.dcp_actualenddate;
+      } else if (publicStatus === 'Filed') {
+        milestone.display_date = USE_END.includes(id) ? milestone.dcp_actualenddate : milestone.dcp_actualstartdate;
+      }
 
       const USE_NULL = ['763beec4-dad0-e711-8116-1458d04e2fb8', 'a43beec4-dad0-e711-8116-1458d04e2fb8', '863beec4-dad0-e711-8116-1458d04e2fb8', '7c3beec4-dad0-e711-8116-1458d04e2fb8', '7e3beec4-dad0-e711-8116-1458d04e2fb8', '883beec4-dad0-e711-8116-1458d04e2fb8', '783beec4-dad0-e711-8116-1458d04e2fb8', 'aa3beec4-dad0-e711-8116-1458d04e2fb8', '823beec4-dad0-e711-8116-1458d04e2fb8', '663beec4-dad0-e711-8116-1458d04e2fb8', '6a3beec4-dad0-e711-8116-1458d04e2fb8', '843beec4-dad0-e711-8116-1458d04e2fb8', '8e3beec4-dad0-e711-8116-1458d04e2fb8', '780593bb-ecc2-e811-8156-1458d04d0698'];
       if (USE_NULL.includes(id)) {
@@ -105,49 +106,49 @@ function noopPostProcess(entity) {
 }
 
 /* POST PROCESS FUNCTIONS FOR PROJECTS LIST */
-function postProcessProjects(projects, entities) {
-  return projects.map(project => {
-    const id = project.dcp_projectid;
+function postProcessProjects(projects, entities, projectsCenters = []) {
+  projects.map((project) => {
+    const uuid = project.dcp_projectid;
+    const id = project.dcp_name;
+    const projectCenter = postProcessProjectsCenters(projectsCenters, id);
     const {
-      projectActionCodes,
-      projectUlurpNumbers 
-    } = postProcessProjectsActions(entities.actions, id);
-    const projectLastMilestoneDate = postProcessProjectsMilestones(entities.milestones, id);
-    const projectApplicants = postProcessProjectsApplicants(entities.applicants, id); 
+      projectActionTypes,
+      projectUlurpNumbers,
+    } = postProcessProjectsActions(entities.actions, uuid);
+    const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
 
-    return {
-      ...project,
-      actiontypes: projectActionCodes,
-      ulurpnumbers: projectUlurpNumbers,
-      lastmilestonedate: projectLastMilestoneDate,
-      applicants: projectApplicants,
-    };
+   
+    project.center = projectCenter;
+    project.has_centroid = !!projectCenter.length;
+    project.actiontypes = projectActionTypes;
+    project.ulurpnumbers = projectUlurpNumbers;
+    project.lastmilestonedate = project.dcp_lastmilestonedate,
+    project.applicants = projectApplicants;
   });
+}
+
+function postProcessProjectsCenters(centers, projectId) {
+  return entitiesForProject(centers, projectId).map(center => center.center);
 }
 
 function postProcessProjectsActions(actions, projectId) {
   const projectActions = entitiesForProject(actions, projectId)
     .filter(action => ACTION_CODES.includes(action.action_code));
 
+  const projectActionCodes = makeUniqueList(projectActions.map(action => action.action_code));
+
   return {
-    projectActionCodes: makeUniqueList(projectActions.map(action => action.action_code)),
+    projectActionTypes: projectActionCodes.map(code => ACTION_TYPES[code]).join(';'),
     projectUlurpNumbers: projectActions.map(action => action.dcp_ulurpnumber).filter(action => !!action),
   };
 }
 
-function postProcessProjectsMilestones(milestones, projectId) {
-  const projectMilestones = entitiesForProject(milestones, projectId);
-
-  // TODO sort?
-  return projectMilestones.length ? projectMilestones[0].actualenddate : '';
-}
-
 function postProcessProjectsApplicants(applicants, projectId) {
   const projectApplicants = entitiesForProject(applicants, projectId)
-    .map(applicant => applicant._dcp_applicant_customer_value_formatted)
+    .map(applicant => applicant._dcp_applicant_customer_value_formatted) // eslint-disable-line
     .filter(applicant => !!applicant);
 
-  return makeUniqueList(projectApplicants);
+  return makeUniqueList(projectApplicants).join(';');
 }
 
 function entitiesForProject(entities, projectId) {
@@ -155,11 +156,87 @@ function entitiesForProject(entities, projectId) {
 }
 
 function makeUniqueList(values) {
-  return Array.from(new Set(values.filter(v => !!v))).join(';');
+  return Array.from(new Set(values.filter(v => !!v)));
 }
 
 /* CONSTANTS FOR PROJECT/ENTITY FORMATTING */
 const ACTION_CODES = ['BD', 'BF', 'CM', 'CP', 'DL', 'DM', 'EB', 'EC', 'EE', 'EF', 'EM', 'EN', 'EU', 'GF', 'HA', 'HC', 'HD', 'HF', 'HG', 'HI', 'HK', 'HL', 'HM', 'HN', 'HO', 'HP', 'HR', 'HS', 'HU', 'HZ', 'LD', 'MA', 'MC', 'MD', 'ME', 'MF', 'ML', 'MM', 'MP', 'MY', 'NP', 'PA', 'PC', 'PD', 'PE', 'PI', 'PL', 'PM', 'PN', 'PO', 'PP', 'PQ', 'PR', 'PS', 'PX', 'RA', 'RC', 'RS', 'SC', 'TC', 'TL', 'UC', 'VT', 'ZA', 'ZC', 'ZD', 'ZJ', 'ZL', 'ZM', 'ZP', 'ZR', 'ZS', 'ZX', 'ZZ'];
+const ACTION_TYPES = {
+  BD: 'Business Improvement Districts',
+  BF: 'Business Franchise',
+  CM: 'Renewal',
+  CP: '',
+  DL: 'Disposition for Residential Low-Income Use',
+  DM: 'Disposition for Residential Not Low-Income Use',
+  EB: 'CEQR Application',
+  EC: 'Enclosed Sidewalk Cafes',
+  EE: 'CEQR Application',
+  EF: 'CEQR Application',
+  EM: 'CEQR Application',
+  EN: 'CEQR Application',
+  EU: 'CEQR Application',
+  GF: 'Franchise or Revocable Consent',
+  HA: 'Urban Development Action Area',
+  HC: 'Minor Change',
+  HD: 'Disposition of Urban Renewal Site',
+  HF: 'Community Dev. Application/Amendment',
+  HG: 'Urban Renewal Designation',
+  HI: 'Landmarks - Individual Sites',
+  HK: 'Landmarks - Historic Districts ',
+  HL: 'Housing/Urban Renewal/Pub Ben Corp Lease',
+  HM: 'Currently Residential/Not Low-Income',
+  HN: 'Urban Development Action Area - UDAAP Non-ULURP',
+  HO: 'Housing Application (Plan and Project)',
+  HP: 'Plan & Project/Land Disposition Agreement (LDA) ',
+  HR: 'Assignments & Transfers',
+  HS: 'Special District/Mall Plan/REMIC NPA',
+  HU: 'Urban Renewal Plan and Amendments',
+  HZ: 'Preliminary Site Approval Application',
+  LD: 'Legal Document (NOC, NOR, RD)',
+  MA: 'Assignment/Acquisition',
+  MC: 'Major Concessions',
+  MD: 'Drainage Plan',
+  ME: 'Easements (Administrative)',
+  MF: 'Franchise Applic - Not Sidewalk Café',
+  ML: 'Landfill',
+  MM: 'Change in City Map',
+  MP: 'Prior Action',
+  MY: 'Administration Demapping',
+  NP: '197-A Plan',
+  PA: 'Transfer/Assignment',
+  PC: 'Combination Acquisition and Site Selection by the City',
+  PD: 'Amended Drainage Plan',
+  PE: 'Exchange of City Property with Private Property',
+  PI: 'Private Improvement',
+  PL: 'Leasing of Private Property by the City',
+  PM: 'Map Change Related to Site Selection',
+  PN: 'Negotiated Disposition of City Property',
+  PO: 'OTB Site Selection',
+  PP: 'Disposition of Non-Residential City-Owned Property',
+  PQ: 'Acquisition of Property by the City',
+  PR: "Release of City's Interest",
+  PS: 'Site Selection (City Facility) ',
+  PX: 'Office Space',
+  RA: 'South Richmond District Authorizations ',
+  RC: 'South Richmond District Certifications',
+  RS: 'South Richmond District Special Permits',
+  SC: 'Special Natural Area Certifications',
+  TC: 'Consent - Sidewalk Café',
+  TL: 'Leasing of C-O-P By Private Applicants',
+  UC: 'Unenclosed Café',
+  VT: 'Cable TV',
+  ZA: 'Zoning Authorization',
+  ZC: 'Zoning Certification',
+  ZD: 'Amended Restrictive Declaration',
+  ZJ: 'Residential Loft Determination',
+  ZL: 'Large Scale Special Permit',
+  ZM: 'Zoning Map Amendment',
+  ZP: 'Parking Special Permit/Incl non-ULURP Ext',
+  ZR: 'Zoning Text Amendment ',
+  ZS: 'Zoning Special Permit',
+  ZX: "Counsel's Office - Rules of Procedure",
+  ZZ: 'Site Plan Approval in Natural Area Districts',
+};
 const ALLOWED_MILESTONES = ['Borough Board Referral', 'Borough President Referral', 'Prepare CEQR Fee Payment', 'City Council Review', 'Community Board Referral', 'CPC Public Meeting - Public Hearing', 'CPC Public Meeting - Vote', 'DEIS Public Hearing Held', 'Review Filed EAS and EIS Draft Scope of Work', 'DEIS Public Scoping Meeting', 'Prepare and Review FEIS', 'Review Filed EAS', 'Final Letter Sent', 'Issue Final Scope of Work', 'Prepare Filed Land Use Application', 'Prepare Filed Land Use Fee Payment', 'Mayoral Veto', 'DEIS Notice of Completion Issued', 'Review Session - Certified / Referred', 'CPC Review of Modification Scope'];
 const MILESTONES = {
   '963beec4-dad0-e711-8116-1458d04e2fb8': {
@@ -223,7 +300,8 @@ const MILESTONES = {
     display_description: 'A Draft Environmental Impact Statement must be completed prior to the City Planning Commission certifying or referring a project for public review.',
   },
   '780593bb-ecc2-e811-8156-1458d04d0698': {
-    display_name: 'CPC Review of Council Modification}', display_sequence: 58, },
+    display_name: 'CPC Review of Council Modification}', display_sequence: 58,
+  },
 
   'a63beec4-dad0-e711-8116-1458d04e2fb8': {
     display_name: 'City Council Review',
@@ -255,7 +333,17 @@ const MILESTONES = {
   },
 };
 
+const projectPostProcess = {
+  bbl: postProcessProjectBbls,
+  action: postProcessProjectActions,
+  milestone: postProcessProjectMilestones,
+  keyword: postProcessProjectKeywords,
+  applicant: postProcessProjectApplicantTeam,
+  address: noopPostProcess,
+};
+
 module.exports = {
   projectPostProcess,
-  projectsPostProcess,
+  postProcessProject,
+  postProcessProjects,
 };

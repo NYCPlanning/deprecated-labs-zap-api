@@ -3,13 +3,6 @@ const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
 const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
 
-const projectsXMLs = {
-  project: projectsXML,
-  action: actionsXML,
-  milestone: milestonesXML,
-  applicant: applicantTeamXML,
-};
-
 function actionsXML(projectIds) {
   const MISTAKE = '717170003';
   return [
@@ -101,14 +94,13 @@ function applicantTeamXML(projectIds) {
   ].join('');
 }
 
-function projectsXML(queryParams) {
+function projectsXML(queryParams, projectIds) {
   const {
     page = 1,
     itemsPerPage = 30,
     'community-districts': community_districts = [],
     'action-types': action_types = [],
     boroughs = [],
-    // dcp_ceqrtype = ['Type I', 'Type II', 'Unlisted', 'Unknown'],
     dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
     dcp_femafloodzonev = false,
     dcp_femafloodzonecoastala = false,
@@ -118,13 +110,12 @@ function projectsXML(queryParams) {
     dcp_certifiedreferred = [],
     project_applicant_text = '',
     block = '',
-    // distance_from_point = [],
-    // radius_from_point = 10,
     applicant_name = '',
     ulurp_number = '',
   } = queryParams;
 
   const projectFilters = buildProjectFilters(
+    projectIds,
     dcp_femafloodzonea,
     dcp_femafloodzonecoastala,
     dcp_femafloodzoneshadedx,
@@ -145,8 +136,9 @@ function projectsXML(queryParams) {
   );
 
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}" returntotalrecordcount="true">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}">`,
       `<entity name="dcp_project">`,
+        `<order attribute="createdon" descending="true" />`,
         `<attribute name="dcp_name"/>`,
         `<attribute name="dcp_projectid"/>`,
         `<attribute name="dcp_ceqrnumber"/>`,
@@ -158,6 +150,7 @@ function projectsXML(queryParams) {
         `<attribute name="dcp_communitydistricts"/>`,
         `<attribute name="dcp_publicstatus"/>`,
         `<attribute name="dcp_certifiedreferred"/>`,
+        `<attribute name="createdon"/>`,
         `<attribute name="dcp_femafloodzonea"/>`,
         `<attribute name="dcp_femafloodzonecoastala"/>`,
         `<attribute name="dcp_femafloodzoneshadedx"/>`,
@@ -173,6 +166,7 @@ function projectsXML(queryParams) {
 
 /* Helper functions to build project filter XMLs */
 function buildProjectFilters(
+  projectIds,
   dcp_femafloodzonea,
   dcp_femafloodzonecoastala,
   dcp_femafloodzoneshadedx,
@@ -185,6 +179,7 @@ function buildProjectFilters(
   dcp_publicstatus,
 ) {
   return [
+    ...buildProjectIdsFilters(projectIds),
     ...buildFloodzoneFilters(dcp_femafloodzonea, dcp_femafloodzonev, dcp_femafloodzonecoastala, dcp_femafloodzoneshadedx),
     ...buildCertifiedReferredFilters(dcp_certifiedreferred),
     ...buildCommunityDistrictsFilters(community_districts),
@@ -206,6 +201,18 @@ function buildLinkFilters(
     ...buildActionFilters(action_types, ulurp_number),
     ...buildApplicantNameFilters(applicant_name),
   ];
+}
+
+function buildProjectIdsFilters(projectIds) {
+  if (projectIds.length) {
+    return [
+      `<condition attribute="dcp_name" operator="in">`,
+        ...projectIds.map(projectId => `<value>${projectId}</value>`),
+      `</condition>`,
+    ];
+  }
+
+  return [];
 }
 
 function buildFloodzoneFilters(a, v, coastal_a, shaded_x) {
@@ -369,7 +376,7 @@ function buildActionFilters(actionTypes, ulurpNumber) {
     if (actionTypes.length) {
       filter.push(
         `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="at">`,
-          `<filter type="and">`,
+          `<filter type="or">`,
             ...actionTypes.map(action => `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(action)}"/>`),
           `</filter>`,
         `</link-entity>`,
@@ -399,4 +406,43 @@ function buildApplicantNameFilters(applicantName) {
   return [];
 }
 
-module.exports = projectsXMLs;
+function projectsByIdsXML(projectIds, page, count) {
+  return [
+   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}">`,
+      `<entity name="dcp_project">`,
+        `<order attribute="createdon" descending="true" />`,
+        `<attribute name="dcp_name"/>`,
+        `<attribute name="dcp_projectid"/>`,
+        `<attribute name="dcp_ceqrnumber"/>`,
+        `<attribute name="dcp_ceqrtype"/>`,
+        `<attribute name="dcp_projectname"/>`,
+        `<attribute name="dcp_projectbrief"/>`,
+        `<attribute name="dcp_borough"/>`,
+        `<attribute name="dcp_ulurp_nonulurp"/>`,
+        `<attribute name="dcp_communitydistricts"/>`,
+        `<attribute name="dcp_publicstatus"/>`,
+        `<attribute name="dcp_certifiedreferred"/>`,
+        `<attribute name="createdon"/>`,
+        `<attribute name="dcp_femafloodzonea"/>`,
+        `<attribute name="dcp_femafloodzonecoastala"/>`,
+        `<attribute name="dcp_femafloodzoneshadedx"/>`,
+        `<attribute name="dcp_femafloodzonev"/>`,
+        `<filter type="and">`,
+          ...buildProjectIdsFilters(projectIds),
+        `</filter>`,
+      `</entity>`,
+    `</fetch>`,
+  ];
+}
+
+const projectsXMLs = {
+  action: actionsXML,
+  milestone: milestonesXML,
+  applicant: applicantTeamXML,
+};
+
+module.exports = {
+  projectsXMLs,
+  projectsXML,
+  projectsByIdsXML,
+};

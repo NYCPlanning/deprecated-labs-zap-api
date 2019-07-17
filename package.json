@@ -39,6 +39,8 @@
     "shortid": "^2.2.8",
     "slack-webhook": "^1.0.0",
     "sphericalmercator": "^1.0.5",
+    "turf-linestring": "^1.0.2",
+    "turf-point": "^2.0.1",
     "xml2js": "0.4.19"
   },
   "devDependencies": {

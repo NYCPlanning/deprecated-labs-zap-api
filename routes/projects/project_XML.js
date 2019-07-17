@@ -1,17 +1,19 @@
 const express = require('express');
 const CRMClient = require('../../utils/crm-client');
-const { projectPostProcess: postProcess } = require('../../utils/post-process');
-const projectXMLs = require('../../queries/project-xmls');
+const { postProcessProject } = require('../../utils/post-process');
+const { getProjectEntities } = require('../../utils/get-entities');
+const { getProjectGeo } = require('../../utils/get-geo');
+const { projectXML } = require('../../queries/project-xmls');
 const responseTemplate = require('../../queries/responseTemplate');
 const pluralizeProjectEntity = require('../../utils/pluralize-project-entity');
 
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
-  const { params: { id } } = req; 
+  const { app: { db }, params: { id } } = req; 
   try {
     const crmClient = new CRMClient();
-    const { value: [project] } = await crmClient.doGet(`dcp_projects?fetchXml=${projectXMLs.project(id)}`);
+    const { value: [project] } = await crmClient.doGet(`dcp_projects?fetchXml=${projectXML(id)}`);
 
     if (!project) {
       console.log(`Project ${id} not found`); // eslint-disable-line
@@ -19,15 +21,16 @@ router.get('/', async (req, res) => {
       return;
     }
 
-    const entities = await getEntities(crmClient, project);
-    postProcess.project(project);
+    const entities = await getProjectEntities(crmClient, project);
+    const geo = await getProjectGeo(db, project.dcp_name);
+    postProcessProject(project, entities, geo);
 
     res.send({
-      data: {
+      data: [{
         type: 'projects',
         id,
-        attributes: buildAttributes(project, entities),
-      },
+        attributes: project,
+      }],
     });
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
