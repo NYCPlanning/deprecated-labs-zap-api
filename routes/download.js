@@ -2,17 +2,16 @@ const express = require('express');
 const { parse: json2csv } = require('json2csv');
 const ogr2ogr = require('ogr2ogr');
 
-const CRMClient = require('../../utils/crm-client');
-const { projectsByIdsXML } = require('../../queries/projects-xmls');
-const { getProjectsEntities } = require('../../utils/get-entities');
-const { postProcessProjects } = require('../../utils/post-process');
-const { getProjectsDownloadGeo } = require('../../utils/get-geo');
+const { getProjectsEntities } = require('../utils/get-entities');
+const { postProcessProjects } = require('../utils/post-process');
+const { getProjectsDownloadGeo } = require('../utils/get-geo');
+const { projectsDownloadXML } = require('../queries/projects-xmls');
 
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
   const {
-    app: { db, filterCache },
+    app: { dbClient, filterCache, crmClient },
     params: { fileType },
     query: { filterId },
   } = req;
@@ -25,7 +24,6 @@ router.get('/', async (req, res) => {
       return;
     }
 
-    const crmClient = new CRMClient();
     const projects = await getAllProjects(crmClient, projectIds);
     const projectUUIDs = projects.map(project => project.dcp_projectid);
     const entities = await getProjectsEntities(crmClient, projectUUIDs);
@@ -36,7 +34,7 @@ router.get('/', async (req, res) => {
       return;
     }
 
-    const projectsGeo = await getProjectsDownloadGeo(db, projectIds);
+    const projectsGeo = await getProjectsDownloadGeo(dbClient, projectIds);
 
     if (fileType === 'shp') {
       sendSHPResponse(projectsGeo, res);
@@ -62,7 +60,7 @@ async function getAllProjects(crmClient, projectIds) {
   for (let i = 1; i <= pages; i ++) { // eslint-disable-line
     const { value } = await crmClient.doBatchPost( // eslint-disable-line
       'dcp_projects',
-      projectsByIdsXML(projectIds, i, MAX_PROJECTS_PER_PAGE),
+      projectsDownloadXML(projectIds, i, MAX_PROJECTS_PER_PAGE),
     );
     projects.push(...value);
   }
@@ -87,8 +85,8 @@ function sendSHPResponse(projects, res) {
   createShapefile(projects).pipe(res);
 }
 
-function createShapefile(featureCollection) {
-  return ogr2ogr(featureCollection)
+function createShapefile(projects) {
+  return ogr2ogr(projects)
     .format('ESRI Shapefile')
     .skipfailures()
     .timeout(60000)

@@ -1,6 +1,7 @@
 /* eslint-disable indent */
 const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
+const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
 
 function projectXML(projectName) {
   const GENERAL_PUBLIC = '717170003';
@@ -169,6 +170,21 @@ function addressXML(projectId) {
   ].join('');
 }
 
+function projectForULURPXML(ulurpNumber) {
+  return [
+     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" top="1">`,
+      `<entity name="dcp_project">`,
+        `<attribute name="dcp_name"/>`,
+        `<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`,
+          `<filter type ="and">`,
+            `<condition attribute="dcp_ulurpnumber" operator="like" value="${formatLikeOperator(ulurpNumber)}" />`,
+          `</filter>`,
+        `</link-entity>`,
+      `</entity>`,
+    `</fetch>`,
+  ].join('');
+}
+
 const projectXMLs = {
   bbl: bblsXML,
   action: actionsXML,
@@ -181,4 +197,5 @@ const projectXMLs = {
 module.exports = {
   projectXMLs,
   projectXML,
+  projectForULURPXML,
 };

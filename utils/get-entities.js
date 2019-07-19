@@ -1,12 +1,6 @@
-const { projectPostProcess } = require('./post-process');
 const { projectsXMLs } = require('../queries/projects-xmls');
 const { projectXMLs } = require('../queries/project-xmls');
 const pluralizeProjectEntity = require('./pluralize-project-entity');
-
-const getEntities = {
-  getProjectsEntities,
-  getProjectEntities,
-};
 
 async function getProjectsEntities(crmClient, projectIds) {
   if (!projectIds.length) {
@@ -65,11 +59,12 @@ function getProjectEntity(crmClient, entityType, project) {
   const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
   const entityXML = projectXMLs[entityType](projectId);
 
-  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then((result) => {
-    const { value } = result;
-    return projectPostProcess[entityType](value, project);
-  });
+  return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => result.value);
 }
 
+const getEntities = {
+  getProjectsEntities,
+  getProjectEntities,
+};
 
 module.exports = getEntities;

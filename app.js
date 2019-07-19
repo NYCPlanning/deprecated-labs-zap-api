@@ -1,32 +1,25 @@
-/*eslint-disable*/
-
-// use .env for local environment variables
 require('dotenv').config();
-
 
 const express = require('express');
 const logger = require('morgan');
 const NodeCache = require('node-cache');
+const CRMClient = require('./utils/crm-client');
 const cors_config = require('./middleware/cors');
-
-
-// instantiate express app
-const app = express();
-
-// require pg-promise
 const pgp = require('pg-promise')({
   query(e) {
      (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
   },
 });
 
-// initialize database connection
-app.db = pgp(process.env.DATABASE_URL);
 
-// use node-cache to store SQL queries
+// instantiate express app
+const app = express();
+
+// initialize app resources
+app.dbClient = pgp(process.env.DATABASE_URL); app.crmClient = new CRMClient();
 app.filterCache = new NodeCache({ stdTTL: 3600 });
 
-// allows CORS
+// setup middleware
 app.all('*', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
@@ -34,16 +27,19 @@ app.all('*', (req, res, next) => {
 });
 app.use(cors_config());
 
-// middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// import routes
-app.use('/projects.:fileType', require('./routes/projects/download-new'));
+// set up routes
 app.use('/projects', require('./routes/projects'));
+app.use('/projects/:id', require('./routes/project'));
+app.use('/projects.:fileType', require('./routes/download'));
+app.use('/projects/tiles', require('./routes/tiles'));
+app.use('/projects/ulurp', require('./routes/ulurp'));
+app.use('/projects/feedback', require('./routes/feedback'));
+app.use('/update-geometries', require('./routes/update-geometries'));
 app.use('/ceqr', require('./routes/ceqr'));
-app.use('/export', require('./routes/export'));
 
 app.use((req, res) => {
   res.status(404).json({

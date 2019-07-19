@@ -1,5 +1,38 @@
+const dedupeList = require('./dedupe-list');
+const getVideoLinks = require('./get-video-links');
+const injectSupportingDocumentURLs = require('./inject-supporting-document-urls');
+const projectTemplate = require('../response-templates/project');
+const projectsTemplate = require('../response-templates/projects');
+
 /* POST PROCESS FUNCTIONS FOR SINGLE PROJECT */
-function postProcessProject(project, entities, geo) {
+async function postProcessProject(project, entities, geo) {
+  setPublicStatusSimp(project);
+
+  project.jdcp_easeis = project.dcp_easeis_formatted; project.dcp_borough = project.dcp_borough_formatted; project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
+  project.dcp_leaddivision = project.dcp_leaddivision_formatted; project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
+  project.dcp_leadagencyforenvreview = project._dcp_leadagencyforenvreview_value; // eslint-disable-line
+
+  // add list entities
+  project.bbls = postProcessProjectBbls(entities.bbls);
+  project.keywords = postProcessProjectKeywords(entities.keywords);
+
+  // add object entities
+  project.actions = postProcessProjectActions(entities.actions);
+  project.milestones = postProcessProjectMilestones(entities.milestones, project);
+  project.applicantteam = postProcessProjectApplicantTeam(entities.applicants);
+  project.addresses = entities.addresses;
+
+  // add geo
+  project.bbl_multipolygon = geo.bblMultipolygon;
+  project.bbl_featurecollection = geo.bblFeatureCollection;
+
+  await injectSupportingDocumentURLs(project);
+  project.video_links = await getVideoLinks(project.dcp_name);
+
+  return projectFromTemplate(project, projectTemplate);
+}
+
+function setPublicStatusSimp(project) {
   switch (project.dcp_publicstatus_formatted) {
     case 'Filed':
       project.dcp_publicstatus_simp = 'Filed';
@@ -14,22 +47,6 @@ function postProcessProject(project, entities, geo) {
     default:
       project.dcp_publicstatus_simp = 'Unknown';
   }
-
-  project.jdcp_easeis = project.dcp_easeis_formatted; project.dcp_borough = project.dcp_borough_formatted; project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
-  project.dcp_leaddivision = project.dcp_leaddivision_formatted; project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
-  project.dcp_leadagencyforenvreview = project._dcp_leadagencyforenvreview_value; // eslint-disable-line
-
-  // add entities
-  project.bbls = entities.bbls;
-  project.actions = entities.actions;
-  project.milestones = entities.milestones;
-  project.keywords = entities.keywords;
-  project.applicantteam = entities.applicants;
-  project.addresses = entities.addresses;
-
-  // add geo
-  project.bbl_multipolygon = geo.bblMultipolygon;
-  project.bbl_featurecollection = geo.bblFeatureCollection;
 }
 
 function postProcessProjectBbls(bbls) { return bbls.map(bbl => bbl.dcp_bblnumber); }
@@ -101,13 +118,9 @@ function postProcessProjectApplicantTeam(applicantTeam) {
   });
 }
 
-function noopPostProcess(entity) {
-  return entity;
-}
-
 /* POST PROCESS FUNCTIONS FOR PROJECTS LIST */
 function postProcessProjects(projects, entities, projectsCenters = []) {
-  projects.map((project) => {
+  return projects.map((project) => {
     const uuid = project.dcp_projectid;
     const id = project.dcp_name;
     const projectCenter = postProcessProjectsCenters(projectsCenters, id);
@@ -117,13 +130,14 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
     } = postProcessProjectsActions(entities.actions, uuid);
     const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
 
-   
     project.center = projectCenter;
     project.has_centroid = !!projectCenter.length;
     project.actiontypes = projectActionTypes;
     project.ulurpnumbers = projectUlurpNumbers;
-    project.lastmilestonedate = project.dcp_lastmilestonedate,
+    project.lastmilestonedate = project.dcp_lastmilestonedate;
     project.applicants = projectApplicants;
+
+    return projectFromTemplate(project, projectsTemplate);
   });
 }
 
@@ -135,11 +149,9 @@ function postProcessProjectsActions(actions, projectId) {
   const projectActions = entitiesForProject(actions, projectId)
     .filter(action => ACTION_CODES.includes(action.action_code));
 
-  const projectActionCodes = makeUniqueList(projectActions.map(action => action.action_code));
-
   return {
-    projectActionTypes: projectActionCodes.map(code => ACTION_TYPES[code]).join(';'),
-    projectUlurpNumbers: projectActions.map(action => action.dcp_ulurpnumber).filter(action => !!action),
+    projectActionTypes: dedupeList(projectActions.map(action => action.action_code)).map(code => ACTION_TYPES[code]),
+    projectUlurpNumbers: projectActions.map(action => action.dcp_ulurpnumber).filter(ulurpNumber => !!ulurpNumber),
   };
 }
 
@@ -148,15 +160,44 @@ function postProcessProjectsApplicants(applicants, projectId) {
     .map(applicant => applicant._dcp_applicant_customer_value_formatted) // eslint-disable-line
     .filter(applicant => !!applicant);
 
-  return makeUniqueList(projectApplicants).join(';');
+  return dedupeList(projectApplicants).join(';');
+}
+
+function postProcessProjectsUpdateGeoms(projects, bbls) {
+  projects.forEach((project) => {
+    const uuid = project.dcp_projectid;
+    setPublicStatusSimp(project);
+    project.bbls = postProcessProjectsBbls(bbls, uuid);
+  });
+}
+
+function postProcessProjectsBbls(bbls, uuid) {
+  return entitiesForProject(bbls, uuid).map(bbl => bbl.dcp_bblnumber);
 }
 
 function entitiesForProject(entities, projectId) {
   return entities.filter(entity => entity.projectid === projectId);
 }
 
-function makeUniqueList(values) {
-  return Array.from(new Set(values.filter(v => !!v)));
+
+function projectFromTemplate(project, template) {
+  const { fields, entities = [], entity_fields } = template;
+  const formatted = objectFromFields(project, fields);
+
+  entities.forEach((entityType) => {
+    formatted[entityType] = project[entityType]
+      .map(entity => objectFromFields(entity, entity_fields[entityType]));
+  });
+
+  return formatted;
+}
+
+function objectFromFields(object, fields) {
+  const formatted = {};
+  fields.forEach((field) => {
+    formatted[field] = object[field];
+  });
+  return formatted;
 }
 
 /* CONSTANTS FOR PROJECT/ENTITY FORMATTING */
@@ -214,7 +255,7 @@ const ACTION_TYPES = {
   PO: 'OTB Site Selection',
   PP: 'Disposition of Non-Residential City-Owned Property',
   PQ: 'Acquisition of Property by the City',
-  PR: "Release of City's Interest",
+  PR: 'Release of City\'s Interest',
   PS: 'Site Selection (City Facility) ',
   PX: 'Office Space',
   RA: 'South Richmond District Authorizations ',
@@ -234,7 +275,7 @@ const ACTION_TYPES = {
   ZP: 'Parking Special Permit/Incl non-ULURP Ext',
   ZR: 'Zoning Text Amendment ',
   ZS: 'Zoning Special Permit',
-  ZX: "Counsel's Office - Rules of Procedure",
+  ZX: 'Counsel\'s Office - Rules of Procedure',
   ZZ: 'Site Plan Approval in Natural Area Districts',
 };
 const ALLOWED_MILESTONES = ['Borough Board Referral', 'Borough President Referral', 'Prepare CEQR Fee Payment', 'City Council Review', 'Community Board Referral', 'CPC Public Meeting - Public Hearing', 'CPC Public Meeting - Vote', 'DEIS Public Hearing Held', 'Review Filed EAS and EIS Draft Scope of Work', 'DEIS Public Scoping Meeting', 'Prepare and Review FEIS', 'Review Filed EAS', 'Final Letter Sent', 'Issue Final Scope of Work', 'Prepare Filed Land Use Application', 'Prepare Filed Land Use Fee Payment', 'Mayoral Veto', 'DEIS Notice of Completion Issued', 'Review Session - Certified / Referred', 'CPC Review of Modification Scope'];
@@ -333,17 +374,8 @@ const MILESTONES = {
   },
 };
 
-const projectPostProcess = {
-  bbl: postProcessProjectBbls,
-  action: postProcessProjectActions,
-  milestone: postProcessProjectMilestones,
-  keyword: postProcessProjectKeywords,
-  applicant: postProcessProjectApplicantTeam,
-  address: noopPostProcess,
-};
-
 module.exports = {
-  projectPostProcess,
   postProcessProject,
   postProcessProjects,
+  postProcessProjectsUpdateGeoms,
 };

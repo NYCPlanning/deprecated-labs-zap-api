@@ -12,7 +12,7 @@ const MILESTONE_TYPES = {
   'Final Letter Sent': /.*_(HPD|DOB)/,
 };
 
-async function injectSupportDocumentURLs(project) {
+async function injectSupportingDocumentURLs(project) {
   // extract trimmed ULURP number
   const ulurpNumbers = project.actions
     .filter(({ dcp_ulurpnumber }) => dcp_ulurpnumber) // filter out nulls
@@ -62,4 +62,4 @@ async function injectSupportDocumentURLs(project) {
   });
 }
 
-module.exports = injectSupportDocumentURLs;
+module.exports = injectSupportingDocumentURLs;
