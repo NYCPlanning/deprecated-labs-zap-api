@@ -4,7 +4,16 @@ const injectSupportingDocumentURLs = require('./inject-supporting-document-urls'
 const projectTemplate = require('../response-templates/project');
 const projectsTemplate = require('../response-templates/projects');
 
-/* POST PROCESS FUNCTIONS FOR SINGLE PROJECT */
+/**
+ * Post-process a single project, adding entities and geo data,
+ * formatting some fields, pulling in video and document resources,
+ * and then formatting the entire object using project template.
+ *
+ * @param {Object} project The raw project object from CRM
+ * @param {Object[]} entities The raw project child entities from CRM
+ * @param {Object} geo The geo data from PostgreSQL
+ * @returns {Object} The processed and formatted project object
+ */
 async function postProcessProject(project, entities, geo) {
   setPublicStatusSimp(project);
 
@@ -19,7 +28,7 @@ async function postProcessProject(project, entities, geo) {
   // add object entities
   project.actions = postProcessProjectActions(entities.actions);
   project.milestones = postProcessProjectMilestones(entities.milestones, project);
-  project.applicantteam = postProcessProjectApplicantTeam(entities.applicants);
+  project.applicantteam = postProcessProjectApplicants(entities.applicants);
   project.addresses = entities.addresses;
 
   // add geo
@@ -32,6 +41,58 @@ async function postProcessProject(project, entities, geo) {
   return projectFromTemplate(project, projectTemplate);
 }
 
+/**
+ * Post-process a list of projects for projects list, adding entities and centers,
+ * formatting some fields, and then formatting the entire object using project template.
+ *
+ * @param {Object[]} projects The raw project objects from CRM
+ * @param {Object[]} entities The raw project child entities from CRM
+ * @param {Point[]} projectCenters The project centers from PostgreSQL
+ * @returns {Object} The processed and formatted project objects
+ */
+function postProcessProjects(projects, entities, projectsCenters = []) {
+  return projects.map((project) => {
+    const uuid = project.dcp_projectid;
+    const id = project.dcp_name;
+    const projectCenter = postProcessProjectsCenters(projectsCenters, id);
+    const {
+      projectActionTypes,
+      projectUlurpNumbers,
+    } = postProcessProjectsActions(entities.actions, uuid);
+    const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
+
+    project.center = projectCenter;
+    project.has_centroid = !!projectCenter.length;
+    project.actiontypes = projectActionTypes;
+    project.ulurpnumbers = projectUlurpNumbers;
+    project.lastmilestonedate = project.dcp_lastmilestonedate;
+    project.applicants = projectApplicants;
+
+    return projectFromTemplate(project, projectsTemplate);
+  });
+}
+
+
+/**
+ * Post-process projects for updating geoms, to get necessary data to use a geom metadata
+ * in the PostgreSQL `project_geoms` table, and add processed bbls.
+ *
+ * @param {Object[]} projects The raw project objects from CRM
+ * @param {Object[]} bbls The raw bbls entities from CRM
+ */
+function postProcessProjectsUpdateGeoms(projects, bbls) {
+  projects.forEach((project) => {
+    const uuid = project.dcp_projectid;
+    setPublicStatusSimp(project);
+    project.bbls = postProcessProjectsBbls(bbls, uuid);
+  });
+}
+
+/**
+ * Helper function to set derived field `dcp_publicstatus_simp` from `dcp_publicstatus_formatted`
+ *
+ * @param {Object} project The raw project to be updated
+ */
 function setPublicStatusSimp(project) {
   switch (project.dcp_publicstatus_formatted) {
     case 'Filed':
@@ -49,8 +110,23 @@ function setPublicStatusSimp(project) {
   }
 }
 
+/**
+ * Helper function to process bbls entity for single project.
+ *
+ * @param {Object[]} bbls The raw bbls from CRM
+ * @returns {String[]} Processed bbls, an array of Bbl numbers
+ */
 function postProcessProjectBbls(bbls) { return bbls.map(bbl => bbl.dcp_bblnumber); }
 
+/**
+ * Helper function to process actions entity for single project.
+ * Raw action `dcp_name`s are parsed into actioncode and dcp_name (which is a human-readable
+ * string description of the action), then filtered to only those included in ACTION_CODES
+ * (see below).
+ *
+ * @param {Object[]} actions The raw actions from CRM
+ * @returns {Object[]} Processed and filtered actions
+ */
 function postProcessProjectActions(actions) {
   return actions
     .filter((action) => {
@@ -69,6 +145,17 @@ function postProcessProjectActions(actions) {
     });
 }
 
+/**
+ * Helper function to process actions entity for single project.
+ * Raw milestones have a few fields renamed. If the milestone.zap_id is in the MILESTONES
+ * lookup, then additional fields are set from the MILESTONES lookup, and display_date and
+ * display_date_2 are set from other raw date fields. Milestones are then filtered to only
+ * those in ALLOWED_MILESTONES (see below)
+ *
+ * @param {Object[]} milestones The raw milestone entities from CRM
+ * @param {Object} project The project these milestones belong to, which contains fields added to the milestone //TODO necessary?
+ * @returns {Object[]} Processed and filtered milestones
+ */
 function postProcessProjectMilestones(milestones, project) {
   const ulurpNonUlurp = project.dcp_ulurp_nonulurp_formatted;
   const publicStatus = project.dcp_publicstatus_formatted;
@@ -106,45 +193,52 @@ function postProcessProjectMilestones(milestones, project) {
   }).filter(milestone => ALLOWED_MILESTONES.includes(milestone.milestonename));
 }
 
+/**
+ * Helper function to process keywords entity for single project.
+ *
+ * @param {Object[]} keywords The raw keyword entities from CRM
+ * @returns {String[]} Processed keywords, an array of keyword strings
+ */
 function postProcessProjectKeywords(keywords) {
   return keywords.map(keyword => keyword._dcp_keyword_value_formatted); // eslint-disable-line
 }
 
-function postProcessProjectApplicantTeam(applicantTeam) {
-  return applicantTeam.map((team) => {
+/**
+ * Helper function to process applicants entity for single project.
+ *
+ * @param {Object[]} applicants The raw applicant entities from CRM
+ * @response {Object[]} Processed applicants
+ */
+function postProcessProjectApplicants(applicants) {
+  return applicants.map((team) => {
     team.role = team.dcp_applicantrole_formatted;
-    team.name = team._dcp_applicant_customer_value_formatted; // eslint-disable-line 
+    team.name = team._dcp_applicant_customer_value_formatted; // eslint-disable-line
     return team;
   });
 }
 
-/* POST PROCESS FUNCTIONS FOR PROJECTS LIST */
-function postProcessProjects(projects, entities, projectsCenters = []) {
-  return projects.map((project) => {
-    const uuid = project.dcp_projectid;
-    const id = project.dcp_name;
-    const projectCenter = postProcessProjectsCenters(projectsCenters, id);
-    const {
-      projectActionTypes,
-      projectUlurpNumbers,
-    } = postProcessProjectsActions(entities.actions, uuid);
-    const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
-
-    project.center = projectCenter;
-    project.has_centroid = !!projectCenter.length;
-    project.actiontypes = projectActionTypes;
-    project.ulurpnumbers = projectUlurpNumbers;
-    project.lastmilestonedate = project.dcp_lastmilestonedate;
-    project.applicants = projectApplicants;
-
-    return projectFromTemplate(project, projectsTemplate);
-  });
-}
-
+/**
+ * Helper function to process project center for a single project in a projects list.
+ *
+ * @param {Object[]} centers The Array of project centers from PostgreSQL
+ * @param {String} projectId The projectId to get center for
+ * @returns {Point} The center point as Array [x, y] for the project
+ */
 function postProcessProjectsCenters(centers, projectId) {
-  return entitiesForProject(centers, projectId).map(center => center.center);
+  const [projectCenter] = entitiesForProject(centers, projectId).map(center => center.center);
+  return projectCenter || [];
 }
 
+/**
+ * Helper function to process action entities for single project in a projects list.
+ * Actions are filtered to only those in ACTION_CODE (see below), then processed into:
+ * - projectActionTypes: A de-duped list of human-readable project actions from the ACTION_TYPES lookup
+ * - projectUlurpNumbers: A ';'-separated string of ulurp numbers associated with the project
+ *
+ * @param {Object[]} actions The raw actions entities
+ * @param {String} projectId The projectId to get actions for
+ * @returns {Object} An object containing projectActionTypes
+ */
 function postProcessProjectsActions(actions, projectId) {
   const projectActions = entitiesForProject(actions, projectId)
     .filter(action => ACTION_CODES.includes(action.action_code));
@@ -155,6 +249,15 @@ function postProcessProjectsActions(actions, projectId) {
   };
 }
 
+/**
+ * Helper function to process applicants entities for single project in a projects list.
+ * Applicant names (_dcp_applicant_customer_value_formatted) are extracted, and returned as a
+ * ';'-separated string
+ *
+ * @param {Object[]} applicants The raw applicants entities
+ * @param {String} projectId The projectId to get applicants for
+ * @returns {String} String of applicants for project
+ */
 function postProcessProjectsApplicants(applicants, projectId) {
   const projectApplicants = entitiesForProject(applicants, projectId)
     .map(applicant => applicant._dcp_applicant_customer_value_formatted) // eslint-disable-line
@@ -163,27 +266,44 @@ function postProcessProjectsApplicants(applicants, projectId) {
   return dedupeList(projectApplicants).join(';');
 }
 
-function postProcessProjectsUpdateGeoms(projects, bbls) {
-  projects.forEach((project) => {
-    const uuid = project.dcp_projectid;
-    setPublicStatusSimp(project);
-    project.bbls = postProcessProjectsBbls(bbls, uuid);
-  });
+/**
+ * Helper function to process bbls entities for single project in a projects list.
+ *
+ * @param {Object[]} bbls The raw bbls entities
+ * @param {String} projectId The project id to get bbls for
+ * @returns {String[]} Processed bbls, an Array of bbl numbers
+ */
+function postProcessProjectsBbls(bbls, projectId) {
+  return entitiesForProject(bbls, projectId).map(bbl => bbl.dcp_bblnumber);
 }
 
-function postProcessProjectsBbls(bbls, uuid) {
-  return entitiesForProject(bbls, uuid).map(bbl => bbl.dcp_bblnumber);
-}
-
+/**
+ * Helper function to grab all entities for a given projectId
+ *
+ * @param {Object[]} entities The array of all entities
+ * @param {String} projectId The projectId to get entities for
+ * @returns {Object[]} The filtered entities for specified project
+ */
 function entitiesForProject(entities, projectId) {
   return entities.filter(entity => entity.projectid === projectId);
 }
 
-
+/**
+ * Helper function to create a formatted project from a template. Template is
+ * expected to be a POJO containing at least a 'fields' property, and optionally
+ * entities and entity_fields (See `/response-templates`).
+ *
+ * @param {Object} project The processed project object
+ * @param {Object} template The project template
+ * @returns {Object} The formatted object, containing exactly the fields defined in template
+ */
 function projectFromTemplate(project, template) {
   const { fields, entities = [], entity_fields } = template;
+
+  // Create all fields in formatted object from original
   const formatted = objectFromFields(project, fields);
 
+  // Create arrays for each entity type from original entity array
   entities.forEach((entityType) => {
     formatted[entityType] = project[entityType]
       .map(entity => objectFromFields(entity, entity_fields[entityType]));
@@ -192,6 +312,13 @@ function projectFromTemplate(project, template) {
   return formatted;
 }
 
+/**
+ * Helper function to make a formatted object from an original, given an array of fields to transfer
+ *
+ * @param {Object} object The original object to pull field values from
+ * @param {String[]} fields The Array of fields to pull into
+ * @returns {Object} The formatted object, containing all fields with values from original object
+ */
 function objectFromFields(object, fields) {
   const formatted = {};
   fields.forEach((field) => {
@@ -341,7 +468,8 @@ const MILESTONES = {
     display_description: 'A Draft Environmental Impact Statement must be completed prior to the City Planning Commission certifying or referring a project for public review.',
   },
   '780593bb-ecc2-e811-8156-1458d04d0698': {
-    display_name: 'CPC Review of Council Modification}', display_sequence: 58,
+    display_name: 'CPC Review of Council Modification}',
+    display_sequence: 58,
   },
 
   'a63beec4-dad0-e711-8116-1458d04e2fb8': {

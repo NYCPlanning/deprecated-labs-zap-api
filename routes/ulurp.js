@@ -4,9 +4,13 @@ const { projectForULURPXML } = require('../queries/project-xmls');
 
 const router = express.Router();
 
+/**
+ * Redirects to the route for a single project ID, if a project ID for the given ULURP
+ * number can be determined, or redirects to the unfiltered `/projects` route
+ */
 router.get('/:ulurpNumber', async (req, res) => {
   const {
-    app : { crmClient },
+    app: { crmClient },
     params: { ulurpNumber },
   } = req;
 
@@ -18,15 +22,17 @@ router.get('/:ulurpNumber', async (req, res) => {
 
   let url = 'https://zap.planning.nyc.gov/projects';
   try {
-    const { value: [project] } = await crmClient.doGet(`dcp_projects?fetchXml=${projectForULURPXML(ulurpNumber)}`)
-    if (project.dcp_name) {
+    // Fetch a project associated with the given ULURP number
+    const { value: [project] } = await crmClient.doGet(`dcp_projects?fetchXml=${projectForULURPXML(ulurpNumber)}`);
+    if (project && project.dcp_name) {
+      // Update redirect target to include project id, if exists
       url += `/${project.dcp_name}`;
-    }    
+    }
   } catch (error) {
-    console.log(`Unable to find project for ULURP Number ${ulurpNumber}:`, error);
+    console.log(`Unable to find project for ULURP Number ${ulurpNumber}:`, error); // eslint-disable-line
   }
 
-  res.redirect(301,url);
+  res.redirect(301, url);
 });
 
 module.exports = router;

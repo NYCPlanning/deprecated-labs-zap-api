@@ -3,6 +3,10 @@ const carto = require('../utils/carto');
 
 const router = express.Router();
 
+/**
+ * Redirects to an external resource for the CEQR id, if one is listed in the
+ * `ceqrview_projects` dataset, or redirects to ceqraccess homepage
+ */
 router.get('/:ceqrnumber', async (req, res) => {
   const { ceqrnumber } = req.params;
 

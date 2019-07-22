@@ -14,6 +14,9 @@ const ADAL_CONFIG = validateConfig({
   TOKEN_PATH: process.env.TOKEN_PATH,
 });
 
+/**
+ * Client for authenticating via Azure Active Direction Authentication
+ */
 class ADALClient {
   constructor() {
     const {
@@ -35,7 +38,7 @@ class ADALClient {
   /**
    * Returns a token for connecting to the CRM.
    * If a valid token exists, returns that. Otherwise, retrieves a new token via ADAL
-   * (Azure Active Direction Authentication) libraries using the provided config.
+   * libraries using the provided config.
    */
   async acquireToken() {
     return new Promise((resolve, reject) => {

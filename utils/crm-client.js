@@ -11,6 +11,10 @@ const CRM_URL = `${CRM_API_CONFIG.CRM_HOST}${CRM_API_CONFIG.CRM_URL_PATH}`;
 const BATCH_NAME = 'batch';
 const OBJECT_REFERENCE_RETRIES = process.env.OBJECT_REFERENCE_RETRIES || 1;
 
+/**
+ * Client for fetching resource from CRM via HTTP leveraging FetchXML
+ * (https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/use-fetchxml-construct-query)
+ */
 class CRMClient {
   constructor() {
     this.ADALClient = new ADALClient();
@@ -59,7 +63,7 @@ class CRMClient {
       const res = await fetch(`${CRM_URL}${query}`, options);
       let text = await res.text();
 
-      if(isBatch) {
+      if (isBatch) {
         text = CRMClient.extractBatchData(text);
       }
 
@@ -68,7 +72,7 @@ class CRMClient {
         return { status: res.status, content: json };
       } catch {
         // some HTTP errors are returned as a string, not a JSON response
-        return { status: res.status, content: { error: { message: text  } } };
+        return { status: res.status, content: { error: { message: text } } };
       }
     } catch (err) {
       console.log(err);  // eslint-disable-line
@@ -76,34 +80,6 @@ class CRMClient {
     }
   }
 
-  /**
-   * Extract the JSON string object data from batch POST response.
-   * Response format:
-      --batchresponse_[UUID]
-      Content-Type: application/http
-      Content-Transfer-Encoding: binary
-
-      HTTP/1.1 200 OK
-      Content-Type: application/json; odata.metadata = minimal
-      OData-Version: 4.0
-
-      [object data JSON string]
-      --batchresponse_[UUID]--
-   */
-  static extractBatchData(textContent) {
-    const batchStart = '--batchresponse_[-0-9a-fA-F]+\\s';
-    const headers = '(?:[-\\w\\s\\/\\.;:=]+\\s)\\s';
-    const httpStatus = 'HTTP\\/\\d\\.\\d\\s\\d+\\s[-\\s\\w]+\\s';
-    const jsonData = '(\\{.*\\})\\s+';
-    const batchEnd = '--batchresponse_[-0-9a-fA-F]+--';
-
-    const batchResponseRegExp = new RegExp(batchStart + headers + httpStatus + headers + jsonData + batchEnd);
-
-    const match = textContent.match(batchResponseRegExp)
-    if (match) {
-      return match[1];
-    }
-  }
   /**
    * Reviver function for json parsing CRM response body, to convert
    * timestamp strings to Date objects
@@ -159,13 +135,13 @@ class CRMClient {
     if (!res.content.error && res.status === 200) {
       return CRMClient.processGetResponse(res.content);
     }
-    
+
     console.log(`GET request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 
   /**
-   * Executes PATCH request. Returns the response content on success, or false on failure
+   * Executes PATCH request. Returns the parsed response content on success, or false on failure.
    */
   async doPatch(query, body) {
     const res = await this.doFetch('PATCH', query, body); // eslint-disable-line
@@ -178,7 +154,7 @@ class CRMClient {
   }
 
   /**
-   * Executes POST request with retry. Returns the response content on success, or false on failure.
+   * Executes POST request with retry. Returns the parsed response content on success, or false on failure.
    */
   async doPost(query, body, isBatch) {
     const res = await this.doFetchWithRetry('POST', query, body, isBatch);
@@ -190,24 +166,14 @@ class CRMClient {
     return false;
   }
 
+
+  /**
+   * Executes POST request against special batch endpoint ('/$batch'), with special batch body.
+   * Returns the parsed response content on success, or false on failure.
+   */
   async doBatchPost(query, fetchXML) {
     const batchBody = CRMClient.makeBatchBody(query, fetchXML);
-    return this.doPost('$batch', batchBody, true); 
-  }
-
-  static makeBatchBody(query, fetchXML) {
-    return `
---${BATCH_NAME}
-Content-Type: application/http
-Content-Transfer-Encoding: binary
-
-GET ${CRM_URL}${query}?fetchXml=${fetchXML} HTTP/1.1
-Content-Type: application/json
-OData-Version: 4.0
-OData-MaxCersion: 4.0
-
---${BATCH_NAME}--
-`;
+    return this.doPost('$batch', batchBody, true);
   }
 
   /**
@@ -221,6 +187,37 @@ OData-MaxCersion: 4.0
 
     console.log(`DELETE request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
+  }
+
+  /**
+   * Extract the JSON string object data from batch POST response.
+   * Response format:
+      --batchresponse_[UUID]
+      Content-Type: application/http
+      Content-Transfer-Encoding: binary
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json; odata.metadata = minimal
+      OData-Version: 4.0
+
+      [object data JSON string]
+      --batchresponse_[UUID]--
+   */
+  static extractBatchData(textContent) {
+    const batchStart = '--batchresponse_[-0-9a-fA-F]+\\s';
+    const headers = '(?:[-\\w\\s\\/\\.;:=]+\\s)\\s';
+    const httpStatus = 'HTTP\\/\\d\\.\\d\\s\\d+\\s[-\\s\\w]+\\s';
+    const jsonData = '(\\{.*\\})\\s+';
+    const batchEnd = '--batchresponse_[-0-9a-fA-F]+--';
+
+    const batchResponseRegExp = new RegExp(batchStart + headers + httpStatus + headers + jsonData + batchEnd);
+
+    const match = textContent.match(batchResponseRegExp);
+    if (match) {
+      return match[1];
+    }
+
+    return '';
   }
 
   /**
@@ -278,6 +275,24 @@ OData-MaxCersion: 4.0
     }
 
     return (index && suffix) ? propertyName.substring(0, index) + suffix : propertyName;
+  }
+
+  /**
+   * Creates a batch POST body for the given FetchXML GET request
+   */
+  static makeBatchBody(query, fetchXML) {
+    return `
+--${BATCH_NAME}
+Content-Type: application/http
+Content-Transfer-Encoding: binary
+
+GET ${CRM_URL}${query}?fetchXml=${fetchXML} HTTP/1.1
+Content-Type: application/json
+OData-Version: 4.0
+OData-MaxCersion: 4.0
+
+--${BATCH_NAME}--
+`;
   }
 }
 

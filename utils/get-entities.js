@@ -2,6 +2,13 @@ const { projectsXMLs } = require('../queries/projects-xmls');
 const { projectXMLs } = require('../queries/project-xmls');
 const pluralizeProjectEntity = require('./pluralize-project-entity');
 
+/**
+ * Fetch entities for projects. Actions, milestones, and applicants are fetched.
+ *
+ * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
+ * @param {String[]} projectIds The projectIds to fetch entities for
+ * @returns {Object} Object containing actions, milestones, and applicants entity arrays
+ */
 async function getProjectsEntities(crmClient, projectIds) {
   if (!projectIds.length) {
     return {};
@@ -20,6 +27,13 @@ async function getProjectsEntities(crmClient, projectIds) {
   };
 }
 
+/**
+ * Helper function to get a single entity type for projects.
+ *
+ * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
+ * @param {String} entityType The type of entity to fetch
+ * @param {String[]} projectIds The projectIds to fetch entities for
+ */
 function getProjectsEntity(crmClient, entityType, projectIds) {
   const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
   const entityXML = projectsXMLs[entityType](projectIds);
@@ -27,7 +41,14 @@ function getProjectsEntity(crmClient, entityType, projectIds) {
   return crmClient.doGet(`${entityName}?fetchXml=${entityXML}`).then(result => result.value);
 }
 
-async function getProjectEntities(crmClient, project) {
+/**
+ * Fetch entities for project. Bbls, actions, milestones, keywords, applicants, and addresses are fetched.
+ *
+ * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
+ * @param {String} projectId The projectId to fetch entities for
+ * @returns {Object} Object containing bbls, actions, milestones, keywords, applicants, and addresses entity arrays
+ */
+async function getProjectEntities(crmClient, projectId) {
   const [
     bbls,
     actions,
@@ -36,12 +57,12 @@ async function getProjectEntities(crmClient, project) {
     applicants,
     addresses,
   ] = await Promise.all([
-    getProjectEntity(crmClient, 'bbl', project),
-    getProjectEntity(crmClient, 'action', project),
-    getProjectEntity(crmClient, 'milestone', project),
-    getProjectEntity(crmClient, 'keyword', project),
-    getProjectEntity(crmClient, 'applicant', project),
-    getProjectEntity(crmClient, 'address', project),
+    getProjectEntity(crmClient, 'bbl', projectId),
+    getProjectEntity(crmClient, 'action', projectId),
+    getProjectEntity(crmClient, 'milestone', projectId),
+    getProjectEntity(crmClient, 'keyword', projectId),
+    getProjectEntity(crmClient, 'applicant', projectId),
+    getProjectEntity(crmClient, 'address', projectId),
   ]);
 
   return {
@@ -54,8 +75,14 @@ async function getProjectEntities(crmClient, project) {
   };
 }
 
-function getProjectEntity(crmClient, entityType, project) {
-  const projectId = project.dcp_projectid;
+/**
+ * Helper function to get a single entity type for project.
+ *
+ * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
+ * @param {String} entityType The type of entity to fetch
+ * @param {String} The projectId to fetch entities for
+ */
+function getProjectEntity(crmClient, entityType, projectId) {
   const entityName = `dcp_project${pluralizeProjectEntity(entityType)}`;
   const entityXML = projectXMLs[entityType](projectId);
 

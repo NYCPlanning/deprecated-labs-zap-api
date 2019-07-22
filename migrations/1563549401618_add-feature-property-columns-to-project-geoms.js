@@ -13,7 +13,7 @@ exports.up = (pgm) => {
   pgm.sql(`
     UPDATE project_geoms
     SET
-      projectname = normalized_projects.dcp_projectname
+      projectname = normalized_projects.dcp_projectname,
       publicstatus_simp = normalized_projects.dcp_publicstatus_simp,
       lastmilestonedate = normalized_projects.dcp_lastmilestonedate
     FROM normalized_projects

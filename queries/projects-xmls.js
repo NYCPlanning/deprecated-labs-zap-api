@@ -4,10 +4,8 @@ const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
 const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
 
-function projectsXML(queryParams, projectIds) {
+function allProjectsXML(queryParams, projectIds) {
   const {
-    page = 1,
-    itemsPerPage = 30,
     'community-districts': community_districts = [],
     'action-types': action_types = [],
     boroughs = [],
@@ -46,10 +44,11 @@ function projectsXML(queryParams, projectIds) {
   );
 
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_project">`,
-        `<order attribute="createdon" descending="true" />`,
-        ...getProjectsAttributes(),
+        `<order attribute="dcp_lastmilestonedate" descending="true" />`,
+        `<attribute name="dcp_name"/>`,
+        `<attribute name="dcp_projectid"/>`,
         `<filter type="and">`,
           ...projectFilters,
           `<condition attribute="dcp_visibility" operator="eq" value="${GENERAL_PUBLIC}"/>`,
@@ -60,46 +59,39 @@ function projectsXML(queryParams, projectIds) {
   ].join('');
 }
 
-function projectsDownloadXML(projectIds, page, count) {
+function projectsXML(projectIds, page, itemsPerPage) {
   return [
-   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}">`,
       `<entity name="dcp_project">`,
-        `<order attribute="createdon" descending="true" />`,
-        ...getProjectsAttributes(),
+        `<order attribute="dcp_lastmilestonedate" descending="true" />`,
+        `<attribute name="dcp_name"/>`,
+        `<attribute name="dcp_projectid"/>`,
+        `<attribute name="dcp_ceqrnumber"/>`,
+        `<attribute name="dcp_ceqrtype"/>`,
+        `<attribute name="dcp_projectname"/>`,
+        `<attribute name="dcp_projectbrief"/>`,
+        `<attribute name="dcp_borough"/>`,
+        `<attribute name="dcp_ulurp_nonulurp"/>`,
+        `<attribute name="dcp_communitydistricts"/>`,
+        `<attribute name="dcp_publicstatus"/>`,
+        `<attribute name="dcp_certifiedreferred"/>`,
+        `<attribute name="createdon"/>`,
+        `<attribute name="dcp_femafloodzonea"/>`,
+        `<attribute name="dcp_femafloodzonecoastala"/>`,
+        `<attribute name="dcp_femafloodzoneshadedx"/>`,
+        `<attribute name="dcp_femafloodzonev"/>`,
         `<filter type="and">`,
-          ...buildProjectIdsFilters(projectIds),
+          ...buildProjectIdsFilter(projectIds),
         `</filter>`,
       `</entity>`,
     `</fetch>`,
   ].join('');
 }
 
-function getProjectsAttributes() {
-  return [
-    `<attribute name="dcp_name"/>`,
-    `<attribute name="dcp_projectid"/>`,
-    `<attribute name="dcp_ceqrnumber"/>`,
-    `<attribute name="dcp_ceqrtype"/>`,
-    `<attribute name="dcp_projectname"/>`,
-    `<attribute name="dcp_projectbrief"/>`,
-    `<attribute name="dcp_borough"/>`,
-    `<attribute name="dcp_ulurp_nonulurp"/>`,
-    `<attribute name="dcp_communitydistricts"/>`,
-    `<attribute name="dcp_publicstatus"/>`,
-    `<attribute name="dcp_certifiedreferred"/>`,
-    `<attribute name="createdon"/>`,
-    `<attribute name="dcp_femafloodzonea"/>`,
-    `<attribute name="dcp_femafloodzonecoastala"/>`,
-    `<attribute name="dcp_femafloodzoneshadedx"/>`,
-    `<attribute name="dcp_femafloodzonev"/>`,
-  ];
-}
-
 function projectsUpdateGeoms(modifiedOn, page, count) {
   return [
    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" returntotalrecordcount="true">`,
       `<entity name="dcp_project">`,
-        `<order attribute="createdon" descending="true" />`,
         `<attribute name="dcp_name" />`,
         `<attribute name="dcp_projectname" />`,
         `<attribute name="dcp_publicstatus" />`,
@@ -220,7 +212,7 @@ function buildProjectFilters(
   dcp_publicstatus,
 ) {
   return [
-    ...buildProjectIdsFilters(projectIds),
+    ...buildProjectIdsFilter(projectIds),
     ...buildFloodzoneFilters(dcp_femafloodzonea, dcp_femafloodzonev, dcp_femafloodzonecoastala, dcp_femafloodzoneshadedx),
     ...buildCertifiedReferredFilters(dcp_certifiedreferred),
     ...buildCommunityDistrictsFilters(community_districts),
@@ -244,7 +236,7 @@ function buildLinkFilters(
   ];
 }
 
-function buildProjectIdsFilters(projectIds) {
+function buildProjectIdsFilter(projectIds) {
   if (projectIds.length) {
     return [
       `<condition attribute="dcp_name" operator="in">`,
@@ -343,10 +335,10 @@ function buildULURPNonULURPFilter(ulurpNonulurp) {
 }
 
 function buildPublicStatusFilter(publicStatus) {
-  const filter = [`<filter type="or">`];
   // build filter for UNKNOWN ( i.e. NOT any of the known statuses)
+  const unknownFilter = [];
   if (publicStatus.includes('Unknown')) {
-    filter.push(
+    unknownFilter.push(
      `<condition attribute="dcp_publicstatus" operator="not-in">`,
       ...KNOWN_STATUSES.map(status => `<value>${STATUS[status]}</value>`),
     `</condition>`,
@@ -355,27 +347,31 @@ function buildPublicStatusFilter(publicStatus) {
 
   // build filter for known statuses
   const knownStatus = publicStatus.filter(status => KNOWN_STATUSES.includes(status));
+  const knownFilter = [];
   if (knownStatus.length) {
-    filter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
+    knownFilter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
     if (publicStatus.includes('Filed')) {
-      filter.push(`<value>${STATUS.Filed}</value>`);
+      knownFilter.push(`<value>${STATUS.Filed}</value>`);
     }
 
     if (publicStatus.includes('In Public Review')) {
-      filter.push(`<value>${STATUS.Certified}</value>`);
+      knownFilter.push(`<value>${STATUS.Certified}</value>`);
     }
 
     if (publicStatus.includes('Completed')) {
-      filter.push(
+      knownFilter.push(
         `<value>${STATUS.Approved}</value>`,
         `<value>${STATUS.Withdrawn}</value>`,
       );
     }
-    filter.push(`</condition>`);
+    knownFilter.push(`</condition>`);
   }
 
-  filter.push(`</filter>`);
-  return filter;
+  if (knownFilter.length && unknownFilter.length) {
+    return [`<filter type="or">`, ...knownFilter, ...unknownFilter, `</filter>`];
+  }
+
+  return [...knownFilter, ...unknownFilter];
 }
 
 function buildBlockFilters(block) {
@@ -490,7 +486,7 @@ const COAPPLICANT = '717170002';
 module.exports = {
   projectsXMLs,
   projectsXML,
-  projectsDownloadXML,
+  allProjectsXML,
   projectsUpdateGeoms,
   projectsBblsXML: bblsXML,
 };
