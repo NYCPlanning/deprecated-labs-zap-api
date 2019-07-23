@@ -5,6 +5,7 @@ const projectTemplate = require('../response-templates/project');
 const projectsTemplate = require('../response-templates/projects');
 const {
   keyForValue,
+  PUBLICSTATUS,
   CEQRTYPE,
   BOROUGH,
   ULURP,
@@ -20,16 +21,15 @@ const {
  * @param {Object} geo The geo data from PostgreSQL
  * @returns {Object} The processed and formatted project object
  */
-async function postProcessProject(project, entities, geo) {
-  setPublicStatusSimp(project);
-
+async function postProcessProject(rawProject, entities, geo) {
+  const project = parsePrefixedProperties(rawProject);
   project.jdcp_easeis = project.dcp_easeis_formatted;
   project.dcp_borough = project.dcp_borough_formatted;
   project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
   project.dcp_leaddivision = project.dcp_leaddivision_formatted;
   project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
   project.dcp_leadagencyforenvreview = project._dcp_leadagencyforenvreview_value; // eslint-disable-line
-
+  project.dcp_publicstatus_simp = getPublicStatusSimp(project.dcp_publicstatus_formatted);
   // add list entities
   project.bbls = postProcessProjectBbls(entities.bbls);
   project.keywords = postProcessProjectKeywords(entities.keywords);
@@ -65,6 +65,7 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
     project.dcp_ceqrtype = keyForValue(CEQRTYPE, project.dcp_ceqrtype);
     project.dcp_borough = keyForValue(BOROUGH, project.dcp_borough);
     project.dcp_ulurp_nonulurp = keyForValue(ULURP, project.dcp_ulurp_nonulurp);
+    project.dcp_publicstatus_simp = getPublicStatusSimp(keyForValue(PUBLICSTATUS, project.dcp_publicstatus));
 
     // add  centers
     const id = project.dcp_name;
@@ -90,7 +91,7 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
 
 
 /**
- * Post-processes projects for updating geoms, to get necessary data to use a geom metadata
+ * Post-processes projects for updating geoms to get projects data to use as  geom metadata
  * in the PostgreSQL `project_geoms` table, and add processed bbls.
  *
  * @param {Object[]} projects The raw project objects from CRM
@@ -99,16 +100,12 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
 function postProcessProjectsUpdateGeoms(projects, bbls) {
   projects.forEach((project) => {
     const uuid = project.dcp_projectid;
-    setPublicStatusSimp(project);
+    project.dcp_publicstatus_simp = getPublicStatusSimp(keyForValue(PUBLICSTATUS, project.dcp_publicstatus));
     project.bbls = postProcessProjectsBbls(bbls, uuid);
   });
 }
 
 /**
- * NOTE: CURRENTLY UNUSED -- likeminded implemented this, but I cannot find a case where
- * it is necessary to process a project or project child entity. Leaving it here so we
- * don't lose the logic, but as of right now it is not required/useful for project processing.
- *
  * Normalizes prefixed property names, and returns an object containing all properties
  * with correct (either original or normalized) name.
  */
@@ -155,22 +152,20 @@ function getNormalizedPropertyName(propertyName) {
 /**
  * Helper function to set derived field `dcp_publicstatus_simp` from `dcp_publicstatus_formatted`
  *
- * @param {Object} project The raw project to be updated
+ * @param {String} publicStatus The formatted dcp_publicstatus string
+ * @param {String} The formatted dcp_publicstatus_simp string
  */
-function setPublicStatusSimp(project) {
-  switch (project.dcp_publicstatus_formatted) {
+function getPublicStatusSimp(publicStatus) {
+  switch (publicStatus) {
     case 'Filed':
-      project.dcp_publicstatus_simp = 'Filed';
-      break;
+      return 'Filed';
     case 'Certified':
-      project.dcp_publicstatus_simp = 'In Public Review';
-      break;
+      return 'In Public Review';
     case 'Approved':
     case 'Withdrawn':
-      project.dcp_publicstatus_simp = 'Completed';
-      break;
+      return 'Completed';
     default:
-      project.dcp_publicstatus_simp = 'Unknown';
+      return 'Unknown';
   }
 }
 
@@ -180,7 +175,12 @@ function setPublicStatusSimp(project) {
  * @param {Object[]} bbls The raw bbls from CRM
  * @returns {String[]} Processed bbls, an array of Bbl numbers
  */
-function postProcessProjectBbls(bbls) { return bbls.map(bbl => bbl.dcp_bblnumber); }
+function postProcessProjectBbls(bbls) {
+  return bbls.map((rawBbl) => {
+    const bbl = parsePrefixedProperties(rawBbl);
+    return bbl.dcp_bblnumber;
+  });
+}
 
 /**
  * Helper function to process actions entity for single project.
@@ -193,20 +193,20 @@ function postProcessProjectBbls(bbls) { return bbls.map(bbl => bbl.dcp_bblnumber
  */
 function postProcessProjectActions(actions) {
   return actions
-    .filter((action) => {
+    .map((rawAction) => {
+      const action = parsePrefixedProperties(rawAction);
+      action.statuscode = action.statuscode_formatted;
+      action.dcp_zoningresolution = action._dcp_zoningresolution_value_formatted; // eslint-disable-line
+
       const actioncodeMatch = action.dcp_name.match('^(\\w+)\\s*-{1}\\s*(.*)\\s');
       if (actioncodeMatch) {
         const [, actioncode, dcpName] = actioncodeMatch;
-        if (ACTION_CODES.includes(actioncode)) {
-          action.actioncode = actioncode;
-          action.dcp_name = dcpName;
-          action.statuscode = action.statuscode_formatted;
-          return true;
-        }
+        action.actioncode = actioncode;
+        action.dcp_name = dcpName;
       }
-
-      return false;
-    });
+      return action;
+    })
+    .filter(action => ACTION_CODES.includes(action.actioncode));
 }
 
 /**
@@ -223,7 +223,8 @@ function postProcessProjectActions(actions) {
 function postProcessProjectMilestones(milestones, project) {
   const ulurpNonUlurp = project.dcp_ulurp_nonulurp_formatted;
   const publicStatus = project.dcp_publicstatus_formatted;
-  return milestones.map((milestone) => {
+  return milestones.map((rawMilestone) => {
+    const milestone = parsePrefixedProperties(rawMilestone);
     milestone.milestonename = milestone._dcp_milestone_value_formatted; // eslint-disable-line
     milestone.statuscode = milestone.statuscode_formatted;
     milestone.zap_id = milestone._dcp_milestone_value; // eslint-disable-line
@@ -264,7 +265,10 @@ function postProcessProjectMilestones(milestones, project) {
  * @returns {String[]} Processed keywords, an array of keyword strings
  */
 function postProcessProjectKeywords(keywords) {
-  return keywords.map(keyword => keyword._dcp_keyword_value_formatted); // eslint-disable-line
+  return keywords.map((rawKeyword) => {
+    const keyword = parsePrefixedProperties(rawKeyword);
+    return keyword._dcp_keyword_value_formatted; // eslint-disable-line
+  });
 }
 
 /**
@@ -274,7 +278,8 @@ function postProcessProjectKeywords(keywords) {
  * @response {Object[]} Processed applicants
  */
 function postProcessProjectApplicants(applicants) {
-  return applicants.map((team) => {
+  return applicants.map((rawTeam) => {
+    const team = parsePrefixedProperties(rawTeam);
     team.role = team.dcp_applicantrole_formatted;
     team.name = team._dcp_applicant_customer_value_formatted; // eslint-disable-line
     return team;

@@ -35,6 +35,7 @@ const projectTemplate = {
     actions: [
       'dcp_name',
       'actioncode',
+      'statuscode',
       'dcp_ulurpnumber',
       'dcp_prefix',
       'dcp_ccresolutionnumber',
