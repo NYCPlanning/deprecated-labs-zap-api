@@ -1,23 +1,36 @@
+/**
+ * Queries for getting and setting geo data in zap-api PostgreSQL database.
+ * Geo data supplements projects data from CRM, providing centroids for projects
+ * returned in the 'list' view (`/projects`), and BBL multipolygons for individual
+ * projects returned in the 'show' view (`/projects/id`). Geo data source of truth
+ * is mappluto dataset in carto, and is synced into the PostgreSQL cluster via the
+ * `/update-geometries` route in this API.
+ */
+
+// Get project centers for `/projects` response
 const centers = `
-  SELECT 
+  SELECT
     projectid,
     ARRAY[ST_X(centroid), ST_Y(centroid)] AS center
   FROM  project_geoms
   WHERE projectid IN ($1:list)
 `;
 
+// Get project bbls for `/projects/id` response
 const bbl_multipolygon = `
   SELECT ST_AsGeoJSON(polygons, 6) AS geom
   FROM project_geoms
   WHERE projectid = $1
 `;
 
+// Get projects bbls for `/update-geometries`
 const bbl_multipolygons = `
   SELECT ST_AsGeoJSON(polygons, 6) AS geom
   FROM project_geoms
   WHERE projectid IN ($1:list)
 `;
 
+// Get radius-bounded project ids for `/projects` filters
 const radius_search = `
   SELECT projectid
   FROM project_geoms
@@ -28,6 +41,7 @@ const radius_search = `
   )
 `;
 
+// Upsert geoms data for `/update-geometries`
 const upsert_geoms = `
   INSERT INTO project_geoms(
     projectid,
@@ -47,6 +61,7 @@ const upsert_geoms = `
     lastmilestonedate = $6
 `;
 
+// Get geoms from carto for `/update-geometries`
 const carto_get_geoms = `
   SELECT
     ST_Multi(ST_Union(the_geom)) AS polygons,
@@ -55,6 +70,7 @@ const carto_get_geoms = `
   WHERE bbl IN ($1:list)
 `;
 
+// Get vector tile for `/tiles`
 const generate_vector_tile = `
   WITH tilebounds (geom) AS ( SELECT  ST_MakeEnvelope($1, $2, $3, $4, 3857))
   SELECT ST_AsMVT(tile, 'project-centroids', 4096, 'geom')
@@ -77,6 +93,7 @@ const generate_vector_tile = `
     DESC
   ) tile
 `;
+
 module.exports = {
   centers,
   bbl_multipolygon,

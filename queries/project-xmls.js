@@ -1,4 +1,9 @@
 /* eslint-disable indent */
+/**
+ * This file contains functions for generating FetchXML query strings used to
+ * query single project data from CRM.
+ */
+
 const {
   VISIBILITY,
   STATUSCODE,
@@ -6,10 +11,11 @@ const {
   APPLICANTROLE,
 } = require('../utils/lookups');
 
-const escape = str => str.replace(/'/g, `''`);
-const escapeFetchParam = str => encodeURIComponent(escape(str));
-const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
+const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-helpers');
 
+/**
+ * Returns FetchXML query param for fetching a single project for the `/project/id` route
+ */
 function projectXML(projectName) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" top="1">`,
@@ -49,6 +55,9 @@ function projectXML(projectName) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching bbls for a single project
+ */
 function bblsXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -64,6 +73,9 @@ function bblsXML(projectId) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching actions for a single project
+ */
 function actionsXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -86,6 +98,9 @@ function actionsXML(projectId) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching milestones for a single project
+ */
 function milestonesXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -114,6 +129,9 @@ function milestonesXML(projectId) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching keywords for a single project
+ */
 function keywordsXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -129,7 +147,10 @@ function keywordsXML(projectId) {
   ].join('');
 }
 
-function applicantTeamXML(projectId) {
+/**
+ * Returns FetchXML query param for fetching applicants for a single project
+ */
+function applicantXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectapplicant">`,
@@ -149,6 +170,9 @@ function applicantTeamXML(projectId) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching addresses for a single project
+ */
 function addressXML(projectId) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -167,6 +191,9 @@ function addressXML(projectId) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML for fetching a single project id (called dcp_name in CRM) by ulurp number
+ */
 function projectForULURPXML(ulurpNumber) {
   return [
      `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" top="1">`,
@@ -187,7 +214,7 @@ const projectXMLs = {
   action: actionsXML,
   milestone: milestonesXML,
   keyword: keywordsXML,
-  applicant: applicantTeamXML,
+  applicant: applicantXML,
   address: addressXML,
 };
 

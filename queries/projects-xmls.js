@@ -1,19 +1,30 @@
 /* eslint-disable indent */
+/**
+ * This file contains functions for generating FetchXML query strings used to
+ * query multiple projects data from CRM.
+ */
+
 const {
   VISIBILITY,
   ULURP,
   STATUSCODE,
   PUBLICSTATUS,
-  KNOWN_STATUSES,
   BOROUGH,
   APPLICANTROLE,
-  MILESTONE_NAMES, 
+  MILESTONE_NAMES,
 } = require('../utils/lookups');
 
-const escape = str => str.replace(/'/g, `''`);
-const escapeFetchParam = str => encodeURIComponent(escape(str));
-const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
+const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-helpers');
 
+/**
+ * Returns FetchXML query param for fetching ALL projects that match a given set of project
+ * filters for the `/projects` route. This query should ideally only be run once for a given
+ * set of filters, and then the filterId should be used to page through the results.
+ *
+ * TODO: Implement optional "get-all" functionality (page=0 ?) where this query is run with
+ * all attributes included (see projectsXML), and the full result is processed and returned to
+ * the user. Current state: pagination is enforced.
+ */
 function allProjectsXML(queryParams, projectIds) {
   const {
     'community-districts': community_districts = [],
@@ -69,6 +80,9 @@ function allProjectsXML(queryParams, projectIds) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching a page of projects results for `/projects` route
+ */
 function projectsXML(projectIds, page, itemsPerPage) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}">`,
@@ -98,30 +112,9 @@ function projectsXML(projectIds, page, itemsPerPage) {
   ].join('');
 }
 
-function projectsUpdateGeoms(modifiedOn, page, count) {
-  return [
-   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" returntotalrecordcount="true">`,
-      `<entity name="dcp_project">`,
-        `<attribute name="dcp_name" />`,
-        `<attribute name="dcp_projectname" />`,
-        `<attribute name="dcp_publicstatus" />`,
-        `<attribute name="dcp_lastmilestonedate" />`,
-        `<filter type="and">`,
-          `<condition attribute="dcp_visibility" operator="eq" value="${GENERAL_PUBLIC}" />`,
-          `<condition attribute="modifiedon" operator="gt" value="${escapeFetchParam(modifiedOn.toISOString())}" />`,
-        `</filter>`,
-        `<link-entity name="dcp_projectbbl" from="dcp_project" to="dcp_projectid" link-type="inner" alias="bbl">`,
-          `<filter type="and">`,
-            `<condition attribute="modifiedon" operator="gt" value="${escapeFetchParam(modifiedOn.toISOString())}" />`,
-            `<condition attribute="statuscode" operator="eq" value="1" />`,
-            `<condition attribute="dcp_bblnumber" operator="not-null" />`,
-          `</filter>`,
-        `</link-entity>`,
-      `</entity>`,
-    `</fetch>`,
-  ].join('');
-}
-
+/**
+ * Returns FetchXML query param for fetching actions for a set of projects
+ */
 function actionsXML(projectIds) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -143,6 +136,9 @@ function actionsXML(projectIds) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching milestones for a set of projects
+ */
 function milestonesXML(projectIds) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" aggregate="true">`,
@@ -167,6 +163,9 @@ function milestonesXML(projectIds) {
   ].join('');
 }
 
+/**
+ * Returns FetchXML query param for fetching applicants for a set of projects
+ */
 function applicantsXML(projectIds) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -187,6 +186,44 @@ function applicantsXML(projectIds) {
   ].join('');
 }
 
+// Used by `/projects` route
+const projectsXMLs = {
+  action: actionsXML,
+  milestone: milestonesXML,
+  applicant: applicantsXML,
+};
+
+/**
+ * Returns FetchXML query param for fetching projects within a lookback window; used
+ * to select projects for updating geometires by the `/update-geometries` route
+ */
+function projectsUpdateGeoms(modifiedOn, page, count) {
+  return [
+   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" returntotalrecordcount="true">`,
+      `<entity name="dcp_project">`,
+        `<attribute name="dcp_name" />`,
+        `<attribute name="dcp_projectname" />`,
+        `<attribute name="dcp_publicstatus" />`,
+        `<attribute name="dcp_lastmilestonedate" />`,
+        `<filter type="and">`,
+          `<condition attribute="dcp_visibility" operator="eq" value="${VISIBILITY.GENERAL_PUBLIC}" />`,
+          `<condition attribute="modifiedon" operator="gt" value="${escapeFetchParam(modifiedOn.toISOString())}" />`,
+        `</filter>`,
+        `<link-entity name="dcp_projectbbl" from="dcp_project" to="dcp_projectid" link-type="inner" alias="bbl">`,
+          `<filter type="and">`,
+            `<condition attribute="modifiedon" operator="gt" value="${escapeFetchParam(modifiedOn.toISOString())}" />`,
+            `<condition attribute="statuscode" operator="eq" value="1" />`,
+            `<condition attribute="dcp_bblnumber" operator="not-null" />`,
+          `</filter>`,
+        `</link-entity>`,
+      `</entity>`,
+    `</fetch>`,
+  ].join('');
+}
+
+/**
+ * Returns FetchXML query param for fetching bbls for a set of projects
+ */
 function bblsXML(projectIds) {
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
@@ -201,13 +238,12 @@ function bblsXML(projectIds) {
   ].join('');
 }
 
-const projectsXMLs = {
-  action: actionsXML,
-  milestone: milestonesXML,
-  applicant: applicantsXML,
-};
+// used in the `/update-geometries` route
+const projectsBblsXML = bblsXML;
 
-/* Helper functions to build project filter XMLs */
+/**
+ * Helper function to build project filter XML arrays
+ */
 function buildProjectFilters(
   projectIds,
   dcp_femafloodzonea,
@@ -233,6 +269,9 @@ function buildProjectFilters(
   ];
 }
 
+/**
+ * Helper function to build link filter XML arrays
+ */
 function buildLinkFilters(
   block,
   action_types,
@@ -246,6 +285,9 @@ function buildLinkFilters(
   ];
 }
 
+/**
+ * Helper function to build filter for projectIds against project.dcp_name
+ */
 function buildProjectIdsFilter(projectIds) {
   if (projectIds.length) {
     return [
@@ -258,6 +300,9 @@ function buildProjectIdsFilter(projectIds) {
   return [];
 }
 
+/**
+ * Helper function to build filter for projectUUIDs against dcp_project field on a project entity
+ */
 function buildProjectUUIDsFilters(projectUUIDs) {
   if (projectUUIDs.length) {
     return [
@@ -271,6 +316,9 @@ function buildProjectUUIDsFilters(projectUUIDs) {
 }
 
 
+/**
+ * Helper function to build filter for floodzone fields on dcp_project
+ */
 function buildFloodzoneFilters(a, v, coastal_a, shaded_x) {
   const filter = [];
   if (a) filter.push(`<condition attribute="dcp_femafloodzonea" operator="eq" value="true" />`);
@@ -281,6 +329,9 @@ function buildFloodzoneFilters(a, v, coastal_a, shaded_x) {
   return filter;
 }
 
+/**
+ * Helper function to build filter for certified-referred date range on dcp_project
+ */
 function buildCertifiedReferredFilters(certifiedReferred) {
   if (certifiedReferred.length) {
     const start = new Date(certifiedReferred[0] * 1000);
@@ -294,6 +345,9 @@ function buildCertifiedReferredFilters(certifiedReferred) {
   return [];
 }
 
+/**
+ * Helper function to build filter for community districts on dcp_project
+ */
 function buildCommunityDistrictsFilters(communityDistricts) {
   if (communityDistricts.length) {
     return [
@@ -306,6 +360,9 @@ function buildCommunityDistrictsFilters(communityDistricts) {
   return [];
 }
 
+/**
+ * Helper function to build filter for boroughs on dcp_project
+ */
 function buildBoroughFilters(boroughs) {
   if (boroughs.length) {
     return [
@@ -318,6 +375,10 @@ function buildBoroughFilters(boroughs) {
   return [];
 }
 
+/**
+ * Helper function to build project applicant text filter on dcp_project, doing 'like'
+ * text matching on  dcp_projectbrief, dcp_projectname, and dcp_ceqrnumber
+ */
 function buildProjectApplicantTextFilter(applicantText) {
   if (applicantText) {
     return [
@@ -332,6 +393,9 @@ function buildProjectApplicantTextFilter(applicantText) {
   return [];
 }
 
+/**
+ * Helper function to build ulurp-nonulurp filter on dcp_project
+ */
 function buildULURPNonULURPFilter(ulurpNonulurp) {
   if (ulurpNonulurp.length) {
     return [
@@ -344,6 +408,10 @@ function buildULURPNonULURPFilter(ulurpNonulurp) {
   return [];
 }
 
+/**
+ * Helper function to build public status filter on dcp_project,
+ * translating the derived `publicstatus_simp` field back into dcp_publicstatus
+ */
 function buildPublicStatusFilter(publicStatus) {
   const knownStatuses = Object.keys(PUBLICSTATUS);
   // build filter for UNKNOWN ( i.e. NOT any of the known statuses)
@@ -362,17 +430,17 @@ function buildPublicStatusFilter(publicStatus) {
   if (knownStatus.length) {
     knownFilter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
     if (publicStatus.includes('Filed')) {
-      knownFilter.push(`<value>${STATUS.Filed}</value>`);
+      knownFilter.push(`<value>${PUBLICSTATUS.Filed}</value>`);
     }
 
     if (publicStatus.includes('In Public Review')) {
-      knownFilter.push(`<value>${STATUS.Certified}</value>`);
+      knownFilter.push(`<value>${PUBLICSTATUS.Certified}</value>`);
     }
 
     if (publicStatus.includes('Completed')) {
       knownFilter.push(
-        `<value>${STATUS.Approved}</value>`,
-        `<value>${STATUS.Withdrawn}</value>`,
+        `<value>${PUBLICSTATUS.Approved}</value>`,
+        `<value>${PUBLICSTATUS.Withdrawn}</value>`,
       );
     }
     knownFilter.push(`</condition>`);
@@ -385,6 +453,9 @@ function buildPublicStatusFilter(publicStatus) {
   return [...knownFilter, ...unknownFilter];
 }
 
+/**
+ * Helper function to build bbl filter on dcp_projectbbl (link filter)
+ */
 function buildBlockFilters(block) {
   if (block) {
     return [
@@ -399,6 +470,9 @@ function buildBlockFilters(block) {
   return [];
 }
 
+/**
+ * Helper function to build action types and ulurp number filters on dcp_projectaction (link filter)
+ */
 function buildActionFilters(actionTypes, ulurpNumber) {
   if (actionTypes.length || ulurpNumber) {
     const filter = [`<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`];
@@ -428,6 +502,9 @@ function buildActionFilters(actionTypes, ulurpNumber) {
   return [];
 }
 
+/**
+ * Helper function to build applicant name filter on dcp_projectapplicant (link filter)
+ */
 function buildApplicantNameFilters(applicantName) {
   if (applicantName) {
     return [
@@ -449,5 +526,5 @@ module.exports = {
   projectsXML,
   allProjectsXML,
   projectsUpdateGeoms,
-  projectsBblsXML: bblsXML,
+  projectsBblsXML,
 };
