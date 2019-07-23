@@ -3,20 +3,20 @@ require('dotenv').config();
 const express = require('express');
 const logger = require('morgan');
 const NodeCache = require('node-cache');
-const CRMClient = require('./utils/crm-client');
-const cors_config = require('./middleware/cors');
 const pgp = require('pg-promise')({
   query(e) {
      (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
   },
 });
+const CRMClient = require('./utils/crm-client');
 
 
 // instantiate express app
 const app = express();
 
 // initialize app resources
-app.dbClient = pgp(process.env.DATABASE_URL); app.crmClient = new CRMClient();
+app.dbClient = pgp(process.env.DATABASE_URL);
+app.crmClient = new CRMClient();
 app.filterCache = new NodeCache({ stdTTL: 3600 });
 
 // setup middleware
@@ -25,7 +25,6 @@ app.all('*', (req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
   next();
 });
-app.use(cors_config());
 
 app.use(logger('dev'));
 app.use(express.json());
