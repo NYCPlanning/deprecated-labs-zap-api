@@ -1,4 +1,14 @@
 /* eslint-disable indent */
+const {
+  VISIBILITY,
+  ULURP,
+  STATUSCODE,
+  PUBLICSTATUS,
+  KNOWN_STATUSES,
+  BOROUGH,
+  APPLICANTROLE,
+  MILESTONE_NAMES, 
+} = require('../utils/lookups');
 
 const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
@@ -9,12 +19,12 @@ function allProjectsXML(queryParams, projectIds) {
     'community-districts': community_districts = [],
     'action-types': action_types = [],
     boroughs = [],
-    dcp_ulurp_nonulurp = ['ULURP', 'Non-ULURP'],
+    dcp_ulurp_nonulurp = [],
     dcp_femafloodzonev = false,
     dcp_femafloodzonecoastala = false,
     dcp_femafloodzonea = false,
     dcp_femafloodzoneshadedx = false,
-    dcp_publicstatus = ['Completed', 'Filed', 'In Public Review', 'Unknown'],
+    dcp_publicstatus = [],
     dcp_certifiedreferred = [],
     project_applicant_text = '',
     block = '',
@@ -51,7 +61,7 @@ function allProjectsXML(queryParams, projectIds) {
         `<attribute name="dcp_projectid"/>`,
         `<filter type="and">`,
           ...projectFilters,
-          `<condition attribute="dcp_visibility" operator="eq" value="${GENERAL_PUBLIC}"/>`,
+          `<condition attribute="dcp_visibility" operator="eq" value="${VISIBILITY.GENERAL_PUBLIC}"/>`,
         `</filter>`,
         ...linkFilters,
       `</entity>`,
@@ -123,7 +133,7 @@ function actionsXML(projectIds) {
           `<condition attribute="dcp_project" operator="in">`,
           ...projectIds.map(projectId => `<value>{${projectId}}</value>`),
           `</condition>`,
-          `<condition attribute="statuscode" operator="ne" value="${MISTAKE}" />`,
+          `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.MISTAKE}" />`,
         `</filter>`,
         `<link-entity name="dcp_action" from="dcp_actionid" to="dcp_action" link-type="inner" alias="aa">`,
           `<attribute name="dcp_name" alias="action_code"/>`,
@@ -146,7 +156,7 @@ function milestonesXML(projectIds) {
       `</filter>`,
       `<link-entity name="dcp_milestone" from="dcp_milestoneid" to="dcp_milestone" link-type="inner" alias="al">`,
         `<filter type="and">`,
-          `<condition attribute="statuscode" operator="ne" value="${OVERRIDDEN}" />`,
+          `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.OVERRIDDEN}" />`,
           `<filter type="or">`,
             ...MILESTONE_NAMES.map(msName => `<condition attribute="dcp_name" operator="eq" value="${msName}" />`),
           `</filter>`,
@@ -169,8 +179,8 @@ function applicantsXML(projectIds) {
           `</condition>`,
         `</filter>`,
         `<filter type="or">`,
-          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANT}" />`,
-          `<condition attribute="dcp_applicantrole" operator="eq" value="${COAPPLICANT}" />`,
+          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANTROLE.APPLICANT}" />`,
+          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANTROLE.COAPPLICANT}" />`,
         `</filter>`,
       `</entity>`,
     `</fetch>`,
@@ -300,7 +310,7 @@ function buildBoroughFilters(boroughs) {
   if (boroughs.length) {
     return [
       `<filter type="or">`,
-        ...boroughs.map(b => `<condition attribute="dcp_borough" operator="eq" value="${BOROUGHS[b]}" />`),
+        ...boroughs.map(b => `<condition attribute="dcp_borough" operator="eq" value="${BOROUGH[b]}" />`),
       `</filter>`,
     ];
   }
@@ -335,18 +345,19 @@ function buildULURPNonULURPFilter(ulurpNonulurp) {
 }
 
 function buildPublicStatusFilter(publicStatus) {
+  const knownStatuses = Object.keys(PUBLICSTATUS);
   // build filter for UNKNOWN ( i.e. NOT any of the known statuses)
   const unknownFilter = [];
   if (publicStatus.includes('Unknown')) {
     unknownFilter.push(
      `<condition attribute="dcp_publicstatus" operator="not-in">`,
-      ...KNOWN_STATUSES.map(status => `<value>${STATUS[status]}</value>`),
+      ...knownStatuses.map(status => `<value>${PUBLICSTATUS[status]}</value>`),
     `</condition>`,
     );
   }
 
   // build filter for known statuses
-  const knownStatus = publicStatus.filter(status => KNOWN_STATUSES.includes(status));
+  const knownStatus = publicStatus.filter(status => knownStatus.includes(status));
   const knownFilter = [];
   if (knownStatus.length) {
     knownFilter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
@@ -432,56 +443,6 @@ function buildApplicantNameFilters(applicantName) {
 
   return [];
 }
-
-const GENERAL_PUBLIC = '717170003';
-const ULURP = {
-  ULURP: 717170001,
-  'Non-ULURP': 717170000,
-};
-const MISTAKE = '717170003';
-const OVERRIDDEN = '717170001';
-const MILESTONE_NAMES = [
-  'Land Use Fee Payment',
-  'Land Use Application Filed Review',
-  'CEQR Fee Payment',
-  'Filed EAS Review',
-  'EIS Draft Scope Review',
-  'EIS Public Scoping Meeting',
-  'Final Scope of Work Issued',
-  'NOC of Draft EIS Issued',
-  'DEIS Public Hearing Held',
-  'Review Session - Certified / Referred',
-  'Community Board Referral',
-  'Borough President Referral',
-  'Borough Board Referral',
-  'CPC Public Meeting - Vote',
-  'CPC Public Meeting - Public Hearing',
-  'City Council Review',
-  'Mayoral Veto',
-  'Final Letter Sent',
-];
-
-const STATUS = {
-  Filed: 717170000,
-  Certified: 717170001,
-  Approved: 717170002,
-  Withdrawn: 717170003,
-};
-
-const KNOWN_STATUSES = Object.keys(STATUS);
-
-const BOROUGHS = {
-  Bronx: 717170000,
-  Brooklyn: 717170002,
-  Manhattan: 717170001,
-  Queens: 717170003,
-  'Staten Island': 717170004,
-  Citywide: 717170005,
-};
-
-const APPLICANT = '717170000';
-const COAPPLICANT = '717170002';
-
 
 module.exports = {
   projectsXMLs,

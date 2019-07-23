@@ -1,11 +1,16 @@
 /* eslint-disable indent */
+const {
+  VISIBILITY,
+  STATUSCODE,
+  STATECODE,
+  APPLICANTROLE,
+} = require('../utils/lookups');
+
 const escape = str => str.replace(/'/g, `''`);
 const escapeFetchParam = str => encodeURIComponent(escape(str));
 const formatLikeOperator = value => escapeFetchParam(`%${value}%`);
 
 function projectXML(projectName) {
-  const GENERAL_PUBLIC = '717170003';
-
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" top="1">`,
       `<entity name="dcp_project">`,
@@ -37,7 +42,7 @@ function projectXML(projectName) {
         `<attribute name="dcp_currentmilestone"/>`,
         `<filter type="and">`,
           `<condition attribute="dcp_name" operator="eq" value="${escapeFetchParam(projectName)}" />`,
-          `<condition attribute="dcp_visibility" operator="eq" value="${GENERAL_PUBLIC}" />`,
+          `<condition attribute="dcp_visibility" operator="eq" value="${VISIBILITY.GENERAL_PUBLIC}" />`,
         `</filter>`,
       `</entity>`,
     `</fetch>`,
@@ -60,7 +65,6 @@ function bblsXML(projectId) {
 }
 
 function actionsXML(projectId) {
-  const MISTAKE = '717170003';
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectaction">`,
@@ -72,7 +76,7 @@ function actionsXML(projectId) {
         `<attribute name="dcp_zoningresolution" />`,
         `<filter type="and">`,
           `<condition attribute="dcp_project" operator="eq" value="${projectId}" />`,
-          `<condition attribute="statuscode" operator="ne" value="${MISTAKE}" />`,
+          `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.MISTAKE}" />`,
         `</filter>`,
         `<link-entity name="dcp_zoningresolution" from="dcp_zoningresolutionid" to="dcp_zoningresolution" alias="a" link-type="outer" >`,
           `<attribute name="dcp_zoningresolution"/>`,
@@ -83,8 +87,6 @@ function actionsXML(projectId) {
 }
 
 function milestonesXML(projectId) {
-  const OVERRIDDEN = '717170001';
-
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectmilestone">`,
@@ -105,7 +107,7 @@ function milestonesXML(projectId) {
         `</link-entity>`,
         `<filter type="and">`,
           `<condition attribute="dcp_project" operator="eq" value="${projectId}" />`,
-          `<condition attribute="statuscode" operator="ne" value="${OVERRIDDEN}" />`,
+          `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.OVERRIDDEN}" />`,
         `</filter>`,
       `</entity>`,
     `</fetch>`,
@@ -113,8 +115,6 @@ function milestonesXML(projectId) {
 }
 
 function keywordsXML(projectId) {
-  const ACTIVE = '0';
-
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectkeywords">`,
@@ -122,7 +122,7 @@ function keywordsXML(projectId) {
         `<link-entity name="dcp_keyword" from="dcp_keywordid" to="dcp_keyword" link-type="outer" alias="ab" />`,
         `<filter type="and">`,
           `<condition attribute="dcp_project" operator="eq" value="${projectId}" />`,
-          `<condition attribute="statecode" operator="eq" value="${ACTIVE}" />`,
+          `<condition attribute="statecode" operator="eq" value="${STATECODE.ACTIVE}" />`,
         `</filter>`,
       `</entity>`,
     `</fetch>`,
@@ -130,9 +130,6 @@ function keywordsXML(projectId) {
 }
 
 function applicantTeamXML(projectId) {
-  const APPLICANT = '717170000';
-  const COAPPLICANT = '717170002';
-
   return [
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectapplicant">`,
@@ -144,8 +141,8 @@ function applicantTeamXML(projectId) {
           `<condition attribute="statecode" operator="eq" value="0"/>`,
         `</filter>`,
         `<filter type="or">`,
-          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANT}" />`,
-          `<condition attribute="dcp_applicantrole" operator="eq" value="${COAPPLICANT}" />`,
+          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANTROLE.APPLICANT}" />`,
+          `<condition attribute="dcp_applicantrole" operator="eq" value="${APPLICANTROLE.COAPPLICANT}" />`,
         `</filter>`,
       `</entity>`,
     `</fetch>`,

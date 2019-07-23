@@ -3,6 +3,12 @@ const getVideoLinks = require('./get-video-links');
 const injectSupportingDocumentURLs = require('./inject-supporting-document-urls');
 const projectTemplate = require('../response-templates/project');
 const projectsTemplate = require('../response-templates/projects');
+const {
+  keyForValue,
+  CEQRTYPE,
+  BOROUGH,
+  ULURP,
+} = require('./lookups');
 
 /**
  * Post-process a single project, adding entities and geo data,
@@ -17,8 +23,11 @@ const projectsTemplate = require('../response-templates/projects');
 async function postProcessProject(project, entities, geo) {
   setPublicStatusSimp(project);
 
-  project.jdcp_easeis = project.dcp_easeis_formatted; project.dcp_borough = project.dcp_borough_formatted; project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
-  project.dcp_leaddivision = project.dcp_leaddivision_formatted; project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
+  project.jdcp_easeis = project.dcp_easeis_formatted;
+  project.dcp_borough = project.dcp_borough_formatted;
+  project.dcp_ceqrtype = project.dcp_ceqrtype_formatted;
+  project.dcp_leaddivision = project.dcp_leaddivision_formatted;
+  project.dcp_ulurp_nonulurp = project.dcp_ulurp_nonulurp_formatted;
   project.dcp_leadagencyforenvreview = project._dcp_leadagencyforenvreview_value; // eslint-disable-line
 
   // add list entities
@@ -42,7 +51,7 @@ async function postProcessProject(project, entities, geo) {
 }
 
 /**
- * Post-process a list of projects for projects list, adding entities and centers,
+ * Post-processes a list of projects for projects list, adding entities and centers,
  * formatting some fields, and then formatting the entire object using project template.
  *
  * @param {Object[]} projects The raw project objects from CRM
@@ -52,17 +61,24 @@ async function postProcessProject(project, entities, geo) {
  */
 function postProcessProjects(projects, entities, projectsCenters = []) {
   return projects.map((project) => {
-    const uuid = project.dcp_projectid;
+    // do lookups
+    project.dcp_ceqrtype = keyForValue(CEQRTYPE, project.dcp_ceqrtype);
+    project.dcp_borough = keyForValue(BOROUGH, project.dcp_borough);
+    project.dcp_ulurp_nonulurp = keyForValue(ULURP, project.dcp_ulurp_nonulurp);
+
+    // add  centers
     const id = project.dcp_name;
     const projectCenter = postProcessProjectsCenters(projectsCenters, id);
+    project.center = projectCenter;
+    project.has_centroid = !!projectCenter.length;
+
+    // add entities
+    const uuid = project.dcp_projectid;
     const {
       projectActionTypes,
       projectUlurpNumbers,
     } = postProcessProjectsActions(entities.actions, uuid);
     const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
-
-    project.center = projectCenter;
-    project.has_centroid = !!projectCenter.length;
     project.actiontypes = projectActionTypes;
     project.ulurpnumbers = projectUlurpNumbers;
     project.lastmilestonedate = project.dcp_lastmilestonedate;
@@ -74,7 +90,7 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
 
 
 /**
- * Post-process projects for updating geoms, to get necessary data to use a geom metadata
+ * Post-processes projects for updating geoms, to get necessary data to use a geom metadata
  * in the PostgreSQL `project_geoms` table, and add processed bbls.
  *
  * @param {Object[]} projects The raw project objects from CRM
@@ -87,6 +103,54 @@ function postProcessProjectsUpdateGeoms(projects, bbls) {
     project.bbls = postProcessProjectsBbls(bbls, uuid);
   });
 }
+
+/**
+ * NOTE: CURRENTLY UNUSED -- likeminded implemented this, but I cannot find a case where
+ * it is necessary to process a project or project child entity. Leaving it here so we
+ * don't lose the logic, but as of right now it is not required/useful for project processing.
+ *
+ * Normalizes prefixed property names, and returns an object containing all properties
+ * with correct (either original or normalized) name.
+ */
+function parsePrefixedProperties(project) {
+  const normalizedProject = {};
+  Object.keys(project).forEach((propertyName) => {
+    const normalizedPropertyName = getNormalizedPropertyName(propertyName);
+    normalizedProject[normalizedPropertyName] = project[propertyName];
+  });
+  return normalizedProject;
+}
+
+/**
+ * Returns the normalized property name if the name is prefixed with
+ * FORMATTED_VALUE prefix, LOGICAL_NAME prefix, or NAVIGATION_PROPERTY prefix;
+ * otherwise returns the original property name.
+ */
+function getNormalizedPropertyName(propertyName) {
+  const FORMATTED_VALUE = '@OData.Community.Display.V1.FormattedValue';
+  const LOGICAL_NAME = '@Microsoft.Dynamics.CRM.lookuplogicalname';
+  const NAVIGATION_PROPERTY = '@Microsoft.Dynamics.CRM.associatednavigationproperty';
+
+  let index;
+  let suffix;
+  if (propertyName.includes(FORMATTED_VALUE)) {
+    index = propertyName.indexOf(FORMATTED_VALUE);
+    suffix = '_formatted';
+  }
+
+  if (propertyName.includes(LOGICAL_NAME)) {
+    index = propertyName.indexOf(LOGICAL_NAME);
+    suffix = '_logical';
+  }
+
+  if (propertyName.includes(NAVIGATION_PROPERTY)) {
+    index = propertyName.indexOf(NAVIGATION_PROPERTY);
+    suffix = '_navigationproperty';
+  }
+
+  return (index && suffix) ? propertyName.substring(0, index) + suffix : propertyName;
+}
+
 
 /**
  * Helper function to set derived field `dcp_publicstatus_simp` from `dcp_publicstatus_formatted`
