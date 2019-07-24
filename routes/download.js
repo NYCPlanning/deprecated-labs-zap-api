@@ -10,23 +10,24 @@ const { projectsXML } = require('../queries/projects-xmls');
 const router = express.Router({ mergeParams: true });
 
 /**
- * Downloads all projects for a specified project filterId; requires that a filtered project
+ * Downloads all projects for a specified project queryId; requires that a filtered project
  * dataset was previously generated via the `/projects` route. FilterIds remain in the cache
  * for one hour. Datasets can be downloaded as CSVs, or as geojson or shape files.
  */
 router.get('/', async (req, res) => {
   const {
-    app: { dbClient, filterCache, crmClient },
+    app: { dbClient, queryCache, crmClient },
     params: { fileType },
-    query: { filterId },
+    query: { queryId = '' },
   } = req;
 
   try {
-    // Get project ids for the given filterId
-    const projectIds = filterCache.get(filterId);
+    // Get project ids for the given queryId
+    const projectIds = queryCache.get(queryId);
+
     if (!projectIds) {
-      console.log('Could not retrieve project ids for given project filter'); // eslint-disable-line
-      res.status(404).send({ error: `Projects for filter id ${filterId} not found` });
+      console.log('Could not retrieve project ids for given project query'); // eslint-disable-line
+      res.status(404).send({ error: `Projects for query id ${queryId} not found` });
       return;
     }
 

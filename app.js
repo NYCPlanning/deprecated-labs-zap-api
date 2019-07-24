@@ -17,12 +17,12 @@ const app = express();
 // initialize app resources
 app.dbClient = pgp(process.env.DATABASE_URL);
 app.crmClient = new CRMClient();
-app.filterCache = new NodeCache({ stdTTL: 3600 });
+app.queryCache = new NodeCache({ stdTTL: 3600 });
 
 // setup middleware
 app.all('*', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,X-Query-Id');
   next();
 });
 

@@ -3,26 +3,24 @@ const { projectXMLs } = require('../queries/project-xmls');
 const pluralizeProjectEntity = require('./pluralize-project-entity');
 
 /**
- * Fetch entities for projects. Actions, milestones, and applicants are fetched.
+ * Fetch entities for projects. Actions and applicants are fetched.
  *
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {String[]} projectIds The projectIds to fetch entities for
- * @returns {Object} Object containing actions, milestones, and applicants entity arrays
+ * @returns {Object} Object containing actions and applicants entity arrays
  */
 async function getProjectsEntities(crmClient, projectIds) {
   if (!projectIds.length) {
     return {};
   }
 
-  const [actions, milestones, applicants] = await Promise.all([
+  const [actions, applicants] = await Promise.all([
     getProjectsEntity(crmClient, 'action', projectIds),
-    getProjectsEntity(crmClient, 'milestone', projectIds),
     getProjectsEntity(crmClient, 'applicant', projectIds),
   ]);
 
   return {
     actions,
-    milestones,
     applicants,
   };
 }

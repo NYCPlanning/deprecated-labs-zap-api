@@ -137,33 +137,6 @@ function actionsXML(projectIds) {
 }
 
 /**
- * Returns FetchXML query param for fetching milestones for a set of projects
- */
-function milestonesXML(projectIds) {
-  return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" aggregate="true">`,
-      `<entity name="dcp_projectmilestone">`,
-      `<attribute name="dcp_project" alias="projectid" groupby="true"/>`,
-      `<attribute name="dcp_actualenddate" alias="actualenddate" aggregate="max"/>`,
-      `<filter type="and">`,
-        `<condition attribute="dcp_project" operator="in">`,
-          ...projectIds.map(projectId => `<value>{${projectId}}</value>`),
-        `</condition>`,
-      `</filter>`,
-      `<link-entity name="dcp_milestone" from="dcp_milestoneid" to="dcp_milestone" link-type="inner" alias="al">`,
-        `<filter type="and">`,
-          `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.OVERRIDDEN}" />`,
-          `<filter type="or">`,
-            ...MILESTONE_NAMES.map(msName => `<condition attribute="dcp_name" operator="eq" value="${msName}" />`),
-          `</filter>`,
-        `</filter>`,
-      `</link-entity>`,
-    `</entity>`,
-  `</fetch>`,
-  ].join('');
-}
-
-/**
  * Returns FetchXML query param for fetching applicants for a set of projects
  */
 function applicantsXML(projectIds) {
@@ -189,7 +162,6 @@ function applicantsXML(projectIds) {
 // Used by `/projects` route
 const projectsXMLs = {
   action: actionsXML,
-  milestone: milestonesXML,
   applicant: applicantsXML,
 };
 
