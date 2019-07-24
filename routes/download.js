@@ -39,11 +39,11 @@ router.get('/', async (req, res) => {
     const entities = await getProjectsEntities(crmClient, projectUUIDs);
 
     // Add entities, and format
-    postProcessProjects(projects, entities);
+    const formattedProjects = postProcessProjects(projects, entities);
 
     if (fileType === 'csv') {
       // Generate and send CSV response
-      sendCSVResponse(projects, res);
+      sendCSVResponse(formattedProjects, res);
       return;
     }
 

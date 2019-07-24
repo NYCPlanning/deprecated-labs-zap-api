@@ -80,8 +80,8 @@ function postProcessProjects(projects, entities, projectsCenters = []) {
       projectUlurpNumbers,
     } = postProcessProjectsActions(entities.actions, uuid);
     const projectApplicants = postProcessProjectsApplicants(entities.applicants, uuid);
-    project.actiontypes = projectActionTypes;
-    project.ulurpnumbers = projectUlurpNumbers;
+    project.actiontypes = projectActionTypes.join(';');
+    project.ulurpnumbers = projectUlurpNumbers.join(';');
     project.lastmilestonedate = project.dcp_lastmilestonedate;
     project.applicants = projectApplicants;
 
@@ -329,7 +329,10 @@ function postProcessProjectsActions(actions, projectId) {
  */
 function postProcessProjectsApplicants(applicants, projectId) {
   const projectApplicants = entitiesForProject(applicants, projectId)
-    .map(applicant => applicant._dcp_applicant_customer_value_formatted) // eslint-disable-line
+    .map((rawApplicant) => {
+      const applicant = parsePrefixedProperties(rawApplicant);
+      return applicant._dcp_applicant_customer_value_formatted; // eslint-disable-line
+    })
     .filter(applicant => !!applicant);
 
   return dedupeList(projectApplicants).join(';');
