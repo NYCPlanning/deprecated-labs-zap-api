@@ -17,7 +17,7 @@ const projectsTemplate = {
     'dcp_femafloodzonec',
     'applicants',
     'lastmilestonedate',
-    'has_centroid',
+    // 'has_centroid', // Not being used
     'center',
     'ulurpnumbers',
   ],
