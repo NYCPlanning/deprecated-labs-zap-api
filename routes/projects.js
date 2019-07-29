@@ -15,7 +15,8 @@ const DEFAULT_PAGE_SIZE = 30;
  * are retrieved from the PostgreSQL geo database, and used as filters in the fetchXML.
  * The resulting fetchXML can be too long to send as a querystring on a GET request, and so
  * projects are fetched using the 'batch operations' POST fetch to execute GETs
- * with long query strings.
+ * with long query strings. Pagination requests should include a `queryId` querystring param,
+ * to enable id-based queries for pagination.
  *
  * A project resource returned by this route is defined in `/response-templates/projects.js`
  */
@@ -29,7 +30,7 @@ router.get('/', async (req, res) => {
     // Get page of projects
     const {
       totalProjectsCount, queryId, projectIds, projects,
-    } = await getProjects(req.get('X-Query-Id'), dbClient, crmClient, query, queryCache);
+    } = await getProjects(dbClient, crmClient, query, queryCache);
 
     // Fetch related entities for all projects
     const projectUUIDs = projects.map(project => project.dcp_projectid);
@@ -66,25 +67,26 @@ router.get('/', async (req, res) => {
  * Gets page of projects requested by the response, and returns projects, plus totalProjectsCount,
  * queryId and projectIds.
  *
- * If queryIdHeader is present, indicates resources are being requested for a query that has
+ * If queryId is present, indicates resources are being requested for a query that has
  * already been set up. In that case, grab the projectIds matching the query from the query
  * cache. If the queryIdHeader is missing, indicates a new query is being requested. In that case,
  * generate a new queryId, generate the list of projectIds matching query with query params
  * and radius bounded project Ids. Use projectIds to format the XML for projects, which leverages
  * pagination from CRM to paginate results for the frontend.
  *
- * @param {String} queryIdHeader The value of the 'X-Filter-Id' header, or undefined
  * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {Object} query The query params from the request
  * @param {NodeCache} queryCache The NodeCache instance used by the app to store projectIds for querys
  * @returns {Object} Object containing queryId, projectIds, and project objects
  */
-async function getProjects(queryIdHeader, dbClient, crmClient, query, queryCache) {
-  let queryId = queryIdHeader;
-  let allProjectIds = queryId ? queryCache.get(queryId) : [];
+async function getProjects(dbClient, crmClient, query, queryCache) {
+  let { queryId } = query;
+  // If queryId exists, but does not have a valid entry in the cache, just assume an empty array
+  let allProjectIds = queryId ? (queryCache.get(queryId) || []) : [];
   let totalProjectsCount = allProjectIds.length;
-  // If no queryId is provided in headers, assume this is a new query search
+
+  // If no queryId is provided, assume this is a new query search
   if (!queryId) {
     const radiusBoundedProjectIds = await getRadiusBoundedProjects(dbClient, query);
     const { value: allProjects } = await crmClient.doBatchPost('dcp_projects', allProjectsXML(query, radiusBoundedProjectIds));
