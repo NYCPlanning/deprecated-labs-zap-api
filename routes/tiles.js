@@ -3,25 +3,28 @@ const SphericalMercator = require('sphericalmercator');
 
 const { getTile } = require('../utils/get-geo');
 
-const router = express.Router(); const mercator = new SphericalMercator(); /**
- * Returns a MVT tile containing the project centroids for a specified project filterId;
+const router = express.Router();
+const mercator = new SphericalMercator();
+
+/**
+ * Returns a MVT tile containing the project centroids for a specified project queryId;
  * requires that a filtered project dataset was previously generated via the `/projects` route.
  * FilterIds remain in the cache for one hour. Tile is created using PostGIS As_MVT() function.
  *
  * See: `/queries/geo.js` generate_vector_tile for tile query.
  */
-router.get('/:filterId/:z/:x/:y.mvt', async (req, res) => {
+router.get('/:queryId/:z/:x/:y.mvt', async (req, res) => {
   const {
-    app: { dbClient, filterCache },
+    app: { dbClient, queryCache },
     query: { type = 'centriod' },
     params: {
-      filterId, x, y, z,
+      queryId, x, y, z,
     },
   } = req;
 
   try {
-    // Get project ids for the given filterId
-    const projectIds = filterCache.get(filterId);
+    // Get project ids for the given queryId
+    const projectIds = queryCache.get(queryId);
 
     // Determine geom column name
     const geomColumn = (type === 'centroid') ? 'centroid_3857' : 'polygons_3857';

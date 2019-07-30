@@ -10,33 +10,34 @@ const router = express.Router({ mergeParams: true });
 
 const DEFAULT_PAGE_SIZE = 30;
 /**
- * Returns paginated set of projects meeting the defined projects filter.
+ * Returns paginated set of projects meeting the defined projects query.
  * To implement the radius filter search, a full set of all project ids within the radius
  * are retrieved from the PostgreSQL geo database, and used as filters in the fetchXML.
  * The resulting fetchXML can be too long to send as a querystring on a GET request, and so
  * projects are fetched using the 'batch operations' POST fetch to execute GETs
- * with long query strings.
+ * with long query strings. Pagination requests should include a `queryId` querystring param,
+ * to enable id-based queries for pagination.
  *
  * A project resource returned by this route is defined in `/response-templates/projects.js`
  */
 router.get('/', async (req, res) => {
   const {
-    app: { dbClient, filterCache, crmClient },
+    app: { dbClient, queryCache, crmClient },
     query,
   } = req;
 
   try {
     // Get page of projects
     const {
-      totalProjectsCount, filterId, projectIds, projects,
-    } = await getProjects(req.get('X-Filter-Id'), dbClient, crmClient, query, filterCache);
+      totalProjectsCount, queryId, projectIds, projects,
+    } = await getProjects(dbClient, crmClient, query, queryCache);
 
     // Fetch related entities for all projects
     const projectUUIDs = projects.map(project => project.dcp_projectid);
     const entities = await getProjectsEntities(crmClient, projectUUIDs);
 
     // Get geo data for all projects
-    const { projectsCenters, bounds, tiles } = await getProjectsGeo(dbClient, filterId, projectIds);
+    const { projectsCenters, bounds, tiles } = await getProjectsGeo(dbClient, queryId, projectIds);
 
     // Add entities and geo data to the project objects, and format
     const formattedProjects = postProcessProjects(projects, entities, projectsCenters);
@@ -53,7 +54,7 @@ router.get('/', async (req, res) => {
         pageTotal: query.itemsPerPage || DEFAULT_PAGE_SIZE,
         tiles,
         bounds,
-        filterId,
+        queryId,
       },
     });
   } catch (e) {
@@ -64,36 +65,37 @@ router.get('/', async (req, res) => {
 
 /**
  * Gets page of projects requested by the response, and returns projects, plus totalProjectsCount,
- * filterId and projectIds.
+ * queryId and projectIds.
  *
- * If filterIdHeader is present, indicates resources are being requested for a filter that has
- * already been set up. In that case, grab the projectIds matching the filter from the filter
- * cache. If the filterIdHeader is missing, indicates a new filter is being requested. In that case,
- * generate a new filterId, generate the list of projectIds matching filter with query params
+ * If queryId is present, indicates resources are being requested for a query that has
+ * already been set up. In that case, grab the projectIds matching the query from the query
+ * cache. If the queryIdHeader is missing, indicates a new query is being requested. In that case,
+ * generate a new queryId, generate the list of projectIds matching query with query params
  * and radius bounded project Ids. Use projectIds to format the XML for projects, which leverages
  * pagination from CRM to paginate results for the frontend.
  *
- * @param {String} filterIdHeader The value of the 'X-Filter-Id' header, or undefined
  * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {Object} query The query params from the request
- * @param {NodeCache} filterCache The NodeCache instance used by the app to store projectIds for filters
- * @returns {Object} Object containing filterId, projectIds, and project objects
+ * @param {NodeCache} queryCache The NodeCache instance used by the app to store projectIds for querys
+ * @returns {Object} Object containing queryId, projectIds, and project objects
  */
-async function getProjects(filterIdHeader, dbClient, crmClient, query, filterCache) {
-  let filterId = filterIdHeader;
-  let allProjectIds = filterId ? filterCache.get(filterId) : [];
+async function getProjects(dbClient, crmClient, query, queryCache) {
+  let { queryId } = query;
+  // If queryId exists, but does not have a valid entry in the cache, just assume an empty array
+  let allProjectIds = queryId ? (queryCache.get(queryId) || []) : [];
   let totalProjectsCount = allProjectIds.length;
-  // If no filterId is provided in headers, assume this is a new filter search
-  if (!filterId) {
+
+  // If no queryId is provided, assume this is a new query search
+  if (!queryId) {
     const radiusBoundedProjectIds = await getRadiusBoundedProjects(dbClient, query);
     const { value: allProjects } = await crmClient.doBatchPost('dcp_projects', allProjectsXML(query, radiusBoundedProjectIds));
 
-    // Store projectIds matching this filter in the cache
-    filterId = shortid.generate();
+    // Store projectIds matching this query in the cache
+    queryId = shortid.generate();
     allProjectIds = allProjects.map(project => project.dcp_name);
     totalProjectsCount = allProjectIds.length;
-    await filterCache.set(filterId, allProjectIds);
+    await queryCache.set(queryId, allProjectIds);
   }
 
   // Do normal paginated projects request
@@ -102,7 +104,7 @@ async function getProjects(filterIdHeader, dbClient, crmClient, query, filterCac
     : await crmClient.doBatchPost('dcp_projects', projectsXML(allProjectIds, page, itemsPerPage));
   const projectIds = projects.map(project => project.dcp_name);
   return {
-    totalProjectsCount, filterId, projectIds, projects,
+    totalProjectsCount, queryId, projectIds, projects,
   };
 }
 module.exports = router;

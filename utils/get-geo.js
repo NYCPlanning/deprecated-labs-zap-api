@@ -10,16 +10,16 @@ const geoSQL = require('../queries/geo');
  * and an array including a tile template are returned.
  *
  * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
- * @param {String} filterId The unqiue filterId to use in the tile template
+ * @param {String} queryId The unqiue queryId to use in the tile template
  * @param {String[]} projectIds The projectIds to get geo data for
  * @returns {Object} Object containing projectCenters, bounds, and tiles
  */
-async function getProjectsGeo(dbClient, filterId, projectIds) {
+async function getProjectsGeo(dbClient, queryId, projectIds) {
   if (!projectIds.length) return {};
 
   const projectsCenters = await dbClient.any(geoSQL.centers, [projectIds]);
   const bounds = getBounds(projectsCenters);
-  const tiles = getTileTemplate(filterId, projectIds);
+  const tiles = getTileTemplate(queryId, projectIds);
 
   return {
     projectsCenters,
@@ -48,12 +48,12 @@ function getBounds(projectCenters) {
 }
 
 /**
- * Gets tile template for the given filterId, as a String Array.
+ * Gets tile template for the given queryId, as a String Array.
  *
- * @param {String} filterId The filterId to use in tile template
+ * @param {String} queryId The queryId to use in tile template
  */
-function getTileTemplate(filterId) {
-  return [`${process.env.HOST}/projects/tiles/${filterId}/{z}/{x}/{y}.mvt`];
+function getTileTemplate(queryId) {
+  return [`${process.env.HOST}/projects/tiles/${queryId}/{z}/{x}/{y}.mvt`];
 }
 
 /**
