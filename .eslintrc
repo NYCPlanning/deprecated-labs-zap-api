@@ -8,6 +8,8 @@
     "camelcase": [0],
     "no-use-before-define": [0],
     "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+    "func-names": [0],
+    "no-console": [0]
   },
   "env": {
     "node": true,

@@ -8,7 +8,6 @@ const cartoClient = require('../clients/carto-client');
 const { getAllProjectsUpdateGeoms } = require('../utils/projects/get-projects');
 const { getProjectsUpdateGeomsEntities } = require('../utils/projects/get-entities');
 const { postProcessProjectsUpdateGeoms } = require('../utils/projects/post-process');
-const { projectsUpdateGeoms } = require('../queries/projects-xmls');
 const geoSQL = require('../queries/geo');
 
 const router = express.Router({ mergeParams: true });
@@ -81,6 +80,8 @@ async function updateProjectGeom(dbClient, project) {
       ],
     );
   }
+
+  return false;
 }
 
 

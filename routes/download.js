@@ -124,6 +124,8 @@ function sendSHPResponse(projects, res) {
  * @returns {Object} ESRI Shapefile readable stream
  */
 function createShapefile(projects) {
+  // this lib doesn't handle errors it seems — or we are probably
+  // configuring the error handling incorrectly.
   return ogr2ogr(projects)
     .format('ESRI Shapefile')
     .skipfailures()
