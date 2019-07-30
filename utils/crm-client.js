@@ -70,7 +70,7 @@ class CRMClient {
       try {
         const json = JSON.parse(text, this.dateReviver);
         return { status: res.status, content: json };
-      } catch {
+      } catch (e) {
         // some HTTP errors are returned as a string, not a JSON response
         return { status: res.status, content: { error: { message: text } } };
       }
