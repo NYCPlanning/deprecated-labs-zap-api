@@ -8,7 +8,6 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const server = require('../../app');
-// const upsertGeoms = require('../../utils/upsert-geoms');
 
 describe('update-geometries route', () => {
   it('should respond with failure if id does not meet regex requirements', (done) => {
@@ -55,3 +54,10 @@ describe('update-geometries route', () => {
       });
   });
 });
+
+// TODO
+// assertions carried over from old util file
+// 'should work without throwing error'
+// 'returns message explaining that ZAP data does not have any matching BBLs'
+// 'should explain that PLUTO does not contain matching BBLs for project'
+// 'should explain that updated geoms for the given id'

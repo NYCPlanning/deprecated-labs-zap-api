@@ -1,6 +1,6 @@
 const VISIBILITY = {
   GENERAL_PUBLIC: 717170003,
-}
+};
 const ULURP = {
   ULURP: 717170001,
   'Non-ULURP': 717170000,
@@ -15,11 +15,11 @@ const CEQRTYPE = {
 const STATUSCODE = {
   MISTAKE: 717170003,
   OVERRIDDEN: 717170001,
-}
+};
 
 const STATECODE = {
   ACTIVE: '0',
-}
+};
 
 const PUBLICSTATUS = {
   Filed: 717170000,
@@ -65,7 +65,7 @@ const MILESTONE_NAMES = [
 /**
  * Lookups are written to enable creation of FetchXML with correct conditions.
  * However, they're also needed to translate a few values from CRM response back into
- * human-readable format (because sadly the batch POST responses do not include this 
+ * human-readable format (because sadly the batch POST responses do not include this
  * information as the normal GET responses do). This function enables use of the same
  * lookup objects to do lookups in both directions, so multiple lookups do not have to
  * be maintained.
@@ -84,9 +84,9 @@ module.exports = {
   ULURP,
   CEQRTYPE,
   STATUSCODE,
-  STATECODE, 
+  STATECODE,
   PUBLICSTATUS,
   BOROUGH,
   APPLICANTROLE,
-  MILESTONE_NAMES, 
+  MILESTONE_NAMES,
 };

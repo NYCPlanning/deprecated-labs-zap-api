@@ -1,7 +1,9 @@
 const express = require('express');
 const SphericalMercator = require('sphericalmercator');
 
-const { getTile } = require('../utils/get-geo'); const router = express.Router(); const mercator = new SphericalMercator(); /**
+const { getTile } = require('../utils/get-geo');
+
+const router = express.Router(); const mercator = new SphericalMercator(); /**
  * Returns a MVT tile containing the project centroids for a specified project filterId;
  * requires that a filtered project dataset was previously generated via the `/projects` route.
  * FilterIds remain in the cache for one hour. Tile is created using PostGIS As_MVT() function.

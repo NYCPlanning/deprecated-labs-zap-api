@@ -3,8 +3,6 @@
 
 const express = require('express');
 const pgp = require('pg-promise');
-
-const dedupeList = require('../utils/dedupe-list');
 const carto = require('../utils/carto');
 const { postProcessProjectsUpdateGeoms } = require('../utils/post-process');
 const { projectsUpdateGeoms, projectsBblsXML } = require('../queries/projects-xmls');
@@ -32,11 +30,11 @@ router.get('/', async (req, res) => {
     const { value: projectsBbls } = await crmClient.doGet(`dcp_projectbbls?fetchXml=${projectsBblsXML(projectUUIDs)}`);
 
     // Add BBL entities to project objects, and format
-    postProcessProjectsUpdateGeoms(projects, projectsBbls); 
+    postProcessProjectsUpdateGeoms(projects, projectsBbls);
 
     // Asyncronously update geoms for all projects
     await Promise.all(
-      projects.map(project => updateProjectGeom(dbClient, project)),       
+      projects.map(project => updateProjectGeom(dbClient, project)),
     );
 
     console.log(`Updated projectIds: ${projects.map(project => project.dcp_name)}`); // eslint-disable-line
@@ -59,27 +57,29 @@ async function updateProjectGeom(dbClient, project) {
   const [geom] = await carto.SQL(query);
   if (geom) {
     return dbClient.none(
-      geoSQL.upsert_geoms, 
+      geoSQL.upsert_geoms,
       [
         project.dcp_name,
         geom.polygons,
         geom.centroid,
         project.dcp_projectname,
         project.dcp_publicstatus_simp,
-        project.dcp_lastmilestonedate
+        project.dcp_lastmilestonedate,
       ],
     );
   }
+
+  return null;
 }
 
 /**
  * Wrapper function to page through CRM responses and get all results. CRM will return up to
  * maximum of 5000 results per page, and it is possible that more than 5000 projects will
  * have been modified within the lookback window.
- * 
+ *
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {int} lookBackSec The lookback window to use to filter for updated projects, in seconds
- * @returns {Object[]} The full list of all raw projects from CRM 
+ * @returns {Object[]} The full list of all raw projects from CRM
  */
 async function getAllProjects(crmClient, lookBackSec) {
   const createdOn = new Date(new Date().getTime() - lookBackSec * 1000);
@@ -92,7 +92,7 @@ async function getAllProjects(crmClient, lookBackSec) {
       value,
       '@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded': limitExceeded,
     } = await crmClient.doGet(
-      `dcp_projects?fetchXml=${projectsUpdateGeoms(createdOn, page, MAX_PROJECTS_PER_PAGE)}`
+      `dcp_projects?fetchXml=${projectsUpdateGeoms(createdOn, page, MAX_PROJECTS_PER_PAGE)}`,
     );
 
     projects.push(...value);

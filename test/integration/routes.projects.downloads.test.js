@@ -10,6 +10,7 @@ chai.use(chaiHttp);
 const server = require('../../app');
 
 describe('downloads functionality', () => {
+  // 'The key argument has to be of type `string` or `number`. Found: `undefined`',
   it('responds to requests for csv', (done) => {
     chai.request(server)
       .get('/projects.csv?dcp_publicstatus[]=Filed&dcp_publicstatus[]=In Public Review&page=1')
