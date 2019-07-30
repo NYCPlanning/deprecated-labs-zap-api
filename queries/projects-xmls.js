@@ -11,9 +11,9 @@ const {
   PUBLICSTATUS,
   BOROUGH,
   APPLICANTROLE,
-} = require('../utils/lookups');
+} = require('../utils/constants');
 
-const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-helpers');
+const { escapeFetchParam, formatLikeOperator } = require('./fetch-xml-helpers');
 
 /**
  * Returns FetchXML query param for fetching ALL projects that match a given set of project
@@ -24,7 +24,7 @@ const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-hel
  * all attributes included (see projectsXML), and the full result is processed and returned to
  * the user. Current state: pagination is enforced.
  */
-function allProjectsXML(queryParams, projectIds) {
+function allProjectsXML(queryParams, projectIds, page, count, pagingCookie) {
   const {
     'community-districts': community_districts = [],
     'action-types': action_types = [],
@@ -64,7 +64,7 @@ function allProjectsXML(queryParams, projectIds) {
   );
 
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true">`,
+   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" paging-cookie="${encodeURIComponent(pagingCookie)}" page="${page}" count="${count}" >`,
       `<entity name="dcp_project">`,
         `<order attribute="dcp_lastmilestonedate" descending="true" />`,
         `<attribute name="dcp_name"/>`,
@@ -119,6 +119,7 @@ function actionsXML(projectIds) {
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="dcp_projectaction">`,
         `<attribute name="dcp_project" alias="projectid" />`,
+        `<attribute name="dcp_name" />`,
         `<attribute name="dcp_action"/>`,
         `<attribute name="dcp_ulurpnumber"/>`,
         `<filter type="and">`,
@@ -158,19 +159,13 @@ function applicantsXML(projectIds) {
   ].join('');
 }
 
-// Used by `/projects` route
-const projectsXMLs = {
-  action: actionsXML,
-  applicant: applicantsXML,
-};
-
 /**
  * Returns FetchXML query param for fetching projects within a lookback window; used
  * to select projects for updating geometires by the `/update-geometries` route
  */
 function projectsUpdateGeoms(modifiedOn, page, count, pagingCookie) {
   return [
-   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" pagingCookie="${pagingCookie}" ${pagingCookie ? '' : 'returntotalrecordcount="true"'}>`,
+   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" paging-cookie="${escapeFetchParam(pagingCookie)}" page="${page}" count="${count}" >`,
       `<entity name="dcp_project">`,
         `<attribute name="dcp_name" />`,
         `<attribute name="dcp_projectname" />`,
@@ -209,8 +204,12 @@ function bblsXML(projectIds) {
   ].join('');
 }
 
-// used in the `/update-geometries` route
-const projectsBblsXML = bblsXML;
+// Used by 'getProjectsEntity' helper function in `get-entities`
+const projectsXMLs = {
+  bbl: bblsXML,
+  action: actionsXML,
+  applicant: applicantsXML,
+};
 
 /**
  * Helper function to build project filter XML arrays
@@ -396,7 +395,7 @@ function buildPublicStatusFilter(publicStatus) {
   }
 
   // build filter for known statuses
-  const knownStatus = publicStatus.filter(status => knownStatus.includes(status));
+  const knownStatus = publicStatus.filter(status => knownStatuses.includes(status));
   const knownFilter = [];
   if (knownStatus.length) {
     knownFilter.push(`<condition attribute="dcp_publicstatus" operator="in">`);
@@ -497,5 +496,4 @@ module.exports = {
   projectsXML,
   allProjectsXML,
   projectsUpdateGeoms,
-  projectsBblsXML,
 };

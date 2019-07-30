@@ -1,11 +1,10 @@
 const express = require('express');
-const shortid = require('shortid');
 
-const dedupeList = require('../utils/dedupe-list');
-const { getProjectsEntities } = require('../utils/get-entities');
-const { postProcessProjects } = require('../utils/post-process');
-const { getProjectsGeo, getRadiusBoundedProjects } = require('../utils/get-geo');
-const { allProjectsXML, projectsXML } = require('../queries/projects-xmls');
+const { getProjectsEntities } = require('../utils/projects/get-entities');
+const { postProcessProjects } = require('../utils/projects/post-process');
+const { getProjectsGeo } = require('../utils/projects/get-geo');
+const { getAllProjects } = require('../utils/projects/get-projects');
+const { projectsXML } = require('../queries/projects-xmls');
 
 const router = express.Router({ mergeParams: true });
 
@@ -37,11 +36,13 @@ router.get('/', async (req, res) => {
     // Get project query metadata (total # of projects, all projectIds)
     const {
       totalProjectsCount, queryId, allProjectIds,
-    } = await getAllProjectsMeta(dbClient, crmClient, query, queryCache);
+    } = await getAllProjects(dbClient, crmClient, query, queryCache);
 
     // Get page of projects
-    const projectIds = allProjectIds.slice(page, page * itemsPerPage);
-    const { value: projects } = await crmClient.doBatchPost('dcp_projects', projectsXML(projectIds));
+    const projectIds = allProjectIds.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+    const { value: projects } = projectIds.length === 0
+      ? { value: [] } 
+      : await crmClient.doBatchPost('dcp_projects', projectsXML(projectIds));
 
     // Fetch related entities for all projects
     const projectUUIDs = projects.map(project => project.dcp_projectid);
@@ -74,43 +75,4 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * Returns some metadata for the filtered dataset: the total # of results, the queryId to identify
- * the specific query defining this filtered dataset, and the full list of projectIds meeting the
- * criteria of this query.
- *
- * If queryId is present, indicates resources are being requested for a query that has
- * already been set up. In that case, grab the projectIds matching the query from the query
- * cache. If the queryIdHeader is missing, indicates a new query is being requested. In that case,
- * generate a new queryId, generate the list of projectIds matching query from request query params
- * and radius bounded projectIds.
- *
- * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
- * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
- * @param {Object} query The query params from the request
- * @param {NodeCache} queryCache The NodeCache instance used by the app to store projectIds for querys
- * @returns {Object} Object containing totalProjectsCount, queryId, and projectIds
- */
-async function getAllProjectsMeta(dbClient, crmClient, query, queryCache) {
-  let { queryId } = query;
-  // If queryId exists, but does not have a valid entry in the cache, just assume an empty array
-  let allProjectIds = queryId ? (queryCache.get(queryId) || []) : [];
-  let totalProjectsCount = allProjectIds.length;
-
-  // If no queryId is provided, assume this is a new query search
-  if (!queryId) {
-    const radiusBoundedProjectIds = await getRadiusBoundedProjects(dbClient, query);
-    const { value: allProjects } = await crmClient.doBatchPost('dcp_projects', allProjectsXML(query, radiusBoundedProjectIds));
-
-    // Store projectIds matching this query in the cache
-    queryId = shortid.generate();
-    allProjectIds = dedupeList(allProjects.map(project => project.dcp_name));
-    totalProjectsCount = allProjectIds.length;
-    await queryCache.set(queryId, allProjectIds);
-  }
-
-  return {
-    totalProjectsCount, queryId, allProjectIds,
-  };
-}
 module.exports = router;

@@ -1,5 +1,5 @@
 const { AuthenticationContext } = require('adal-node');
-const validateConfig = require('./validate-config');
+const validateConfig = require('../utils/validate-config');
 
 const DEFAULT_TOKEN_EXPIRATION_BUFFER_MSEC = 15 * 60 * 1000; // 15 minutes
 const TOKEN_EXPIRATION_BUFFER_MSEC = process.env.TOKEN_EXPIRATION_BUFFER_MSEC || DEFAULT_TOKEN_EXPIRATION_BUFFER_MSEC;

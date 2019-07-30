@@ -8,7 +8,7 @@ const pgp = require('pg-promise')({
      (process.env.DEBUG === 'true') ? console.log(e.query) : null; // eslint-disable-line
   },
 });
-const CRMClient = require('./utils/crm-client');
+const CRMClient = require('./clients/crm-client');
 
 
 // instantiate express app

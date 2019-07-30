@@ -9,9 +9,9 @@ const {
   STATUSCODE,
   STATECODE,
   APPLICANTROLE,
-} = require('../utils/lookups');
+} = require('../utils/constants');
 
-const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-helpers');
+const { escapeFetchParam, formatLikeOperator } = require('./fetch-xml-helpers');
 
 /**
  * Returns FetchXML query param for fetching a single project for the `/project/id` route
@@ -27,20 +27,8 @@ function projectXML(projectName) {
         `<attribute name="dcp_borough"/>`,
         `<attribute name="dcp_communitydistricts"/>`,
         `<attribute name="dcp_ulurp_nonulurp"/>`,
-        `<attribute name="dcp_leaddivision"/>`,
         `<attribute name="dcp_ceqrtype"/>`,
         `<attribute name="dcp_ceqrnumber"/>`,
-        `<attribute name="dcp_easeis"/>`,
-        `<attribute name="dcp_leadagencyforenvreview"/>`,
-        `<attribute name="dcp_alterationmapnumber"/>`,
-        `<attribute name="dcp_sisubdivision"/>`,
-        `<attribute name="dcp_sischoolseat"/>`,
-        `<attribute name="dcp_previousactiononsite"/>`,
-        `<attribute name="dcp_wrpnumber"/>`,
-        `<attribute name="dcp_nydospermitnumber"/>`,
-        `<attribute name="dcp_bsanumber"/>`,
-        `<attribute name="dcp_lpcnumber"/>`,
-        `<attribute name="dcp_decpermitnumber"/>`,
         `<attribute name="dcp_femafloodzonea"/>`,
         `<attribute name="dcp_femafloodzonecoastala"/>`,
         `<attribute name="dcp_femafloodzonev"/>`,
@@ -82,10 +70,7 @@ function actionsXML(projectId) {
       `<entity name="dcp_projectaction">`,
         `<attribute name="dcp_name" />`,
         `<attribute name="dcp_ulurpnumber" />`,
-        `<attribute name="dcp_prefix" />`,
         `<attribute name="statuscode" />`,
-        `<attribute name="dcp_ccresolutionnumber" />`,
-        `<attribute name="dcp_zoningresolution" />`,
         `<filter type="and">`,
           `<condition attribute="dcp_project" operator="eq" value="${projectId}" />`,
           `<condition attribute="statuscode" operator="ne" value="${STATUSCODE.MISTAKE}" />`,

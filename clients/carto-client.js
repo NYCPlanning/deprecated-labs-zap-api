@@ -30,7 +30,7 @@ const carto = {
         if (response.ok) {
           return response.json();
         }
-        throw new Error('Not found');
+        throw new Error(response.statusText);
       })
       .then((d) => { // eslint-disable-line
         return format === 'json' ? d.rows : d;

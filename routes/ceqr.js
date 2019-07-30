@@ -1,5 +1,5 @@
 const express = require('express');
-const carto = require('../utils/carto');
+const cartoClient = require('../clients/carto-client');
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.get('/:ceqrnumber', async (req, res) => {
   const SQL = `SELECT url FROM ceqrview_projects WHERE ceqr_number IN ('${ceqrnumber}')`;
 
   try {
-    const [data] = await carto.SQL(SQL);
+    const [data] = await cartoClient.SQL(SQL);
     const { url } = data;
 
     res.redirect(301, url);

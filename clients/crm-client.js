@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const validateConfig = require('./validate-config');
+const validateConfig = require('../utils/validate-config');
 const ADALClient = require('./ADAL-client');
 
 const CRM_API_CONFIG = validateConfig({
@@ -136,7 +136,7 @@ class CRMClient {
       return res.content;
     }
 
-    console.log(`GET request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
+    console.log(`GET request to ${query} failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
     return false;
   }
 

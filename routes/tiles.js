@@ -1,7 +1,7 @@
 const express = require('express');
 const SphericalMercator = require('sphericalmercator');
 
-const { getTile } = require('../utils/get-geo');
+const { getTile } = require('../utils/tiles/get-geo');
 
 const router = express.Router();
 const mercator = new SphericalMercator();

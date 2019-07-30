@@ -2,10 +2,10 @@ const express = require('express');
 const { parse: json2csv } = require('json2csv');
 const ogr2ogr = require('ogr2ogr');
 
-const { getProjectsEntities } = require('../utils/get-entities');
-const { postProcessProjects } = require('../utils/post-process');
-const { getProjectsDownloadGeo } = require('../utils/get-geo');
-const { projectsXML } = require('../queries/projects-xmls');
+const { getAllProjectsDownload } = require('../utils/projects/get-projects');
+const { getProjectsEntities } = require('../utils/projects/get-entities');
+const { postProcessProjects } = require('../utils/projects/post-process');
+const { getProjectsDownloadGeo } = require('../utils/projects/get-geo');
 
 const router = express.Router({ mergeParams: true });
 
@@ -32,14 +32,22 @@ router.get('/', async (req, res) => {
     }
 
     // Fetch all projects
-    const projects = await getAllProjects(crmClient, projectIds);
+    const projects = await getAllProjectsDownload(crmClient, projectIds);
 
-    // Fetch related entities for all projects
-    const projectUUIDs = projects.map(project => project.dcp_projectid);
-    const entities = await getProjectsEntities(crmClient, projectUUIDs);
-
-    // Add entities, and format
-    const formattedProjects = postProcessProjects(projects, entities);
+    // Fetch related entities for all projects in batches to avoid too-long URIs
+    // (can't use batch posts either, b/c those don't work for super long child-entity requests)
+    // 😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭😭
+    const BATCH_SIZE = 50;
+    const formattedProjects = [];
+    const batches = Math.ceil(projects.length / BATCH_SIZE);
+    for (let i = 0; i < batches; i++) { // eslint-disable-line
+      const projectsBatch = projects.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+      // Fetch related entities
+      const projectUUIDs = projectsBatch.map(project => project.dcp_projectid);
+      const entities = await getProjectsEntities(crmClient, projectUUIDs);
+      // Add entities, and format
+      formattedProjects.push(...postProcessProjects(projectsBatch, entities));
+    }
 
     if (fileType === 'csv') {
       // Generate and send CSV response
@@ -68,32 +76,6 @@ router.get('/', async (req, res) => {
     res.status(500).send({ error: e.toString() });
   }
 });
-
-/**
- * Wrapper function to page through CRM responses and get all results. CRM will return up to
- * maximum of 5000 results per page, and it is possible that more than 5000 projects will
- * comprise a single filtered dataset.
- *
- * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
- * @param {int[]} projectIds The list of all projectIds in the filtered dataset
- * @returns {Object[]} The full list of all raw projects from CRM
- */
-async function getAllProjects(crmClient, projectIds) {
-  if (!projectIds.length) return [];
-
-  const MAX_PROJECTS_PER_PAGE = 5000;
-  const projects = [];
-  const pages = Math.ceil(projectIds.length / MAX_PROJECTS_PER_PAGE);
-  for (let i = 1; i <= pages; i ++) { // eslint-disable-line
-    const { value } = await crmClient.doBatchPost( // eslint-disable-line
-      'dcp_projects',
-      projectsXML(projectIds, i, MAX_PROJECTS_PER_PAGE),
-    );
-    projects.push(...value);
-  }
-
-  return projects;
-}
 
 /**
  * Generates and sends CSV response from projects data

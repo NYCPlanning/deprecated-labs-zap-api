@@ -1,8 +1,8 @@
 const express = require('express');
 
-const { postProcessProject } = require('../utils/post-process');
-const { getProjectEntities } = require('../utils/get-entities');
-const { getProjectGeo } = require('../utils/get-geo');
+const { postProcessProject } = require('../utils/project/post-process');
+const { getProjectEntities } = require('../utils/project/get-entities');
+const { getProjectGeo } = require('../utils/project/get-geo');
 const { projectXML } = require('../queries/project-xmls');
 
 const router = express.Router({ mergeParams: true });
