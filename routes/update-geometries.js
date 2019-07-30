@@ -4,10 +4,10 @@
 const express = require('express');
 const pgp = require('pg-promise');
 
-const dedupeList = require('../utils/dedupe-list');
 const carto = require('../utils/carto');
+const { getProjectsEntity } = require('../utils/get-entities');
 const { postProcessProjectsUpdateGeoms } = require('../utils/post-process');
-const { projectsUpdateGeoms, projectsBblsXML } = require('../queries/projects-xmls');
+const { projectsUpdateGeoms } = require('../queries/projects-xmls');
 const geoSQL = require('../queries/geo');
 
 const router = express.Router({ mergeParams: true });
@@ -27,17 +27,24 @@ router.get('/', async (req, res) => {
     // Fetch all projects modified within the lookback window
     const projects = await getAllProjects(crmClient, lookBackSec);
 
-    // Fetch related BBL entities
-    const projectUUIDs = projects.map(project => project.dcp_projectid);
-    const { value: projectsBbls } = await crmClient.doGet(`dcp_projectbbls?fetchXml=${projectsBblsXML(projectUUIDs)}`);
+    const BATCH_SIZE = 50;
+    const batches = Math.ceil(projects.length / BATCH_SIZE);
+    for (let i = 0; i < batches; i++) { // eslint-disable-line
+      const projectsBatch = projects.slice(i, i * BATCH_SIZE);
 
-    // Add BBL entities to project objects, and format
-    postProcessProjectsUpdateGeoms(projects, projectsBbls); 
+      // Fetch related BBL entities
+      const projectUUIDs = projectsBatch.map(project => project.dcp_projectid);
+      const projectsBbls = await getProjectsEntity(crmClient, 'bbl', projectUUIDs);
 
-    // Asyncronously update geoms for all projects
-    await Promise.all(
-      projects.map(project => updateProjectGeom(dbClient, project)),       
-    );
+      // Add BBL entities to project objects, and format
+      postProcessProjectsUpdateGeoms(projects, projectsBbls);
+
+      // Asyncronously update geoms for all projects
+      await Promise.all(
+        projects.map(project => updateProjectGeom(dbClient, project)),
+      );
+      console.log(`Completed updating geometries for batch ${i} of ${batches}`);
+    }
 
     console.log(`Updated projectIds: ${projects.map(project => project.dcp_name)}`); // eslint-disable-line
     res.send({ message: `Successfully updated geometries for ${projects.length} projects` });
@@ -59,14 +66,14 @@ async function updateProjectGeom(dbClient, project) {
   const [geom] = await carto.SQL(query);
   if (geom) {
     return dbClient.none(
-      geoSQL.upsert_geoms, 
+      geoSQL.upsert_geoms,
       [
         project.dcp_name,
         geom.polygons,
         geom.centroid,
         project.dcp_projectname,
         project.dcp_publicstatus_simp,
-        project.dcp_lastmilestonedate
+        project.dcp_lastmilestonedate,
       ],
     );
   }
@@ -76,10 +83,10 @@ async function updateProjectGeom(dbClient, project) {
  * Wrapper function to page through CRM responses and get all results. CRM will return up to
  * maximum of 5000 results per page, and it is possible that more than 5000 projects will
  * have been modified within the lookback window.
- * 
+ *
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {int} lookBackSec The lookback window to use to filter for updated projects, in seconds
- * @returns {Object[]} The full list of all raw projects from CRM 
+ * @returns {Object[]} The full list of all raw projects from CRM
  */
 async function getAllProjects(crmClient, lookBackSec) {
   const createdOn = new Date(new Date().getTime() - lookBackSec * 1000);
@@ -92,7 +99,7 @@ async function getAllProjects(crmClient, lookBackSec) {
       value,
       '@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded': limitExceeded,
     } = await crmClient.doGet(
-      `dcp_projects?fetchXml=${projectsUpdateGeoms(createdOn, page, MAX_PROJECTS_PER_PAGE)}`
+      `dcp_projects?fetchXml=${projectsUpdateGeoms(createdOn, page, MAX_PROJECTS_PER_PAGE)}`,
     );
 
     projects.push(...value);

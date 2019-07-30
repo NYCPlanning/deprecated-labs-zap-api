@@ -3,13 +3,8 @@ const { projectXMLs } = require('../queries/project-xmls');
 const pluralizeProjectEntity = require('./pluralize-project-entity');
 
 /**
- * Cannot always get all entities in a single GET request, because the URL sent to CRM may be 
- * too long (FetchXML query param will include all project UUIDs). Cannot get all entities
- * in a single batch POST request, because for some reason this causes the CRM to fail with
- * HTTP 400 and no error message. Instead, do GET requests in batches of 50 ids (if max URI
- * length is ~2000 characters, and projectUUIDs are 36 chars each, then 50 of them should
- * be safely within the acceptable url length)
- *
+ * Fetch entities for projects. Actions and applicants are fetched. Assumed that project
+ * process is batched, and projectUUIDs will not contain more than 50 items.
  * @param {CRMClient} crmClient The client instance for making authenticated CRM calls
  * @param {int[]} projectUUIDs The list of all projectUUIDs in the filtered dataset
  * @returns {Object} Object containing full list of projects entities
@@ -19,27 +14,12 @@ async function getProjectsEntities(crmClient, projectUUIDs) {
     return {};
   }
 
-  const BATCH_SIZE = 50;
-  const actionsPromises = [];
-  const applicantsPromises = [];
-  const batches = Math.ceil(projectUUIDs.length / BATCH_SIZE);
-  for (let i = 0; i < batches; i++) { // eslint-disable-line
-    const uuidBatch = projectUUIDs.slice(i, i + BATCH_SIZE);
-    actionsPromises.push(getProjectsEntity(crmClient, 'action', uuidBatch));
-    applicantsPromises.push(getProjectsEntity(crmClient, 'applicant', uuidBatch));
-  }
+  const [actions, applicants] = await Promise.all([
+    getProjectsEntity(crmClient, 'action', projectUUIDs),
+    getProjectsEntity(crmClient, 'applicant', projectUUIDs),
+  ]);
 
-  const actions = await Promise.all(actionsPromises)
-    .then((res) => {
-      const [ac] = res;
-      return ac.reduce((acc, val) => acc.concat(val), []);
-    });
-  const applicants = await Promise.all(applicantsPromises)
-    .then((res) =>{
-      const [ap] = res;
-      return ap.reduce((acc, val) => acc.concat(val), []);
-    });
-  return  { actions, applicants };
+  return { actions, applicants };
 }
 
 /**
@@ -107,6 +87,7 @@ function getProjectEntity(crmClient, entityType, projectId) {
 const getEntities = {
   getProjectsEntities,
   getProjectEntities,
+  getProjectsEntity,
 };
 
 module.exports = getEntities;

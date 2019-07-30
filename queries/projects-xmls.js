@@ -11,7 +11,6 @@ const {
   PUBLICSTATUS,
   BOROUGH,
   APPLICANTROLE,
-  MILESTONE_NAMES,
 } = require('../utils/lookups');
 
 const { escapeFetchParam, formatLikeOperator } = require('../utils/fetch-xml-helpers');
@@ -65,7 +64,7 @@ function allProjectsXML(queryParams, projectIds) {
   );
 
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true">`,
       `<entity name="dcp_project">`,
         `<order attribute="dcp_lastmilestonedate" descending="true" />`,
         `<attribute name="dcp_name"/>`,
@@ -83,9 +82,9 @@ function allProjectsXML(queryParams, projectIds) {
 /**
  * Returns FetchXML query param for fetching a page of projects results for `/projects` route
  */
-function projectsXML(projectIds, page, itemsPerPage) {
+function projectsXML(projectIds) {
   return [
-    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${itemsPerPage}">`,
+    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" >`,
       `<entity name="dcp_project">`,
         `<order attribute="dcp_lastmilestonedate" descending="true" />`,
         `<attribute name="dcp_name"/>`,
@@ -169,9 +168,9 @@ const projectsXMLs = {
  * Returns FetchXML query param for fetching projects within a lookback window; used
  * to select projects for updating geometires by the `/update-geometries` route
  */
-function projectsUpdateGeoms(modifiedOn, page, count) {
+function projectsUpdateGeoms(modifiedOn, page, count, pagingCookie) {
   return [
-   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" returntotalrecordcount="true">`,
+   `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" page="${page}" count="${count}" pagingCookie="${pagingCookie}" ${pagingCookie ? '' : 'returntotalrecordcount="true"'}>`,
       `<entity name="dcp_project">`,
         `<attribute name="dcp_name" />`,
         `<attribute name="dcp_projectname" />`,
