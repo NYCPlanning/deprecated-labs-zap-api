@@ -163,7 +163,7 @@ function applicantsXML(projectIds) {
  * Returns FetchXML query param for fetching projects within a lookback window; used
  * to select projects for updating geometires by the `/update-geometries` route
  */
-function projectsUpdateGeoms(modifiedOn, page, count, pagingCookie) {
+function projectsUpdateGeomsXML(modifiedOn, page, count, pagingCookie) {
   return [
    `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" paging-cookie="${escapeFetchParam(pagingCookie)}" page="${page}" count="${count}" >`,
       `<entity name="dcp_project">`,
@@ -495,5 +495,5 @@ module.exports = {
   projectsXMLs,
   projectsXML,
   allProjectsXML,
-  projectsUpdateGeoms,
+  projectsUpdateGeomsXML,
 };

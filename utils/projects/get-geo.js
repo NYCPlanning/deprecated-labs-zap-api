@@ -16,11 +16,9 @@ const geoSQL = require('../../queries/geo');
  * @returns {Object} Object containing projectCenters, bounds, and tiles
  */
 async function getProjectsGeo(dbClient, queryId, projectIds) {
-  if (!projectIds.length) return {};
-
-  const projectsCenters = await dbClient.any(geoSQL.centers, [projectIds]);
+  const projectsCenters = !projectIds.length ? [] : await dbClient.any(geoSQL.centers, [projectIds]);
   const bounds = getBounds(projectsCenters);
-  const tiles = getTileTemplate(queryId, projectIds);
+  const tiles = getTileTemplate(queryId);
 
   return {
     projectsCenters,
@@ -41,12 +39,12 @@ async function getProjectsGeo(dbClient, queryId, projectIds) {
  * and NO CRM queries need to be made.
  */
 async function getRadiusBoundedProjects(dbClient, query) {
-  const METERS_TO_FEET_MULT = 3.28084;
+  const FEET_TO_METERS_MULT = 0.3048;
   const point = query.distance_from_point || [];
   const distance = query.radius_from_point || 10;
 
   if (point.length && distance) {
-    const distanceFeet = distance * METERS_TO_FEET_MULT;
+    const distanceFeet = distance * FEET_TO_METERS_MULT;
     const projectIds = await dbClient.any(geoSQL.radius_search, [...point, distanceFeet]);
     return projectIds.length ? projectIds.map(projectId => projectId.projectid).slice(0, 10) : false;
   }

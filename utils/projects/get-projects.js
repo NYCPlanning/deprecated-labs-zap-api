@@ -1,7 +1,7 @@
 const shortid = require('shortid');
 
 const dedupeList = require('../../utils/dedupe-list');
-const { projectsXML, allProjectsXML } = require('../../queries/projects-xmls');
+const { projectsXML, allProjectsXML, projectsUpdateGeomsXML } = require('../../queries/projects-xmls');
 const { getRadiusBoundedProjects } = require('../../utils/projects/get-geo');
 
 /**
@@ -93,8 +93,8 @@ async function getAllProjectsForFilter(crmClient, radiusBoundedProjectIds, query
 
   let page = 1;
   let pagingCookie = '';
-  while (true) {
-    const res = await crmClient.doBatchPost(
+  while (true) { // eslint-disable-line
+    const res = await crmClient.doBatchPost( // eslint-disable-line
       'dcp_projects',
       allProjectsXML(query, radiusBoundedProjectIds, page, MAX_PROJECTS_PER_PAGE, pagingCookie),
     );
@@ -124,9 +124,9 @@ async function getAllProjectsUpdateGeoms(crmClient, lookBackSec) {
 
   let page = 1;
   let pagingCookie = '';
-  while (true) {
-    const res = await crmClient.doGet(
-      `dcp_projects?fetchXml=${projectsUpdateGeoms(createdOn, page, MAX_PROJECTS_PER_PAGE, pagingCookie)}`,
+  while (true) { // eslint-disable-line
+    const res = await crmClient.doGet( //eslint-disable-line
+      `dcp_projects?fetchXml=${projectsUpdateGeomsXML(createdOn, page, MAX_PROJECTS_PER_PAGE, pagingCookie)}`,
     );
     const {
       value,
@@ -148,7 +148,7 @@ async function getAllProjectsUpdateGeoms(crmClient, lookBackSec) {
  * You are not dreaming! It's true! The cookie must be extracted from an XML string,
  * then DOUBLELY decoded, then special characters must be re-encoded to HTML-safe versions.
  * A usable API product? Methinks not...
- * 
+ *
  * @param {Object} res The CRM fetchXML GET response
  * @returns {String} The HTML-escaped paging cookie
  */

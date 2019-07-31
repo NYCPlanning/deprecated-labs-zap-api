@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
     // Get page of projects
     const projectIds = allProjectIds.slice((page - 1) * itemsPerPage, page * itemsPerPage);
     const { value: projects } = projectIds.length === 0
-      ? { value: [] } 
+      ? { value: [] }
       : await crmClient.doBatchPost('dcp_projects', projectsXML(projectIds));
 
     // Fetch related entities for all projects
