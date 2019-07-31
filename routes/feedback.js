@@ -1,5 +1,5 @@
 const express = require('express');
-const { Recaptcha } = require('express-recaptcha');
+const { RecaptchaV3 } = require('express-recaptcha');
 const github = require('octonode');
 
 const router = express.Router();
@@ -7,7 +7,7 @@ const router = express.Router();
 const client = github.client(process.env.GITHUB_ACCESS_TOKEN);
 const ghrepo = client.repo('NYCPlanning/dcp-zap-data-feedback');
 
-const recaptcha = new Recaptcha(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
+const recaptcha = new RecaptchaV3(process.env.RECAPTCHA_SITE_KEY, process.env.RECAPTCHA_SECRET_KEY);
 
 /**
  * Creates a github issue for a given project
