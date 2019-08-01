@@ -39,6 +39,7 @@ app.use('/projects/ulurp', require('./routes/ulurp'));
 app.use('/projects/feedback', require('./routes/feedback'));
 app.use('/update-geometries', require('./routes/update-geometries'));
 app.use('/ceqr', require('./routes/ceqr'));
+app.use('/recommendation', require('./routes/recommendation'));
 
 app.use((req, res) => {
   res.status(404).json({

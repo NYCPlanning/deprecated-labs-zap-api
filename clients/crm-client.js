@@ -154,16 +154,19 @@ class CRMClient {
   }
 
   /**
-   * Executes POST request with retry. Returns the parsed response content on success, or false on failure.
+   * Executes POST request with retry.
+   *  Returns true on success, or error message on failure.
    */
   async doPost(query, body, isBatch) {
     const res = await this.doFetchWithRetry('POST', query, body, isBatch);
-    if (res && !res.content.error && res.status === 200) { // TODO: Confirm correct status for POST resp
-      return res.content;
+    // A successfuly Create or Patch returns a 204 and
+    // and the response Content is empty
+    if (res && res.status === 204 && !res.content.error.message) {
+      return { success: true };
     }
 
     console.log(`POST request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
-    return false;
+    return { success: false, error: res.content.error.message };
   }
 
 
