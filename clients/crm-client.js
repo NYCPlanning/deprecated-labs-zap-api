@@ -163,6 +163,10 @@ class CRMClient {
     // and the response Content is empty
     if (res && res.status === 204 && !res.content.error.message) {
       return { success: true };
+
+    // Successful record retrival returns 200
+    } else if ( res && res.status === 200 && !res.content.error ) {
+      return res.content
     }
 
     console.log(`POST request failed with status: ${res.status}, error: ${res.content.error.message}`); // eslint-disable-line
