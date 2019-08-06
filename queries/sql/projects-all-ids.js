@@ -73,7 +73,7 @@ function publicStatusFilter(publicStatus) {
 }
 
 function certifiedReferredFilter(certifiedReferred) {
-  if (!certifiedReferred.length > 1) return '';
+  if (!(certifiedReferred.length > 1)) return '';
   return `AND dcp_certifiedreferred BETWEEN TO_TIMESTAMP('${certifiedReferred[0]}') AND TO_TIMESTAMP('${certifiedReferred[1]}')`;
 }
 

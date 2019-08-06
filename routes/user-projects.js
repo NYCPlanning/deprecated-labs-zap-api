@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
 
   try {
     const accountId = getAccountIdFromAuth();
-    if(!accountId) {
-      res.status(401).send({error: 'Authentication required for this route'});
+    if (!accountId) {
+      res.status(401).send({ error: 'Authentication required for this route' });
       return;
     }
 

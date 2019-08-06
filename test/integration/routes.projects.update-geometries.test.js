@@ -1,57 +1,47 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const chaiThings = require('chai-things');
+const manageHTTPStubs = require('../../test/helpers/manage-stubs');
 
-chai.use(require('chai-things'));
+const { USER_API_KEY } = process.env;
 
-const should = chai.should();
-
+chai.use(chaiThings);
+chai.should();
 chai.use(chaiHttp);
 
 const server = require('../../app');
-// const upsertGeoms = require('../../utils/upsert-geoms');
 
 describe('update-geometries route', () => {
-  it('should respond with failure if id does not meet regex requirements', (done) => {
-    chai.request(server)
-      .get('/projects/update-geometries/P201RQ0293')
-      .end((err, res) => {
-        should.not.exist(err);
-        res.status.should.equal(200);
-        res.type.should.equal('application/json');
+  manageHTTPStubs();
 
-        // app response should include message
-        res.body.message.should.equal('Invalid project id');
-        done();
-      });
+  beforeEach(() => {
+    // stub the database calls
+    server.dbClient = {
+      // noop
+      none: async () => {},
+    };
   });
 
-  it('should respond failure message if project does not have BBLs', (done) => {
-    chai.request(server)
-      .get('/projects/update-geometries/P1984Y0176')
-      .end((err, res) => {
-        should.not.exist(err);
-        res.status.should.equal(200);
-        res.type.should.equal('application/json');
+  it('should respond with failure if project cannot be found', async () => {
+    const { body, status, type } = await chai.request(server)
+      .get(`/update-geometries/P201RQ0293?API_KEY=${USER_API_KEY}`);
+    console.log(body);
 
+    status.should.equal(200);
+    type.should.equal('application/json');
 
-        // app response should include message
-        res.body.response.message.should.equal('ZAP data does not list any BBLs for project P1984Y0176');
-        done();
-      });
+    // app response should include message
+    body.message.should.equal('Project P201RQ0293 does not exist or does not have any associated bbls');
   });
 
-  it('should respond success message if project is updated', (done) => {
-    chai.request(server)
-      .get('/projects/update-geometries/P2017M0085')
-      .end((err, res) => {
-        should.not.exist(err);
-        res.status.should.equal(200);
-        res.type.should.equal('application/json');
+  it('should respond success message if project is updated', async () => {
+    const { body, status, type } = await chai.request(server)
+      .get(`/update-geometries/P2018R0026?API_KEY=${USER_API_KEY}`);
 
+    status.should.equal(200);
+    type.should.equal('application/json');
 
-        // app response should include message
-        res.body.response.message.should.equal('Updated geometries for project P2017M0085');
-        done();
-      });
+    // app response should include message
+    body.message.should.equal('Successfully updated geometries for project P2018R0026');
   });
 });
