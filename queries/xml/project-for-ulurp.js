@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 const { formatLikeOperator } = require('./helpers');
 
 /**
@@ -8,7 +9,7 @@ function projectForULURPXML(ulurpNumber) {
      `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="true" top="1">`,
       `<entity name="dcp_project">`,
         `<attribute name="dcp_name"/>`,
-        `<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="ae">`,
+        `<link-entity name="dcp_projectaction" from="dcp_project" to="dcp_projectid" link-type="inner" alias="action">`,
           `<filter type ="and">`,
             `<condition attribute="dcp_ulurpnumber" operator="like" value="${formatLikeOperator(ulurpNumber)}" />`,
           `</filter>`,

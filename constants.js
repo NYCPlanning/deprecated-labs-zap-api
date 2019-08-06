@@ -17,7 +17,8 @@ const APPLICANTROLE = {
   COAPPLICANT: 717170002,
 };
 
-// post-processing constants
+const EXCLUDED_ACTION_CODES = ['EAS', 'EIS', 'WR', 'FT', 'UK'];
+
 const ACTIONS = {
   BD: 'Business Improvement Districts',
   BF: 'Business Franchise',
@@ -71,7 +72,7 @@ const ACTIONS = {
   PO: 'OTB Site Selection',
   PP: 'Disposition of Non-Residential City-Owned Property',
   PQ: 'Acquisition of Property by the City',
-  PR: "Release of City's Interest",
+  PR: 'Release of City\'s Interest',
   PS: 'Site Selection (City Facility) ',
   PX: 'Office Space',
   RA: 'South Richmond District Authorizations ',
@@ -91,7 +92,7 @@ const ACTIONS = {
   ZP: 'Parking Special Permit/Incl non-ULURP Ext',
   ZR: 'Zoning Text Amendment ',
   ZS: 'Zoning Special Permit',
-  ZX: "Counsel's Office - Rules of Procedure",
+  ZX: 'Counsel\'s Office - Rules of Procedure',
   ZZ: 'Site Plan Approval in Natural Area Districts',
 };
 const MILESTONES = {
@@ -198,6 +199,7 @@ module.exports = {
   STATUSCODE,
   STATECODE,
   APPLICANTROLE,
+  EXCLUDED_ACTION_CODES,
   ACTIONS,
   ALLOWED_ACTIONS: Object.keys(ACTIONS),
   MILESTONES,
