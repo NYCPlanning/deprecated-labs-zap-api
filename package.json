@@ -7,7 +7,7 @@
     "start": "node ./bin/www",
     "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js",
     "devstart": "docker run -it -v $PWD:/zap-api -p 3000:3000 -w /zap-api geodatagouv/node-gdal ./node_modules/.bin/nodemon ./bin/www",
-    "devtest": "docker run -it -v $PWD:/zap-api -w /zap-api -e \"NODE_ENV=test\" geodatagouv/node-gdal node ./node_modules/mocha/bin/mocha ./test/**/*.js --timeout 15000 --exit",
+    "devtest": "docker run -e REFRESH_STUBS=$REFRESH_STUBS -it -v $PWD:/zap-api -w /zap-api -e \"NODE_ENV=test\" geodatagouv/node-gdal node ./node_modules/mocha/bin/mocha ./test/**/*.js --timeout 15000 --exit",
     "migrate": "node-pg-migrate"
   },
   "dependencies": {
@@ -46,8 +46,8 @@
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
-    "chai": "^4.1.2",
-    "chai-http": "^4.0.0",
+    "chai": "4.2.0",
+    "chai-http": "4.3.0",
     "chai-things": "^0.2.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^17.0.0",
@@ -55,7 +55,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
     "glob": "^7.1.2",
-    "mocha": "^5.2.0",
+    "mocha": "6.2.0",
     "nodemon": "^1.19.1"
   },
   "engines": {

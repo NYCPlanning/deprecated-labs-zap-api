@@ -1,6 +1,6 @@
 const chai = require('chai');
 const nock = require('nock');
-const injectSupportDocuments = require('../../utils/inject-supporting-document-urls');
+const injectSupportDocuments = require('../../utils/project/inject-supporting-document-urls');
 const generateXMLDoc = require('../helpers/generate-s3-xml-doc');
 
 const should = chai.should();

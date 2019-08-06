@@ -28,16 +28,19 @@ router.get('/', async (req, res) => {
     // Get all projectIds that fit given query filters
     const { projectIds, queryId } = await getOrCreateQuery(dbClient, queryCache, page, query);
 
+    const targetQuery = projectsResultsSQL(projectIds, page, itemsPerPage);
+
     // Get page of projects from projectIds
     const projects = !projectIds.length ? []
-      : await dbClient.any(projectsResultsSQL(projectIds, page, itemsPerPage));
+      : await dbClient.any(targetQuery);
+
     res.send({
       data: projects.map(project => ({
         type: 'projects',
         id: project.dcp_name,
         attributes: project,
       })),
-      meta: getMeta(projectIds, projects, queryId, page),
+      meta: getMeta(projectIds, projects, page, queryId),
     });
   } catch (e) {
     if (e instanceof BadRequestError) {
@@ -100,7 +103,9 @@ async function getOrCreateQuery(dbClient, queryCache, page, query) {
   let projectIds = queryId ? queryCache.get(queryId) : [];
 
   if (!queryId) {
-    projectIds = await dbClient.any(projectsAllIdsSQL(query))
+    const targetQuery = projectsAllIdsSQL(query);
+
+    projectIds = await dbClient.any(targetQuery)
       .then(projects => projects.map(project => project.dcp_name));
     queryId = shortid.generate();
     await queryCache.set(queryId, projectIds);
