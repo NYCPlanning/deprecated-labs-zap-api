@@ -37,6 +37,7 @@ app.use('/projects.:fileType', require('./routes/download'));
 app.use('/projects/tiles', require('./routes/tiles'));
 app.use('/projects/ulurp', require('./routes/ulurp'));
 app.use('/projects/feedback', require('./routes/feedback'));
+app.use('/user-projects', require('./routes/user-projects'));
 app.use('/update-geometries', require('./routes/update-geometries'));
 app.use('/ceqr', require('./routes/ceqr'));
 

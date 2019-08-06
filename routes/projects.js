@@ -51,6 +51,38 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * Allows for querying by a list of projectIds (which is usually too long to be URI params,
+ * so for simplicity just implementing this as a post).
+ */
+router.post('/', async (req, res) => {
+  const {
+    app: { dbClient },
+    body: {
+      projectIds,
+      page = 1,
+      itemsPerPage = 30,
+    },
+  } = req;
+
+  try {
+    const projects = !projectIds.length ? []
+      : await dbClient.any(projectsResultsSQL(projectIds, page, itemsPerPage));
+    res.send({
+      data: projects.map(project => ({
+        type: 'projects',
+        id: project.dcp_name,
+        attributes: project,
+      })),
+      meta: getMeta(projectIds, projects, page),
+    });
+  } catch (e) {
+    console.log(e); // eslint-disable-line
+    res.status(500).send({ error: e.toString() });
+  }
+});
+
+
+/**
  * Returns list of projectIds meeting the filters described by the given
  * query (defined by query parameters, or queryId). If new query (i.e. no queryId
  * param is not supplied): query PostgreSQL for projectIds that fit
@@ -85,11 +117,11 @@ async function getOrCreateQuery(dbClient, queryCache, page, query) {
  *
  * @param {String[]} projectIds The list of projectIds that fit query filters
  * @param {Object[]} projects The list of projects in the current page of results
- * @param {String} queryId The unique id representing projects that meet query filters
  * @param {String} page The page being requested
+ * @param {String} queryId The unique id representing projects that meet query filters
  * @returns {Object} Object containing metadata for response
  */
-function getMeta(projectIds, projects, queryId, page) {
+function getMeta(projectIds, projects, page, queryId) {
   const meta = {
     queryId,
     total: projectIds.length,
