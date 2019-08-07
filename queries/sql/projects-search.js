@@ -1,6 +1,6 @@
 const { forIlike, forIn } = require('./helpers');
 
-function projectsAllIdsSQL(query) {
+function projectsSearchSQL(query) {
   const {
     'community-districts': community_districts = [],
     'action-types': action_types = [],
@@ -109,4 +109,4 @@ function radiusBoundingFilter(center, radius) {
   `;
 }
 
-module.exports = { projectsAllIdsSQL };
+module.exports = { projectsSearchSQL };

@@ -4,13 +4,13 @@
 const express = require('express');
 const pgp = require('pg-promise');
 
-const cartoClient = require('../clients/carto-client');
-const { flattenProjectsRows } = require('../utils/update-geometries/flatten-rows');
-const { getEscapedPagingCookie } = require('../utils/get-escaped-paging-cookie');
+const cartoClient = require('../../clients/carto-client');
+const { flattenProjectsRows } = require('../../utils/update-geometries/flatten-rows');
+const { getEscapedPagingCookie } = require('../../utils/get-escaped-paging-cookie');
 
-const { updateGeometriesProjectsSQL } = require('../queries/xml/update-geometries-projects');
-const { cartoProjectsGeomsSQL } = require('../queries/sql/carto-projects-geoms');
-const { updateGeomsSQL } = require('../queries/sql/update-geoms');
+const { updateGeometriesProjectsXML } = require('../../queries/xml/update-geometries-projects');
+const { cartoProjectsGeomsSQL } = require('../../queries/sql/carto-projects-geoms');
+const { updateGeomsSQL } = require('../../queries/sql/update-geoms');
 
 const router = express.Router({ mergeParams: true });
 const { USER_API_KEY } = process.env;
@@ -125,7 +125,7 @@ async function getProjectsForGeometryUpdate(crmClient, lookBackSec = false, proj
   let pagingCookie = '';
   while (true) { // eslint-disable-line
     const res = await crmClient.doGet( //eslint-disable-line
-      `dcp_projects?fetchXml=${updateGeometriesProjectsSQL(page, MAX_PROJECTS_PER_PAGE, pagingCookie, createdOn, projectId)}`,
+      `dcp_projects?fetchXml=${updateGeometriesProjectsXML(page, MAX_PROJECTS_PER_PAGE, pagingCookie, createdOn, projectId)}`,
     );
     const {
       value,

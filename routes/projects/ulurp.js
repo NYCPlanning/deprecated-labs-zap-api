@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { projectForULURPXML } = require('../queries/xml/project-for-ulurp');
+const { projectForULURPXML } = require('../../queries/xml/project-for-ulurp');
 
 const router = express.Router();
 

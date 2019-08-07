@@ -1,11 +1,11 @@
 const express = require('express');
 
-const { flattenProjectRows } = require('../utils/project/flatten-rows');
-const { makeFeatureCollection } = require('../utils/make-feature-collection');
-const { projectXML } = require('../queries/xml/project');
-const { projectGeomsSQL } = require('../queries/sql/project-geoms');
-const getVideoLinks = require('../utils/project/get-video-links');
-const injectSupportingDocumentURLs = require('../utils/project/inject-supporting-document-urls');
+const { flattenProjectRows } = require('../../utils/project/flatten-rows');
+const { makeFeatureCollection } = require('../../utils/make-feature-collection');
+const { projectXML } = require('../../queries/xml/project');
+const { projectGeomsSQL } = require('../../queries/sql/project-geoms');
+const getVideoLinks = require('../../utils/project/get-video-links');
+const injectSupportingDocumentURLs = require('../../utils/project/inject-supporting-document-urls');
 
 
 const router = express.Router({ mergeParams: true });
