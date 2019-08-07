@@ -64,7 +64,7 @@ describe('projects route filters and returns data', () => {
     };
 
     const res = await chai.request(server)
-      .get('/projects?community-districts[]=BK01&page=1');
+      .get('/projects-search?community-districts[]=BK01&page=1');
 
     const { data } = res.body;
 
@@ -78,7 +78,7 @@ describe('projects route filters and returns data', () => {
 
   it('should provide valid metadata', async () => {
     const res = await chai.request(server)
-      .get('/projects?community-districts[]=BK01&page=1');
+      .get('/projects-search?community-districts[]=BK01&page=1');
 
     const { meta } = res.body;
 
@@ -114,7 +114,7 @@ describe('projects route filters and returns data', () => {
 
     // make another request for page 2, include the query id
     const page2 = await chai.request(server)
-      .get(`/projects?page=2&queryId=${queryId}`);
+      .get(`/projects-search?page=2&queryId=${queryId}`);
 
     // map out the ids from that result set
     const secondIdSet = page2.body.data.map(project => project.id);

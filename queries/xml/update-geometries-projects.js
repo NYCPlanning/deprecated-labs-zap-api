@@ -3,7 +3,7 @@
 const { VISIBILITY } = require('../../constants');
 const { escapeFetchParam } = require('./helpers');
 
-function updateGeometriesProjectsSQL(page, count, pagingCookie, modifiedOn = false, projectId = false) {
+function updateGeometriesProjectsXML(page, count, pagingCookie, modifiedOn = false, projectId = false) {
   return [
    `<fetch version="1.0" output-format="xml-platform" mapping="logical" paging-cookie="${escapeFetchParam(pagingCookie)}" page="${page}" count="${count}" >`,
       `<entity name="dcp_project">`,
@@ -36,4 +36,4 @@ function getModifiedFilter(modifiedOn) {
     ? `<condition attribute="modifiedon" operator="gt" value="${escapeFetchParam(modifiedOn.toISOString())}" />`
     : '';
 }
-module.exports = { updateGeometriesProjectsSQL };
+module.exports = { updateGeometriesProjectsXML };

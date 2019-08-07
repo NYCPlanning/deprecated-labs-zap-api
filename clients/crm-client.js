@@ -173,8 +173,8 @@ class CRMClient {
    * Executes POST request against special batch endpoint ('/$batch'), with special batch body.
    * Returns the parsed response content on success, or false on failure.
    */
-  async doBatchPost(query, fetchXML) {
-    const batchBody = CRMClient.makeBatchBody(query, fetchXML);
+  async doBatchPost(query) {
+    const batchBody = CRMClient.makeBatchBody(query);
     return this.doPost('$batch', batchBody, true);
   }
 
@@ -225,13 +225,13 @@ class CRMClient {
   /**
    * Creates a batch POST body for the given FetchXML GET request
    */
-  static makeBatchBody(query, fetchXML) {
+  static makeBatchBody(query) {
     return `
 --${BATCH_NAME}
 Content-Type: application/http
 Content-Transfer-Encoding: binary
 
-GET ${CRM_URL}${query}?fetchXml=${fetchXML} HTTP/1.1
+GET ${CRM_URL}${query} HTTP/1.1
 Content-Type: application/json
 OData-Version: 4.0
 OData-MaxCersion: 4.0
