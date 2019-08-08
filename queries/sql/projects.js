@@ -1,6 +1,6 @@
 const { forIn } = require('./helpers');
 
-function projectsResultsSQL(projectIds, page, itemsPerPage) {
+function projectsSQL(page, itemsPerPage, projectIds) {
   return `
     SELECT
       dcp_name,
@@ -30,7 +30,7 @@ function projectsResultsSQL(projectIds, page, itemsPerPage) {
     FROM normalized_projects
     LEFT JOIN project_geoms
     ON normalized_projects.dcp_name = project_geoms.projectid
-    WHERE dcp_name IN (${forIn(projectIds)})
+    ${projectIdsFilter(projectIds)}
     ORDER BY
       lastmilestonedate DESC NULLS LAST,
       CASE
@@ -43,9 +43,14 @@ function projectsResultsSQL(projectIds, page, itemsPerPage) {
   `;
 }
 
+function projectIdsFilter(projectIds) {
+  if(!projectIds || !projectIds.length) return '';
+  return `WHERE dcp_name IN (${forIn(projectIds)})`;
+}
+
 function limitOffset(page, itemsPerPage) {
   if (!(page && itemsPerPage)) return '';
   return `LIMIT ${itemsPerPage} OFFSET ${(page - 1) * itemsPerPage}`;
 }
 
-module.exports = { projectsResultsSQL };
+module.exports = { projectsSQL };

@@ -1,7 +1,7 @@
 const express = require('express');
 const SphericalMercator = require('sphericalmercator');
 
-const { vectorTileSQL } = require('../queries/sql/vector-tile');
+const { vectorTileSQL } = require('../../queries/sql/vector-tile');
 
 const router = express.Router();
 const mercator = new SphericalMercator();
