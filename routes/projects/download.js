@@ -2,9 +2,9 @@ const express = require('express');
 const { parse: json2csv } = require('json2csv');
 const ogr2ogr = require('ogr2ogr');
 
-const { ACTIONS } = require('../constants');
-const { projectsDownloadSQL } = require('../queries/sql/projects-download');
-const { makeFeatureCollection } = require('../utils/make-feature-collection');
+const { ACTIONS } = require('../../constants');
+const { projectsDownloadSQL } = require('../../queries/sql/projects-download');
+const { makeFeatureCollection } = require('../../utils/make-feature-collection');
 
 const router = express.Router({ mergeParams: true });
 

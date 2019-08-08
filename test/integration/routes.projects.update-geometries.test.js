@@ -24,7 +24,7 @@ describe('update-geometries route', () => {
 
   it('should respond with failure if project cannot be found', async () => {
     const { body, status, type } = await chai.request(server)
-      .get(`/update-geometries/P201RQ0293?API_KEY=${USER_API_KEY}`);
+      .get(`/projects/update-geometries/P201RQ0293?API_KEY=${USER_API_KEY}`);
     console.log(body);
 
     status.should.equal(200);
@@ -36,7 +36,7 @@ describe('update-geometries route', () => {
 
   it('should respond success message if project is updated', async () => {
     const { body, status, type } = await chai.request(server)
-      .get(`/update-geometries/P2018R0026?API_KEY=${USER_API_KEY}`);
+      .get(`/projects/update-geometries/P2018R0026?API_KEY=${USER_API_KEY}`);
 
     status.should.equal(200);
     type.should.equal('application/json');
