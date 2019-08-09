@@ -46,4 +46,6 @@ jobs:
               git remote add dokku dokku@zap-api.planninglabs.nyc:zap-api && git push dokku master
             elif [ "${CIRCLE_BRANCH}" == "develop" ]; then
               git remote add dokku dokku@zap-api.planninglabs.nyc:zap-api-staging && git push dokku develop:master
+            elif [ "${CIRCLE_BRANCH}" == "zap-api-with-CRM" ]; then
+              git remote add dokku dokku@zap-api.planninglabs.nyc:zap-api-lupp && git push dokku develop:master
             fi
