@@ -43,6 +43,8 @@ app.use('/projects/ulurp', require('./routes/projects/ulurp'));
 app.use('/projects/feedback', require('./routes/projects/feedback'));
 app.use('/projects/update-geometries', require('./routes/projects/update-geometries'));
 
+app.use('/users/:userId/projects', require('./routes/users/projects'));
+
 app.use('/login', require('./routes/login'));
 app.use('/user-projects', require('./routes/user-projects'));
 app.use('/ceqr', require('./routes/ceqr'));
