@@ -180,17 +180,42 @@ function getMilestoneDisplayDescription(id, ulurpNonUlurp) {
  * @returns {String} The appropriate date to use as display_date
  */
 function getMilestoneDisplayDate(id, start, end, publicStatus) {
-  const USE_ACTUAL = ['763beec4-dad0-e711-8116-1458d04e2fb8', '783beec4-dad0-e711-8116-1458d04e2fb8', '663beec4-dad0-e711-8116-1458d04e2fb8', '6a3beec4-dad0-e711-8116-1458d04e2fb8', '780593bb-ecc2-e811-8156-1458d04d0698'];
-  const USE_START = ['783beec4-dad0-e711-8116-1458d04e2fb8'];
-  const USE_END = ['a43beec4-dad0-e711-8116-1458d04e2fb8', '863beec4-dad0-e711-8116-1458d04e2fb8', '7e3beec4-dad0-e711-8116-1458d04e2fb8', 'aa3beec4-dad0-e711-8116-1458d04e2fb8', '823beec4-dad0-e711-8116-1458d04e2fb8', '843beec4-dad0-e711-8116-1458d04e2fb8', '8e3beec4-dad0-e711-8116-1458d04e2fb8'];
+  const USE_END = [
+    '763beec4-dad0-e711-8116-1458d04e2fb8',
+    '663beec4-dad0-e711-8116-1458d04e2fb8',
+    '6a3beec4-dad0-e711-8116-1458d04e2fb8',
+    '780593bb-ecc2-e811-8156-1458d04d0698',
+    '483beec4-dad0-e711-8116-1458d04e2fb8',
+    '4a3beec4-dad0-e711-8116-1458d04e2fb8',
+  ];
+  const USE_END_IF_NOT_FILED = [
+    'a43beec4-dad0-e711-8116-1458d04e2fb8',
+    '863beec4-dad0-e711-8116-1458d04e2fb8',
+    '7e3beec4-dad0-e711-8116-1458d04e2fb8',
+    'aa3beec4-dad0-e711-8116-1458d04e2fb8',
+    '823beec4-dad0-e711-8116-1458d04e2fb8',
+    '843beec4-dad0-e711-8116-1458d04e2fb8',
+    '8e3beec4-dad0-e711-8116-1458d04e2fb8',
+  ];
+  const USE_START = [
+    '783beec4-dad0-e711-8116-1458d04e2fb8',
+  ];
+  const USE_START_IF_NOT_FILED = [
+    '963beec4-dad0-e711-8116-1458d04e2fb8',
+    '943beec4-dad0-e711-8116-1458d04e2fb8',
+    'a63beec4-dad0-e711-8116-1458d04e2fb8',
+    '923beec4-dad0-e711-8116-1458d04e2fb8',
+    '9e3beec4-dad0-e711-8116-1458d04e2fb8',
+    '7c3beec4-dad0-e711-8116-1458d04e2fb8',
+    '883beec4-dad0-e711-8116-1458d04e2fb8',
+    'a83beec4-dad0-e711-8116-1458d04e2fb8',
+  ];
 
-  if (USE_ACTUAL.includes(id)) {
-    return USE_START.includes(id) ? start : end;
-  }
+  if (USE_END.includes(id)) return end;
+  if (USE_END_IF_NOT_FILED.includes(id) && publicStatus !== 'Filed') return end;
 
-  if (publicStatus === 'Filed') {
-    return USE_END.includes(id) ? end : start;
-  }
+  if (USE_START.includes(id)) return start;
+  if (USE_START_IF_NOT_FILED.includes(id) && publicStatus !== 'Filed') return start;
 
   return null;
 }
@@ -205,7 +230,7 @@ function getMilestoneDisplayDate(id, start, end, publicStatus) {
  * @returns {String} The appropriate date to use as display_date_2
  */
 function getMilestoneDisplayDate2(id, actualEnd, plannedCompletion, publicStatus) {
-  if (publicStatus === 'Filed') {
+  if (publicStatus !== 'Filed') {
     return actualEnd || plannedCompletion;
   }
 
