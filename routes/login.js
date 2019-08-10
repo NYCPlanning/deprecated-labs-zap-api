@@ -54,7 +54,8 @@ function validateNYCIDToken(token) {
 }
 
 async function getContactId(crmClient, email) {
-  const { value: contacts } = await crmClient.doGet(`contacts?fetchXml=${contactIdXML(email)}`);
+  const response = await crmClient.doGet(`contacts?fetchXml=${contactIdXML(email)}`);
+  const { value: contacts } = response;
 
   if (!contacts.length) {
     throw new UnauthError(`No CRM Contact found for email ${email}`);
