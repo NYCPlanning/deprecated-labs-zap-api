@@ -1,4 +1,5 @@
 const express = require('express');
+const camelcase = require('camelcase');
 
 const { flattenProjectRows } = require('../../utils/project/flatten-rows');
 const { makeFeatureCollection } = require('../../utils/make-feature-collection');
@@ -6,7 +7,6 @@ const { projectXML } = require('../../queries/xml/project');
 const { projectGeomsSQL } = require('../../queries/sql/project-geoms');
 const getVideoLinks = require('../../utils/project/get-video-links');
 const injectSupportingDocumentURLs = require('../../utils/project/inject-supporting-document-urls');
-
 
 const router = express.Router({ mergeParams: true });
 
@@ -48,7 +48,22 @@ router.get('/', async (req, res) => {
         type: 'projects',
         id,
         attributes: project,
+        relationships: {
+          actions: {
+            data: project.actions.map((action, idx) => ({
+              type: 'action',
+              id: `${project.dcp_ceqrnumber}-${idx}`,
+            })),
+          },
+        },
       },
+      included: project.actions
+        .map((action, idx) => ({
+          type: 'action',
+          id: `${project.dcp_ceqrnumber}-${idx}`,
+          attributes: Object.keys(action)
+            .reduce((acc, curr) => { acc[camelcase(curr)] = action[curr]; return acc; }, {}),
+        })),
     });
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
