@@ -56,7 +56,8 @@ function validateNYCIDToken(token) {
 }
 
 async function getContactForSession(crmClient, email) {
-  const { value: contacts } = await crmClient.doGet(`contacts?fetchXml=${contactXML(email)}`);
+  const response = await crmClient.doGet(`contacts?fetchXml=${contactXML(email)}`);
+  const { value: contacts } = response;
 
   if (!contacts.length) {
     throw new UnauthError(`No CRM Contact found for email ${email}`);
@@ -79,4 +80,5 @@ function getRole(name) {
 
   return getUserRole(role);
 }
+
 module.exports = router;

@@ -21,10 +21,18 @@ app.dbClient = pgp(process.env.DATABASE_URL);
 app.crmClient = new CRMClient();
 app.queryCache = new NodeCache({ stdTTL: 3600 });
 
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:4200', 'http://localhost:3000'];
+
 // setup middleware
 app.all('*', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,X-Query-Id');
+  if (ALLOWED_ORIGINS.includes(req.headers.origin)) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,X-Query-Id');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+
   next();
 });
 
@@ -48,6 +56,7 @@ app.use('/users/:userId/projects', require('./routes/users/projects'));
 app.use('/login', require('./routes/login'));
 app.use('/user-projects', require('./routes/user-projects'));
 app.use('/ceqr', require('./routes/ceqr'));
+app.use('/users', require('./routes/users'));
 
 app.use((req, res) => {
   res.status(404).json({
