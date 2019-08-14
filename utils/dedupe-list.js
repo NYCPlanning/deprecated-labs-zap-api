@@ -6,7 +6,7 @@
  * @param {String} idField Name of property to use as 'id' when deduplicating array of objects
  * @returns {*[]} The deduplicated array
  */
-function dedupeList(values, idField = '') {
+function dedupeList(values, idField = '', ...optionalCols) {
   const defined = values.filter(v => !!v && notEmptyObject(v));
 
   if (!defined.length) return [];
@@ -15,8 +15,24 @@ function dedupeList(values, idField = '') {
     return Array.from(new Set(defined));
   }
 
-  return Array.from(new Set(defined.map(value => value[idField])))
-    .map(id => defined.find(value => value[idField] === id));
+  const distinctIdentifiers = new Set(defined
+    .map((value) => {
+      const mainIdentifier = value[idField];
+      const additionalIdentifiers = optionalCols
+        .map(col => value[col]);
+
+      return JSON.stringify([mainIdentifier, ...additionalIdentifiers]);
+    }));
+
+  return Array.from(distinctIdentifiers)
+    .map(identifier => defined.find((value) => { // find in array of vals
+      const identifierKeys = [idField, ...optionalCols];
+      const uniqCombos = JSON.parse(identifier); // pipe-separated ids
+
+      return identifierKeys
+        .every((id, idx) => value[id] === uniqCombos[idx]);
+    }))
+    .filter(Boolean); // filters out undefineds
 }
 
 /**

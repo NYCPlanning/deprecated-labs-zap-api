@@ -23,8 +23,8 @@ describe('support documents', () => {
         { dcp_ulurpnumber: 'N180230ZRK' },
       ],
       milestones: [
-        { milestonename: 'Community Board Referral' },
-        { milestonename: 'Borough President Referral' },
+        { display_name: 'Community Board Review' },
+        { display_name: 'Borough President Review' },
       ],
     };
 
@@ -46,8 +46,8 @@ describe('support documents', () => {
         { dcp_ulurpnumber: 'N180230ZRK' },
       ],
       milestones: [
-        { milestonename: 'Community Board Referral' },
-        { milestonename: 'Borough President Referral' },
+        { display_name: 'Community Board Review' },
+        { display_name: 'Borough President Review' },
       ],
     };
 
@@ -75,8 +75,8 @@ describe('support documents', () => {
         { dcp_ulurpnumber: 'C180229ZMK' },
       ],
       milestones: [
-        { milestonename: 'Community Board Referral' },
-        { milestonename: 'Borough President Referral' },
+        { display_name: 'Community Board Review' },
+        { display_name: 'Borough President Review' },
       ],
     };
 
@@ -115,10 +115,10 @@ describe('support documents', () => {
         { dcp_ulurpnumber: 'C180302ZMK' },
       ],
       milestones: [
-        { milestonename: 'Community Board Referral' },
-        { milestonename: 'Borough President Referral' },
-        { milestonename: 'Borough Board Referral' },
-        { milestonename: 'Final Letter Sent' },
+        { display_name: 'Community Board Review' },
+        { display_name: 'Borough President Review' },
+        { display_name: 'Borough Board Review' },
+        { display_name: 'Final Letter Sent' },
       ],
     };
 
