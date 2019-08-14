@@ -6,9 +6,9 @@ const parseStringAsync = promisify(parseString);
 
 const S3_BUCKET_HOST = 'https://labs-zap-supporting-documents.sfo2.digitaloceanspaces.com';
 const MILESTONE_TYPES = {
-  'Community Board Referral': /.*_[A-Z]{1}[0-9]{2}/,
-  'Borough President Referral': /.*_[A-Z]{1}BP/,
-  'Borough Board Referral': /.*_[A-Z]{1}BB/,
+  'Community Board Review': /.*_[A-Z]{1}[0-9]{2}/,
+  'Borough President Review': /.*_[A-Z]{1}BP/,
+  'Borough Board Review': /.*_[A-Z]{1}BB/,
   'Final Letter Sent': /.*_(HPD|DOB)/,
 };
 
@@ -38,8 +38,8 @@ async function injectSupportingDocumentURLs(project) {
     .reduce((acc, curr) => acc.concat(curr), []);
 
   project.milestones.forEach((milestone) => {
-    const { milestonename } = milestone;
-    const regex = MILESTONE_TYPES[milestonename];
+    const { display_name } = milestone;
+    const regex = MILESTONE_TYPES[display_name];
 
     if (regex) {
       const foundDocuments = allSupportingDocs.filter(({ Key: key }) => {

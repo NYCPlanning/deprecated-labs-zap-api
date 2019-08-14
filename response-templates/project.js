@@ -31,6 +31,7 @@ const projectTemplate = {
       'display_date',
       'display_date_2',
       'display_description',
+      'zap_id',
     ],
     addresses: [
       'dcp_validatedaddressnumber',

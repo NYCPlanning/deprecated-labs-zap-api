@@ -11,6 +11,7 @@ const {
 const FORMATTED = '@OData.Community.Display.V1.FormattedValue';
 
 /**
+ * TODO: RENAME CLASS AND EXTRACT DISTINCT RESPONSIBILITIES INTO NEW CLASS
  * Flatten an array of project rows (all associated with a single project)
  * into a single project object, with associated entities rolled up into arrays,
  * and finally formatting object for response from template.
@@ -43,9 +44,9 @@ function flattenProjectRows(projectRows) {
 
   // add entities
   project.bbls = dedupeList(bbls);
-  project.actions = dedupeList(actions, 'actioncode')
+  project.actions = dedupeList(actions, 'dcp_ulurpnumber')
     .filter(action => ALLOWED_ACTIONS.includes(action.actioncode));
-  project.milestones = dedupeList(milestones, 'zap_id')
+  project.milestones = dedupeList(milestones, 'zap_id', 'display_date')
     .filter(milestone => ALLOWED_MILESTONES.includes(milestone.zap_id));
   project.keywords = dedupeList(keywords);
   project.applicantteam = dedupeList(applicants, 'name');
@@ -118,23 +119,30 @@ function extractAction(projectRow) {
  */
 function extractMilestone(projectRow) {
   const id = projectRow['milestones.dcp_milestone'];
+
+  const display_date = getMilestoneDisplayDate(
+    id,
+    projectRow['milestones.dcp_actualstartdate'],
+    projectRow['milestones.dcp_actualenddate'],
+    projectRow[`dcp_publicstatus${FORMATTED}`],
+  );
+
+  const display_date_2 = getMilestoneDisplayDate2(
+    id,
+    projectRow['milestones.dcp_actualenddate'],
+    projectRow['milestones.dcp_plannedcompletiondate'],
+    projectRow[`dcp_publicstatus${FORMATTED}`],
+  );
+
   if (id) {
     return {
       zap_id: id,
       display_name: getMilestoneDisplayName(id),
       display_description: getMilestoneDisplayDescription(id, projectRow[`dcp_ulurp_nonulurp${FORMATTED}`]),
-      display_date: getMilestoneDisplayDate(
-        id,
-        projectRow['milestones.dcp_actualstartdate'],
-        projectRow['milestones.dcp_actualenddate'],
-        projectRow[`dcp_publicstatus${FORMATTED}`],
-      ),
-      display_date_2: getMilestoneDisplayDate2(
-        id,
-        projectRow['milestones.dcp_actualenddate'],
-        projectRow['milestones.dcp_plannedcompletiondate'],
-        projectRow[`dcp_publicstatus${FORMATTED}`],
-      ),
+      display_date,
+      // TODO: This is behavior that should be dealt with in the frontend
+      display_date_2: (display_date === display_date_2) ? null : display_date_2,
+      outcome: projectRow['outcomes.dcp_name'],
     };
   }
 
