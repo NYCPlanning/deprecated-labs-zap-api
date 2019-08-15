@@ -1,3 +1,5 @@
+/* eslint-disable indent */
+
 /**
  * Returns FetchXML query param for fetching the contactid associated with a given email.
  * By default, the CRM does case-insensitive string matching
