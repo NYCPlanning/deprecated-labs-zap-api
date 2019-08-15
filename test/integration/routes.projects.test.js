@@ -1,8 +1,14 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const chaiThings = require('chai-things');
-
+const server = require('../../app');
 const manageStubs = require('../../test/helpers/manage-stubs');
+
+const { expect } = chai;
+
+chai.use(chaiThings);
+chai.should();
+chai.use(chaiHttp);
 
 const PROJECT_STUB = {
   dcp_name: '',
@@ -27,14 +33,6 @@ const PROJECT_STUB = {
   ulurpnumbers: '',
   geom: '{"type": "Polygon","coordinates": [[[-92.10937499999999,41.244772343082076],[-87.890625,41.244772343082076],[-87.890625,44.59046718130883],[-92.10937499999999,44.59046718130883],[-92.10937499999999,41.244772343082076]]]}',
 };
-
-chai.use(chaiThings);
-chai.should();
-chai.use(chaiHttp);
-
-const { expect } = chai;
-
-const server = require('../../app');
 
 describe('projects route filters and returns data', () => {
   manageStubs();

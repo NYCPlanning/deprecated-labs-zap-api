@@ -1,9 +1,10 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
+const { getUserRole } = require('../utils/session');
 const UnauthError = require('../errors/unauth');
 const BadRequestError = require('../errors/bad-request');
-const { contactIdXML } = require('../queries/xml/contact-id');
+const contactIdQuery = require('../queries/xml/contact-id');
 
 const router = express.Router({ mergeParams: true });
 
@@ -28,14 +29,15 @@ router.get('/', async (req, res) => {
     const { email, expiresOn } = validateNYCIDToken(accessToken);
 
     // Validate exactly 1 contact exists in CRM associated with email from NYCID token
-    const contactId = await getContactId(crmClient, email);
+    const contactForSession = await getContactForSession(crmClient, email);
 
     // Create new token indicating NYCID and CRM authentication requirements met, with same exp as NYCID token
-    const newToken = jwt.sign({ exp: expiresOn, contactId }, CRM_SIGNING_SECRET);
+    const newToken = jwt.sign({ exp: expiresOn, ...contactForSession }, CRM_SIGNING_SECRET);
     res.cookie('token', newToken, { httpOnly: true }).send({ message: 'Login successful!' });
   } catch (e) {
     if (e instanceof BadRequestError) {
       res.status(e.status).send({ errors: [{ code: e.code, detail: e.message }] });
+      return;
     }
 
     console.log(e);
@@ -53,8 +55,8 @@ function validateNYCIDToken(token) {
   }
 }
 
-async function getContactId(crmClient, email) {
-  const response = await crmClient.doGet(`contacts?fetchXml=${contactIdXML(email)}`);
+async function getContactForSession(crmClient, email) {
+  const response = await crmClient.doGet(`contacts?fetchXml=${contactIdQuery(email)}`);
   const { value: contacts } = response;
 
   if (!contacts.length) {
@@ -65,7 +67,20 @@ async function getContactId(crmClient, email) {
     throw new BadRequestError(`More than one CRM Contact found for email ${email}`);
   }
 
-  return contacts.map(contact => contact.contactid)[0];
+  const [firstContact] = contacts.map(contact => ({
+    contactId: contact.contactid,
+    contactRole: getRole(contact.fullname),
+  }));
+
+  return firstContact;
+}
+
+function getRole(name) {
+  const roleRegExp = /\w{2}(\w{2})\d{0,2}/;
+  const match = name.match(roleRegExp);
+  const role = match ? match[1] : '';
+
+  return getUserRole(role);
 }
 
 module.exports = router;

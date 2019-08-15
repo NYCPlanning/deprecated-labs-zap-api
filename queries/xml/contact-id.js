@@ -7,6 +7,7 @@ function contactIdXML(email) {
     `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">`,
       `<entity name="contact">`,
         `<attribute name="contactid" />`,
+        `<attribute name="fullname" />`,
         `<filter type="and" >`,
           `<condition attribute="emailaddress1" operator="eq" value="${email}" />`,
         `</filter>`,
@@ -15,4 +16,4 @@ function contactIdXML(email) {
   ].join('');
 }
 
-module.exports = { contactIdXML };
+module.exports = contactIdXML;
