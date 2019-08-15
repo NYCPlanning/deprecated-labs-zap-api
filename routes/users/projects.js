@@ -1,31 +1,38 @@
 const express = require('express');
+const camelcase = require('camelcase');
 
 const UnauthError = require('../../errors/unauth');
 const BadRequestError = require('../../errors/bad-request');
-const { userProjectsXML } = require('../../queries/xml/user-projects');
-const { isCurrentUser, USER_ROLES_ENUM } = require('../../utils/session');
+const userProjectsQueries = require('../../queries/xml/user-projects');
+const { isCurrentUser } = require('../../utils/session');
+const { flattenProjectRows } = require('../../utils/project/flatten-rows');
 
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
   const {
-    app: { dbClient, crmClient },
-    params: { userId },
-    query: { projectState = 'review' },
+    app: { crmClient },
+    params: { contactId },
+    query: { projectState = 'reviewed' },
     session,
   } = req;
 
- try {
-    validateSession(session, userId);
+  try {
+    validateSession(session, contactId);
     validateParams(projectState);
 
-    const { contactRole: userRole } = session;
-    const targetMilestoneIds = getTargetMilestoneIds(userRole);
+    const targetQuery = userProjectsQueries[camelcase(projectState)](contactId);
+    const { value: projectRows } = await crmClient.doGet(`dcp_projects?fetchXml=${targetQuery}`);
 
-    const targetQuery = userProjectsXML(userId, targetMilestoneIds, projectState);
-    const { value: projectsRows } =  await crmClient.doGet(`dcp_projects?fetchXml=${targetQuery}`);
-    res.send({ message: projectsRows.map(p => p.dcp_name).join(', ') });
+    const projects = projectRows.map(project => flattenProjectRows([project]));
 
+    res.send({
+      data: projects.map(project => ({
+        type: 'projects',
+        id: project.dcp_name,
+        attributes: project,
+      })),
+    });
   } catch (e) {
     if (e instanceof UnauthError) {
       res.status(e.status).send({ errors: [{ code: e.code, detail: e.message }] });
@@ -37,38 +44,28 @@ router.get('/', async (req, res) => {
   }
 });
 
-function validateSession(session, userId) {
+// the middleware decodes the session into an object
+// if that fails, the session will be null
+function validateSession(session, contactId) {
   if (!session) {
     throw new UnauthError('Authentication required');
   }
 
-  if (!isCurrentUser(userId, session)) {
+  if (!isCurrentUser(contactId, session)) {
     throw new UnauthError('Current user not authorized to access this route');
   }
 }
 
-function validateParams(projectState) {
-  const VALID_PROJECT_STATES = ['upcoming', 'current', 'reviewed', 'archived'];
-  if (!VALID_PROJECT_STATES.includes(projectState)) {
-    throw new BadRequestError(`projectState must be one of: ${VALID_PROJECT_STATES.join(', ')}`);
+// ???
+function validateParams(filterType) {
+  const VALID_PROJECT_STATES = ['upcoming', 'to-review', 'reviewed', 'archived'];
+  if (!VALID_PROJECT_STATES.includes(filterType)) {
+    throw new BadRequestError(`filterType must be one of: ${VALID_PROJECT_STATES.join(', ')}`);
   }
 }
 
-function getTargetMilestoneIds(userRole) {
-  if (userRole === USER_ROLES_ENUM.UNKNOWN) {
-    console.log('userRole must not be UNKNOWN to view lup projects');
-    throw new UnauthError('Current user is not authorized to access this route');
-  }
+// See GH issue, must add another filter step
+// Removing for now
+// function getTargetMilestoneIds(userRole) ...
 
-  if (userRole === USER_ROLES_ENUM.COMMUNITY_BOARD) {
-    return ['923beec4-dad0-e711-8116-1458d04e2fb8'];
-  }
-
-  if (userRole === USER_ROLES_ENUM.BOROUGH_PRESIDENT) {
-    return [
-      '943beec4-dad0-e711-8116-1458d04e2fb8',
-      '963beec4-dad0-e711-8116-1458d04e2fb8',
-    ];
-  }
-}
 module.exports = router;

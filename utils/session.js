@@ -19,9 +19,9 @@ function getUserRole(role) {
 /**
  * Functions to help validate sessions
  */
-function isCurrentUser(userId, session) {
+function isCurrentUser(contactId, session) {
   if (!session.contactId) return false;
-  if (!session.contactId === userId) return false;
+  if (session.contactId !== contactId) return false;
 
   return true;
 }

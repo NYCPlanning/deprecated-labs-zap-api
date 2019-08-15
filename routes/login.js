@@ -67,10 +67,12 @@ async function getContactForSession(crmClient, email) {
     throw new BadRequestError(`More than one CRM Contact found for email ${email}`);
   }
 
-  return contacts.map(contact => ({
+  const [firstContact] = contacts.map(contact => ({
     contactId: contact.contactid,
     contactRole: getRole(contact.fullname),
-  }))[0];
+  }));
+
+  return firstContact;
 }
 
 function getRole(name) {

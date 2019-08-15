@@ -93,6 +93,8 @@ function extractBbl(projectRow) {
  * statuscode, dcp_ulurpnumber, actioncode, dcp_name
  */
 function extractAction(projectRow) {
+  if (!projectRow['actions.dcp_name']) return {};
+
   const ACTION_DCP_NAME_REGEX = '^(\\w+)\\s*-{1}\\s*(.*)\\s';
   const actionMatch = projectRow['actions.dcp_name'].match(ACTION_DCP_NAME_REGEX);
   if (actionMatch) {
