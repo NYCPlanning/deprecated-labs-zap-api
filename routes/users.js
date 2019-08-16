@@ -14,7 +14,6 @@ router.get('/', async (req, res) => {
   } = req;
 
   try {
-    console.log(req.session);
     const { contactId } = req.session;
 
     if (!contactId) {
@@ -23,12 +22,19 @@ router.get('/', async (req, res) => {
     }
 
     const { value: [contact] } = await crmClient.doGet(`contacts?fetchXml=${contactIdXML(contactId)}`);
-    console.log(contact);
+
     res.send({
       data: {
         type: 'user',
         id: contactId,
         attributes: contact,
+        relationships: {
+          projects: {
+            links: {
+              related: `/users/${contactId}/projects`,
+            },
+          },
+        },
       },
     });
   } catch (e) {
