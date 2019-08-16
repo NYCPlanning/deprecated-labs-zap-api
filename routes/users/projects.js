@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   const {
     app: { crmClient },
     params: { contactId },
-    query: { projectState = 'reviewed' },
+    query: { projectState = 'to-review' },
     session,
   } = req;
 
@@ -22,6 +22,7 @@ router.get('/', async (req, res) => {
     validateParams(projectState);
 
     const targetQuery = userProjectsQueries[camelcase(projectState)](contactId);
+
     const { value: projectRows } = await crmClient.doGet(`dcp_projects?fetchXml=${targetQuery}`);
 
     const projects = projectRows.map(project => flattenProjectRows([project]));
