@@ -1,4 +1,25 @@
-// CRM entitiy enum lookups
+// CRM Query for Contact Status types:
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/EntityDefinitions(LogicalName='contact')/Attributes(a247349a-78ab-4729-8528-515fc2719b67)/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet?$select=Options
+
+// CRM Query for ProjectMilestone Status types:
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/EntityDefinitions(LogicalName='dcp_projectmilestone')/Attributes(5cbf24ef-7923-423a-bf5d-e898a3375331)/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet?$select=Options
+
+// CRM Query for Milestones:
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/dcp_milestones
+
+// CRM Query for Actions
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/dcp_actions
+
+// CRM Query for Project publicstatuses
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/EntityDefinitions(LogicalName='dcp_project')/Attributes(c8d2d301-d28c-4b41-b1aa-b98bb2bbd7fa)/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName&$expand=OptionSet,GlobalOptionSet
+
+// CRM Query for Contact Statecode
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/EntityDefinitions(LogicalName='contact')/Attributes(cdc3895a-7539-41e9-966b-3f9ef805aefd)/Microsoft.Dynamics.CRM.StateAttributeMetadata/OptionSet?$select=Options
+
+// CRM Query for ProjectMilestone STATUSCode
+// https://dcppfstest2.crm9.dynamics.com/api/data/v9.0/EntityDefinitions(LogicalName='dcp_projectmilestone')/Attributes(5cbf24ef-7923-423a-bf5d-e898a3375331)/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet?$select=Options
+
+// CRM entity enum lookups
 const VISIBILITY = {
   GENERAL_PUBLIC: 717170003,
 };
@@ -95,6 +116,8 @@ const ACTIONS = {
   ZX: 'Counsel\'s Office - Rules of Procedure',
   ZZ: 'Site Plan Approval in Natural Area Districts',
 };
+
+// Are these IDs stable across environments?
 const MILESTONES = {
   '963beec4-dad0-e711-8116-1458d04e2fb8': {
     display_name: 'Borough Board Review',

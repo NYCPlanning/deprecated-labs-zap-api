@@ -1,10 +1,10 @@
 const express = require('express');
 const shortid = require('shortid');
 
-const BadRequestError = require('../../errors/bad-request');
-const { getMeta } = require('../../utils/projects/get-meta');
-const { projectsSQL } = require('../../queries/sql/projects');
-const { projectsSearchSQL } = require('../../queries/sql/projects-search');
+const BadRequestError = require('../errors/bad-request');
+const { getMeta } = require('../utils/projects/get-meta');
+const { projectsSQL } = require('../queries/sql/projects');
+const { projectsSearchSQL } = require('../queries/sql/projects-search');
 
 const router = express.Router({ mergeParams: true });
 

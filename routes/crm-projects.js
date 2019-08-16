@@ -1,30 +1,35 @@
 const express = require('express');
 const camelcase = require('camelcase');
 
-const UnauthError = require('../../errors/unauth');
-const BadRequestError = require('../../errors/bad-request');
-const userProjectsQueries = require('../../queries/xml/user-projects');
-const { isCurrentUser } = require('../../utils/session');
-const { flattenProjectRows } = require('../../utils/project/flatten-rows');
+const UnauthError = require('../errors/unauth');
+const BadRequestError = require('../errors/bad-request');
+const userProjectsQueries = require('../queries/xml/user-projects');
+const { isCurrentUser } = require('../utils/session');
+const { flattenProjectRows } = require('../utils/project/flatten-rows');
 
 const router = express.Router({ mergeParams: true });
+
+const { CRM_TEST_CONTACT_ID } = process.env;
 
 router.get('/', async (req, res) => {
   const {
     app: { crmClient },
-    params: { contactId },
     query: { projectState = 'to-review' },
     session,
   } = req;
 
   try {
+    let { contactId } = session;
     validateSession(session, contactId);
+
+    if (CRM_TEST_CONTACT_ID) {
+      contactId = CRM_TEST_CONTACT_ID;
+    }
+
     validateParams(projectState);
 
     const targetQuery = userProjectsQueries[camelcase(projectState)](contactId);
-
     const { value: projectRows } = await crmClient.doGet(`dcp_projects?fetchXml=${targetQuery}`);
-
     const projects = projectRows.map(project => flattenProjectRows([project]));
 
     res.send({

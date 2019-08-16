@@ -12,6 +12,14 @@ const pgp = require('pg-promise')({
 const CRMClient = require('./clients/crm-client');
 const authenticate = require('./middleware/authenticate');
 
+if (process.env.CRM_TEST_CONTACT_ID) {
+  console.log(`
+    Warning! Environmental variable "CRM_TEST_CONTACT_ID" found. 
+    Using ${process.env.CRM_TEST_CONTACT_ID} for project information.
+
+    This should NOT be used in production.
+  `);
+}
 
 // instantiate express app
 const app = express();
@@ -43,7 +51,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // set up routes
-app.use('/projects', require('./routes/projects/projects'));
+app.use('/projects', require('./routes/projects'));
 app.use('/projects/:id', require('./routes/projects/project'));
 app.use('/projects.:fileType', require('./routes/projects/download'));
 app.use('/projects/tiles', require('./routes/projects/tiles'));
@@ -51,7 +59,7 @@ app.use('/projects/ulurp', require('./routes/projects/ulurp'));
 app.use('/projects/feedback', require('./routes/projects/feedback'));
 app.use('/projects/update-geometries', require('./routes/projects/update-geometries'));
 
-app.use('/users/:contactId/projects', require('./routes/users/projects'));
+app.use('/crm-projects', require('./routes/crm-projects'));
 
 app.use('/login', require('./routes/login'));
 app.use('/ceqr', require('./routes/ceqr'));
