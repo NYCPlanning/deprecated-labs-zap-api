@@ -17,7 +17,7 @@ describe('user login callback', () => {
   it('should sign-in a user with existing contact information', async () => {
     const NYCIDMockToken = jwt.sign({
       mail: 'WGardner@planning.nyc.gov',
-      exp: 1565932329,
+      exp: 1565932329 * 1000,
     }, NYCID_CONSOLE_PASSWORD);
 
     const res = await chai.request(server)
