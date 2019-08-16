@@ -9,5 +9,9 @@ module.exports = [
   `<attribute name="dcp_leadaction" />`,
   `<attribute name="dcp_currentmilestone" />`,
   `<attribute name="dcp_projectid" />`,
+  `<link-entity name="dcp_projectapplicant" from="dcp_project" to="dcp_projectid" link-type="outer" alias="applicants">`,
+    `<attribute name="dcp_applicantrole"/>`,
+    `<attribute name="dcp_applicant_customer"/>`,
+  `</link-entity>`,
   `<order descending="false" attribute="dcp_name" />`,
 ];
