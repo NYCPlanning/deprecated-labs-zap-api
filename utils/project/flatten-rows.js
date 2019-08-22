@@ -47,7 +47,17 @@ function flattenProjectRows(projectRows) {
   project.actions = dedupeList(actions, 'dcp_ulurpnumber')
     .filter(action => ALLOWED_ACTIONS.includes(action.actioncode));
   project.milestones = dedupeList(milestones, 'zap_id', 'display_date')
-    .filter(milestone => ALLOWED_MILESTONES.includes(milestone.zap_id));
+    .filter(milestone => ALLOWED_MILESTONES.includes(milestone.zap_id))
+    .sort((milestone1, milestone2) => {
+      if (milestone1.dcp_milestonesequence > milestone2.dcp_milestonesequence) return 1;
+      if (milestone1.dcp_milestonesequence < milestone2.dcp_milestonesequence) return -1;
+
+      if (milestone1.display_date > milestone2.display_date) return 1;
+      if (milestone1.display_date < milestone2.display_date) return -1;
+
+      return 0;
+    });
+
   project.keywords = dedupeList(keywords);
   project.applicantteam = dedupeList(applicants, 'name');
   project.addresses = dedupeList(addresses, 'full_address');
@@ -145,6 +155,7 @@ function extractMilestone(projectRow) {
       // TODO: This is behavior that should be dealt with in the frontend
       display_date_2: (display_date === display_date_2) ? null : display_date_2,
       outcome: projectRow['outcomes.dcp_name'],
+      dcp_milestonesequence: projectRow['milestones.dcp_milestonesequence'],
     };
   }
 
