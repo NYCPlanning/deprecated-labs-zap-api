@@ -31,6 +31,7 @@ function flattenProjectRows(projectRows) {
     bbls.push(extractBbl(row));
     actions.push(extractAction(row));
     milestones.push(extractMilestone(row));
+    console.log(milestones);
     keywords.push(extractKeyword(row));
     applicants.push(extractApplicant(row));
     addresses.push(extractAddress(row));
