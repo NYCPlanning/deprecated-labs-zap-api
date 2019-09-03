@@ -7,16 +7,13 @@
     "start": "node ./bin/www",
     "test": "NODE_ENV=test node ./node_modules/mocha/bin/mocha ./test/**/*.js",
     "devstart": "docker run -it -v $PWD:/zap-api -p 3000:3000 -w /zap-api geodatagouv/node-gdal ./node_modules/.bin/nodemon ./bin/www",
-    "devtest": "docker run -e REFRESH_STUBS=$REFRESH_STUBS -it -v $PWD:/zap-api -w /zap-api -e \"NODE_ENV=test\" geodatagouv/node-gdal node ./node_modules/mocha/bin/mocha ./test/**/*.js --timeout 15000 --exit",
+    "devtest": "docker run -it -v $PWD:/zap-api -w /zap-api -e \"NODE_ENV=test\" geodatagouv/node-gdal node ./node_modules/mocha/bin/mocha ./test/**/*.js --timeout 15000 --exit",
     "migrate": "node-pg-migrate"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
     "@turf/buffer": "^5.1.5",
     "JSONStream": "^1.3.3",
-    "adal-node": "^0.1.28",
-    "camelcase": "5.3.1",
-    "cookie-parser": "^1.4.4",
     "debug": "~3.1.0",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
@@ -24,7 +21,6 @@
     "fast-csv": "^2.4.1",
     "json-stream-stringify": "^2.0.1",
     "json2csv": "^4.1.5",
-    "jsonwebtoken": "^8.5.1",
     "moment": "^2.22.2",
     "morgan": "^1.9.0",
     "nock": "^9.6.1",
@@ -42,15 +38,12 @@
     "shortid": "^2.2.8",
     "slack-webhook": "^1.0.0",
     "sphericalmercator": "^1.0.5",
-    "turf-linestring": "^1.0.2",
-    "turf-point": "^2.0.1",
-    "utf8": "3.0.0",
     "xml2js": "0.4.19"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
-    "chai": "4.2.0",
-    "chai-http": "4.3.0",
+    "chai": "^4.1.2",
+    "chai-http": "^4.0.0",
     "chai-things": "^0.2.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^17.0.0",
@@ -58,10 +51,10 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
     "glob": "^7.1.2",
-    "mocha": "6.2.0",
-    "nodemon": "^1.19.1"
+    "mocha": "^5.2.0",
+    "nodemon": "^1.17.5"
   },
   "engines": {
-    "node": "*"
+    "node": "^10.15.3"
   }
 }

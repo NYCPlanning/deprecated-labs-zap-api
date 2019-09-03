@@ -1,6 +1,6 @@
 const nock = require('nock');
 
-const getVideoLinks = require('../../utils/project/get-video-links');
+const getVideoLinks = require('../../utils/get-video-links');
 
 describe('get-video-links', () => {
   beforeEach(() => {
