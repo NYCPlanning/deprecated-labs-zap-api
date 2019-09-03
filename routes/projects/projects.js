@@ -1,97 +1,106 @@
+const pgp = require('pg-promise');
 const express = require('express');
+const turfBbox = require('@turf/bbox');
+const turfBuffer = require('@turf/buffer');
 const shortid = require('shortid');
 
-const BadRequestError = require('../../errors/bad-request');
-const { getMeta } = require('../../utils/projects/get-meta');
-const { projectsSQL } = require('../../queries/sql/projects');
-const { projectsSearchSQL } = require('../../queries/sql/projects-search');
+const buildProjectsSQL = require('../../utils/build-projects-sql');
+const getQueryFile = require('../../utils/get-query-file');
 
 const router = express.Router({ mergeParams: true });
 
-/**
- * Returns a paginated view of projects; either ALL projects, or a filtered subset of
- * projects defined by a queryId (nth page of existing query) or filter query params (new query)
- */
-router.get('/', async (req, res) => {
-  const {
-    app: { dbClient, queryCache },
-    query,
-  } = req;
+const boundingBoxQuery = getQueryFile('helpers/bounding-box-query.sql');
 
-  const { page = '1', itemsPerPage = '30' } = query;
+const tileQuery = getQueryFile('helpers/tile-query.sql');
+
+/* GET /projects */
+/* gets a JSON array of projects that match the query params */
+router.get('/', async (req, res) => {
+  const { app, query } = req;
+
+  const SQL = buildProjectsSQL(query);
 
   try {
-    const { projectIds, queryId } = await getProjectIdsAndQueryId(dbClient, queryCache, query);
+    const projects = await app.db.any(SQL);
 
-    const targetQuery = projectsSQL(page, itemsPerPage, projectIds);
+    const [{ total_projects: total = 0 } = {}] = projects || [];
+    const { length = 0 } = projects;
 
-    const projects = projectIds ? await dbClient.any(targetQuery) : [];
+    // if this is the first page of a new query, include bounds for the query's geoms, and a vector tile template
+    let tileMeta = {};
+    const { page } = query;
 
+    if (page === '1') {
+      /*
+       * ProjectIds query is extracted to enable a one-time generation of projectIds that meet the filter requirements.
+       * These projectId strings are then injected into the tile query, which is later cached.
+       * This speeds up tile generation by ensuring the expensive WHERE logic to determine matching projects is only run once.
+       */
+      const projectIds = await app.db.any(buildProjectsSQL(query, 'projectids'));
+      const projectIdsString = projectIds.map(d => d.projectid).map(d => `'${d}'`).join(',');
+      const tileSQL = pgp.as.format(tileQuery, { projectIds: projectIdsString });
+
+      // create array of projects that have geometry
+      const projectsWithGeometries = projects.filter(project => project.has_centroid);
+
+      // get the bounds for projects with geometry
+      // default to a bbox for the whole city
+      // if project list has no geometries (projectsWithGeometries is 0) default to whole city
+      let bounds = [[-74.2553345639348, 40.498580711525], [-73.7074928813077, 40.9141778017518]];
+
+      if (projectsWithGeometries.length > 0) {
+        bounds = await app.db.one(boundingBoxQuery, { tileSQL });
+        bounds = bounds.bbox;
+      }
+
+      // if y coords are the same for both corners, the bbox is for a single point
+      // to prevent fitBounds being lame, wrap a 600m buffer around the point
+
+      if (bounds[0][0] === bounds[1][0]) {
+        const point = {
+          type: 'Point',
+          coordinates: [
+            bounds[0][0],
+            bounds[0][1],
+          ],
+        };
+        const buffer = turfBuffer(point, 0.4);
+        const bbox = turfBbox.default(buffer);
+        bounds = [
+          [bbox[0], bbox[1]],
+          [bbox[2], bbox[3]],
+        ];
+      }
+
+      // create a shortid for this query and store it in the cache
+      const tileId = shortid.generate();
+      await app.tileCache.set(tileId, tileSQL);
+
+      tileMeta = {
+        tiles: [`${process.env.HOST}/projects/tiles/${tileId}/{z}/{x}/{y}.mvt`],
+        bounds,
+      };
+    }
+
+    // send the response with a tile template
     res.send({
       data: projects.map(project => ({
         type: 'projects',
         id: project.dcp_name,
         attributes: project,
       })),
-      meta: getMeta(projectIds, projects, page, queryId),
+      meta: {
+        total,
+        pageTotal: length,
+        ...tileMeta,
+      },
     });
   } catch (e) {
-    if (e instanceof BadRequestError) {
-      res.status(e.status).send({ error: e.message });
-      return;
-    }
-
-    console.log(e);
-    res.status(500).send({ error: e.message });
+    console.log(e); // eslint-disable-line
+    res.status(404).send({
+      error: e.toString(),
+    });
   }
 });
-
-
-/**
- * Returns projectIds and queryId for the given request. If a queryId is provided, returns
- * the associated projectIds from the queryCache. If the provided queryId is not found in the cache,
- * throws a BadRequestError to indicate invalid request params. Otherwise, a new queryId is generated and
- * a project-search query is run. The results of the query are stored in the queryCache
- * with queryId as the key.
- *
- * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
- * @param {NodeCache} queryCache The app cache that stores filtered projectIds for a given query
- * @param {Object} query The full set of request querystring params
- * @returns {Object} Object containing list of projectIds for the request, and optionally a queryId
- */
-async function getProjectIdsAndQueryId(dbClient, queryCache, query) {
-  if (query.queryId) {
-    const projectIds = queryCache.get(query.queryId);
-
-    // queryId not found in cache
-    if (projectIds === undefined) {
-      throw new BadRequestError(`Invalid queryId (${query.queryId})`);
-    }
-
-    return { projectIds, queryId: query.queryId };
-  }
-
-  return newQuery(dbClient, queryCache, query);
-}
-
-/**
- * Returns list of projectIds meeting the filters defined in query,
- * and a queryId generated to represent this result set. Additionally,
- * stores the list of projectIds in the queryCache with queryId as the key.
- *
- * @param {Database} dbClient The pg-promise Database object for querying PostgreSQL
- * @param {NodeCache} queryCache The app cache that stores filtered projectIds for a given query
- * @param {Object} query The full set of request querystring params
- * @returns {Object} Object containing list of projectIds for the request and the queryId
- */
-async function newQuery(dbClient, queryCache, query) {
-  const targetQuery = projectsSearchSQL(query);
-  const projectIds = await dbClient.any(targetQuery)
-    .then(projects => projects.map(project => project.dcp_name));
-  const queryId = shortid.generate();
-  await queryCache.set(queryId, projectIds);
-
-  return { projectIds, queryId };
-}
 
 module.exports = router;

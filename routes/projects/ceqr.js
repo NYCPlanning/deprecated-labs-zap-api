@@ -2,23 +2,23 @@ const express = require('express');
 
 const router = express.Router();
 
-router.get('/:ulurpnumber', async (req, res) => {
+router.get('/:ceqrnumber', async (req, res) => {
   const { app, params } = req;
-  const { ulurpnumber } = params;
+  const { ceqrnumber } = params;
   // find projectid for this ceqrnumber
-  // http://localhost:3000/projects/ulurp/170358ZMM
+  // http://localhost:3000/projects/ceqr/18DCP155K
 
-  const SQL = `SELECT dcp_name as projectid FROM normalized_projects WHERE ulurpnumbers ILIKE '%${ulurpnumber}%'`;
+  const SQL = `SELECT dcp_name as projectid FROM dcp_project WHERE dcp_ceqrnumber LIKE '${ceqrnumber}'`;
 
-  // ulurpnumber should be 6-10 capital letters, numbers, and hyphens
-  if (ulurpnumber.match(/^[0-9A-Za-z]{4,12}$/)) {
+  // ceqrnumber should be 6-10 capital letters, numbers, and hyphens
+  if (ceqrnumber.match(/^[0-9A-Z-]{6,10}$/)) {
     try {
       const { projectid } = await app.db.one(SQL);
       const url = `https://zap.planning.nyc.gov/projects/${projectid}`;
 
       res.redirect(301, url);
     } catch (error) {
-      res.redirect(301, 'https://zap.planning.nyc.gov/projects');
+      res.redirect(301, 'https://a002-ceqraccess.nyc.gov/ceqr/');
     }
   } else {
     res.status(422).send({
@@ -26,5 +26,6 @@ router.get('/:ulurpnumber', async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

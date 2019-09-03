@@ -15,7 +15,7 @@ Navigate to the repo and install dependencies: `cd labs-zap-api && npm install`
 
 Create `.env` with all the required environment variables.  
 
-Make sure you have Docker open and running, then start the development server:  `npm run devstart`
+Start the development server.  `npm run devstart`
 
 ### Local Database
 
