@@ -10,17 +10,6 @@ chai.use(chaiHttp);
 const server = require('../../app');
 
 describe('downloads functionality', () => {
-  it('responds to requests for csv', (done) => {
-    chai.request(server)
-      .get('/projects.csv?dcp_publicstatus[]=Filed&dcp_publicstatus[]=In Public Review&page=1')
-      .end((err, res) => {
-        should.not.exist(err);
-        res.status.should.equal(200);
-        res.type.should.equal('text/csv');
-
-        done();
-      });
-  });
   it('responds to requests for shapefile', (done) => {
     chai.request(server)
       .get('/projects.shp?dcp_publicstatus[]=Filed&dcp_publicstatus[]=In Public Review&page=1')
@@ -32,6 +21,19 @@ describe('downloads functionality', () => {
         done();
       });
   });
+
+  it('responds to requests for csv', (done) => {
+    chai.request(server)
+      .get('/projects.csv?dcp_publicstatus[]=Filed&dcp_publicstatus[]=In Public Review&page=1')
+      .end((err, res) => {
+        should.not.exist(err);
+        res.status.should.equal(200);
+        res.type.should.equal('text/csv');
+
+        done();
+      });
+  });
+
   it('responds to requests for geojson', (done) => {
     chai.request(server)
       .get('/projects.geojson?dcp_publicstatus[]=Filed&dcp_publicstatus[]=In Public Review&page=1')
