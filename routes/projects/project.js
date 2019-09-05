@@ -1,4 +1,5 @@
 const express = require('express');
+const camelcase = require('camelcase');
 const getQueryFile = require('../../utils/get-query-file');
 const getVideoLinks = require('../../utils/get-video-links');
 const normalizeSupportDocs = require('../../utils/inject-supporting-document-urls');
@@ -32,7 +33,27 @@ router.get('/', async (req, res) => {
         type: 'projects',
         id,
         attributes: project,
+        relationships: {
+          actions: {
+            data: project.actions.map((action, idx) => ({
+              type: 'action',
+              id: `${project.dcp_ceqrnumber}-${idx}`,
+            })),
+          },
+        },
       },
+      included: project.actions
+        .map((action, idx) => ({
+          type: 'action',
+          id: `${project.dcp_ceqrnumber}-${idx}`,
+          attributes: Object.keys(action)
+            .reduce((acc, curr) => {
+              const cleanedKey = curr.replace('dcp_', '');
+              acc[camelcase(cleanedKey)] = action[curr];
+
+              return acc;
+            }, {}),
+        })),
     });
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line
