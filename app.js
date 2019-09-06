@@ -22,9 +22,19 @@ app.db = pgp(process.env.DATABASE_URL);
 app.tileCache = new NodeCache({ stdTTL: 3600 });
 
 // allows CORS
+// allows CORS
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:4200', 'http://localhost:3000'];
+
+// setup middleware
 app.all('*', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
+  if (ALLOWED_ORIGINS.includes(req.headers.origin)) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,X-Query-Id');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+
   next();
 });
 
