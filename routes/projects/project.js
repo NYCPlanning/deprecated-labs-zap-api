@@ -28,6 +28,12 @@ router.get('/', async (req, res) => {
     await normalizeSupportDocs(project);
     project.video_links = await getVideoLinks(project.dcp_name);
 
+    /**
+     * Memo for getting last ID in a sequence of milestones.
+     * Logic is extracted from FE. TODO: Refactor this.
+    */
+    let lastZapId = '';
+
     res.send({
       data: {
         type: 'projects',
@@ -40,20 +46,56 @@ router.get('/', async (req, res) => {
               id: `${project.dcp_ceqrnumber}-${idx}`,
             })),
           },
+          milestones: {
+            data: project.milestones.map((milestone, idx) => ({
+              type: 'milestone',
+              id: `m-${project.dcp_ceqrnumber}-${idx}`,
+            })),
+          },
         },
       },
-      included: project.actions
-        .map((action, idx) => ({
-          type: 'action',
-          id: `${project.dcp_ceqrnumber}-${idx}`,
-          attributes: Object.keys(action)
-            .reduce((acc, curr) => {
-              const cleanedKey = curr.replace('dcp_', '');
-              acc[camelcase(cleanedKey)] = action[curr];
+      included: [
+        ...project.actions
+          .map((action, idx) => ({
+            type: 'action',
+            id: `${project.dcp_ceqrnumber}-${idx}`,
+            attributes: Object.keys(action)
+              .reduce((acc, curr) => {
+                const cleanedKey = curr.replace('dcp_', '');
+                acc[camelcase(cleanedKey)] = action[curr];
 
-              return acc;
-            }, {}),
-        })),
+                return acc;
+              }, {}),
+          })),
+        ...project.milestones
+          .map((milestone, idx) => {
+            if (
+              milestone.dcp_milestone === lastZapId
+              && (
+                milestone.dcp_milestone === '663beec4-dad0-e711-8116-1458d04e2fb8' // "Land Use Application Filed"
+                || milestone.dcp_milestone === '783beec4-dad0-e711-8116-1458d04e2fb8' // "Environmental Assessment Statement Filed"
+              )
+            ) {
+              milestone.isRevised = true;
+            } else {
+              milestone.isRevised = false;
+            }
+
+            lastZapId = milestone.dcp_milestone;
+
+            return {
+              type: 'milestone',
+              id: `m-${project.dcp_ceqrnumber}-${idx}`,
+              attributes: Object.keys(milestone)
+                .reduce((acc, curr) => {
+                  const cleanedKey = curr.replace('dcp_', '');
+                  acc[camelcase(cleanedKey)] = milestone[curr];
+
+                  return acc;
+                }, {}),
+            };
+          }),
+      ],
     });
   } catch (error) {
     console.log(`Error retrieving project (id: ${id})`, error); // eslint-disable-line

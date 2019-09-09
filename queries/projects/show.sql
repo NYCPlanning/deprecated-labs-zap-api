@@ -143,7 +143,7 @@ SELECT
       'dcp_actualenddate', m.dcp_actualenddate,
       'statuscode', m.statuscode,
       'outcome', m.outcome,
-      'zap_id', m.dcp_milestone,
+      'dcp_milestone', m.dcp_milestone,
       'dcp_milestonesequence', m.dcp_milestonesequence,
       'display_sequence', m.display_sequence,
       'display_name', m.display_name,
