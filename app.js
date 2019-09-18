@@ -1,6 +1,8 @@
 const express = require('express');
 const logger = require('morgan');
 const NodeCache = require('node-cache');
+const cookieParser = require('cookie-parser');
+const authenticate = require('./middleware/authenticate');
 
 // use .env for local environment variables
 require('dotenv').config();
@@ -22,7 +24,6 @@ app.db = pgp(process.env.DATABASE_URL);
 app.tileCache = new NodeCache({ stdTTL: 3600 });
 
 // allows CORS
-// allows CORS
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:4200', 'http://localhost:3000'];
 
 // setup middleware
@@ -39,6 +40,8 @@ app.all('*', (req, res, next) => {
 });
 
 // middleware
+app.use(cookieParser());
+app.use(authenticate);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -48,6 +51,7 @@ app.use('/projects.:filetype', require('./routes/projects/download'));
 app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
+app.use('/login', require('./routes/login'));
 
 app.use((req, res) => {
   res.status(404).json({
