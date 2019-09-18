@@ -16,8 +16,14 @@ const tileQuery = getQueryFile('helpers/tile-query.sql');
 /* GET /projects */
 /* gets a JSON array of projects that match the query params */
 router.get('/', async (req, res) => {
-  const { app, query } = req;
+  const {
+    app,
+    query,
+    // session,
+  } = req;
 
+  // TODO: extract contactID from session
+  // const { contactId } = session;
   const SQL = buildProjectsSQL(query);
 
   try {
