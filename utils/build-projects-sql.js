@@ -2,7 +2,6 @@ const pgp = require('pg-promise');
 const generateDynamicQuery = require('./generate-dynamic-sql');
 const getQueryFile = require('../utils/get-query-file');
 
-
 // import sql query templates
 const listProjectsQuery = getQueryFile('/projects/index.sql');
 const paginateQuery = getQueryFile('/helpers/paginate.sql');
@@ -31,6 +30,7 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     block = '',
     distance_from_point = [],
     radius_from_point = 10,
+    project_lup_status = 'to-review',
   } = queryParams;
 
   // special handling for FEMA flood zones
@@ -65,12 +65,8 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
    *    should be used if you have points that are more than a mile apart)
    * -  the radius_from_point value is set in the frontend as feet, we convert it to meters to run this query
    */
-
   const METERS_TO_FEET_FACTOR = 3.28084;
-
   const radiusDistanceQuery = distance_from_point[0] ? pgp.as.format('AND ST_DWithin(ST_MakePoint($1,$2)::geography, c.polygons::geography, $3)', [...distance_from_point, (radius_from_point / METERS_TO_FEET_FACTOR)]) : '';
-
-
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
 
   if (type === 'filter') {
@@ -134,6 +130,18 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       blockQuery,
       radiusDistanceQuery,
       paginate: '',
+    });
+  }
+
+  if (type === 'lup-user') {
+    // one of 'archive', 'reviewed', 'to-review', 'upcoming'
+    if (!['archive', 'reviewed', 'to-review', 'upcoming'].includes(project_lup_status)) {
+      throw new Error('Must be one of archive, reviewed, to-review, upcoming');
+    }
+
+    const userProjectsQuery = getQueryFile(`/projects/lup-${project_lup_status}-projects`);
+
+    return pgp.as.format(userProjectsQuery, {
     });
   }
 
