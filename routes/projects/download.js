@@ -38,12 +38,12 @@ const router = express.Router({ mergeParams: true });
 /* GET /projects/download.:filetype */
 /* Downloads a file of projects that match the current query params and filetype */
 router.get('/', async (req, res) => {
-  const { app, query, params } = req;
+  const { app, params } = req;
   const { filetype } = params;
 
   try {
     if (filetype === 'csv') {
-      const SQL = buildProjectsSQL(query, 'csv_download');
+      const SQL = buildProjectsSQL(req, 'csv_download');
       const data = await app.db.any(SQL);
       res.setHeader('Content-type', 'text/csv');
 
@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
         res.status(204).send();
       }
     } else { // spatial download
-      const SQL = buildProjectsSQL(query, 'spatial_download');
+      const SQL = buildProjectsSQL(req, 'spatial_download');
       const FeatureCollection = await getProjectsFeatureCollection(app, SQL);
       if (filetype === 'shp') { // zipped shapefile
         res.setHeader('Content-disposition', 'attachment; filename=projects.zip');
