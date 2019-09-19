@@ -52,6 +52,7 @@ app.use('/projects', require('./routes/projects'));
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
 app.use('/login', require('./routes/login'));
+app.use('/users', require('./routes/users'));
 
 app.use((req, res) => {
   res.status(404).json({

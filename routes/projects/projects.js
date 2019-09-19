@@ -19,12 +19,9 @@ router.get('/', async (req, res) => {
   const {
     app,
     query,
-    // session,
   } = req;
 
-  // TODO: extract contactID from session
-  // const { contactId } = session;
-  const SQL = buildProjectsSQL(query);
+  const SQL = buildProjectsSQL(req);
 
   try {
     const projects = await app.db.any(SQL);
@@ -42,7 +39,7 @@ router.get('/', async (req, res) => {
        * These projectId strings are then injected into the tile query, which is later cached.
        * This speeds up tile generation by ensuring the expensive WHERE logic to determine matching projects is only run once.
        */
-      const projectIds = await app.db.any(buildProjectsSQL(query, 'projectids'));
+      const projectIds = await app.db.any(buildProjectsSQL(req, 'projectids'));
       const projectIdsString = projectIds.map(d => d.projectid).map(d => `'${d}'`).join(',');
       const tileSQL = pgp.as.format(tileQuery, { projectIds: projectIdsString });
 

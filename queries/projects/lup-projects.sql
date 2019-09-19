@@ -1,14 +1,22 @@
 -- first, get the list of assigned projects, roles, and statuses for the specific LUP contact
 WITH lups_project_assignments AS (
   SELECT DISTINCT
-    'Reviewed' AS dashboard_tab,
+    -- 'To Review' AS dashboard_tab,
+    CASE
+      WHEN mm.statuscode = 'In Progress' THEN 'to-review'
+      WHEN mm.statuscode = 'Not Started' THEN 'upcoming'
+      WHEN mm.statuscode IN ('Completed', 'Overridden') AND p.dcp_publicstatus NOT IN ('Approved', 'Withdrawn') THEN 'reviewed'
+      WHEN mm.statuscode IN ('Completed', 'Overridden') AND p.dcp_publicstatus IN ('Approved', 'Withdrawn') THEN 'archive'
+    END AS dashboard_tab,     
     lup.dcp_project AS project_id,
+    lup.dcp_project AS dcp_name,
     lup.dcp_name AS lup_name,
     lup.dcp_lupteammemberrole AS lup_role,
-    p.dcp_publicstatus AS project_status,
-    p.dcp_projectname AS project_name,
-    p.dcp_projectbrief AS project_brief,
-    p.dcp_ulurp_nonulurp AS project_ulurp
+    p.dcp_publicstatus,
+    p.dcp_projectname,
+    p.dcp_projectbrief,
+    p.dcp_name,
+    p.dcp_ulurp_nonulurp
   FROM
     dcp_projectlupteam AS lup
   INNER JOIN -- inner because not all projects should be visible to users based on visibility field in "where" clause
@@ -23,7 +31,7 @@ WITH lups_project_assignments AS (
       OR (mm.dcp_milestone = '943beec4-dad0-e711-8116-1458d04e2fb8' AND lup.dcp_lupteammemberrole = 'BP')
       OR (mm.dcp_milestone = '963beec4-dad0-e711-8116-1458d04e2fb8' AND lup.dcp_lupteammemberrole = 'BB')
     )
-    AND mm.statuscode IN ('Completed', 'Overridden') AND p.dcp_publicstatus NOT IN ('Approved', 'Withdrawn')
+    -- AND mm.statuscode = 'In Progress'
 )
 
 -- using the list of projects assigned to that contact, get additional attributes at the project level
@@ -236,3 +244,4 @@ SELECT
 FROM lups_project_assignments AS lup
 LEFT JOIN
   dcp_project AS p ON p.dcp_projectid = lup.project_id
+WHERE dashboard_tab = '${status:value}'

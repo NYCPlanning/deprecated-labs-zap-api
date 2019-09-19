@@ -5,12 +5,13 @@ const getQueryFile = require('../utils/get-query-file');
 const UnauthError = require('../errors/unauth');
 const BadRequestError = require('../errors/bad-request');
 
-const listProjectsQuery = getQueryFile('contacts/filter.sql');
+const contactsFilter = getQueryFile('contacts/filter.sql');
 const router = express.Router({ mergeParams: true });
 
 const {
   CRM_SIGNING_SECRET,
   NYCID_CONSOLE_PASSWORD,
+  CRM_IMPOSTER_ID,
 } = process.env;
 
 function validateNYCIDToken(token) {
@@ -24,7 +25,9 @@ function validateNYCIDToken(token) {
 }
 
 async function getContactId(dbClient, email) {
-  const contacts = await dbClient.any(listProjectsQuery, {
+  if (CRM_IMPOSTER_ID) return CRM_IMPOSTER_ID;
+
+  const contacts = await dbClient.any(contactsFilter, {
     email,
   });
 

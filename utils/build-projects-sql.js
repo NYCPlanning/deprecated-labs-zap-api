@@ -8,7 +8,12 @@ const paginateQuery = getQueryFile('/helpers/paginate.sql');
 const standardColumns = getQueryFile('/helpers/standard-projects-columns.sql');
 const spatialColumns = getQueryFile('/helpers/shp-projects-columns.sql');
 
-const buildProjectsSQL = (queryParams, type = 'filter') => {
+const buildProjectsSQL = (req, type = 'filter') => {
+  const {
+    query,
+    session,
+  } = req;
+
   const {
     // pagination
     page = '1',
@@ -30,8 +35,12 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
     block = '',
     distance_from_point = [],
     radius_from_point = 10,
-    project_lup_status = 'to-review',
-  } = queryParams;
+
+    // user-specific filters
+    // defaults to null because filtering on this
+    // requires authentication
+    project_lup_status = null, // 'to-review'
+  } = query;
 
   // special handling for FEMA flood zones
   // to only filter when set to true
@@ -70,6 +79,23 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
   const paginate = generateDynamicQuery(paginateQuery, { itemsPerPage, offset: (page - 1) * itemsPerPage });
 
   if (type === 'filter') {
+    const { contactId } = session;
+
+    // we have different queries for LUPP things
+    if (project_lup_status && contactId) {
+      // one of 'archive', 'reviewed', 'to-review', 'upcoming'
+      if (!['archive', 'reviewed', 'to-review', 'upcoming'].includes(project_lup_status)) {
+        throw new Error('Must be one of archive, reviewed, to-review, upcoming');
+      }
+
+      const userProjectsQuery = getQueryFile('/projects/lup-projects.sql');
+
+      return pgp.as.format(userProjectsQuery, {
+        id: contactId,
+        status: project_lup_status,
+      });
+    }
+
     return pgp.as.format(listProjectsQuery, {
       standardColumns,
       dcp_publicstatus,
@@ -130,18 +156,6 @@ const buildProjectsSQL = (queryParams, type = 'filter') => {
       blockQuery,
       radiusDistanceQuery,
       paginate: '',
-    });
-  }
-
-  if (type === 'lup-user') {
-    // one of 'archive', 'reviewed', 'to-review', 'upcoming'
-    if (!['archive', 'reviewed', 'to-review', 'upcoming'].includes(project_lup_status)) {
-      throw new Error('Must be one of archive, reviewed, to-review, upcoming');
-    }
-
-    const userProjectsQuery = getQueryFile(`/projects/lup-${project_lup_status}-projects`);
-
-    return pgp.as.format(userProjectsQuery, {
     });
   }
 
