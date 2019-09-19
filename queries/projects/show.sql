@@ -341,7 +341,22 @@ SELECT
     FROM dcp_projectaddress a
     WHERE a.dcp_project = p.dcp_projectid
       AND (dcp_validatedaddressnumber IS NOT NULL AND dcp_validatedstreet IS NOT NULL AND statuscode = 'Active')
-  ) AS addresses
+  ) AS addresses,
+  (
+    SELECT json_agg(
+      json_build_object(
+        'recommendationsubmittedby', disp.dcp_recommendationsubmittedby,
+        'representing', disp.dcp_representing,
+        'dateofpublichearing', disp.dcp_dateofpublichearing,
+        'boroughboardrecommendation', disp.dcp_boroughboardrecommendation,
+        'communityboardrecommendation', disp.dcp_communityboardrecommendation,
+        'boroughpresidentrecommendation', disp.dcp_boroughpresidentrecommendation
+      )
+    )
+    FROM dcp_communityboarddisposition AS disp
+    WHERE
+      disp.dcp_project = p.dcp_projectid
+  ) AS lup_dispositions
 FROM dcp_project p
 WHERE dcp_name = '${id:value}'
   AND dcp_visibility = 'General Public'
