@@ -101,7 +101,7 @@ router.get('/', async (req, res) => {
                 }, {}),
             };
           }),
-        ...project.lup_dispositions
+        ...(project.lup_dispositions || [])
           .map((disposition, idx) => {
             const dispositionId = `d-${project.dcp_ceqrnumber}-${idx}`;
 
