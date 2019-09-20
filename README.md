@@ -44,6 +44,8 @@ You'll need to create a `.env` file in the root of the repo, with the following 
 
 `AIRTABLE_API_KEY` - api key for accessing the airtable with youtube video references
 
+`CRM_IMPOSTER_ID` - ID used to simulate an "in-CRM" user — essentially force a specific CRM id to be returned
+
 ### GDAL Dependency
 
 The shapefile download endpoint requires the gdal `ogr2ogr` command to be available in the environment.  

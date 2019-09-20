@@ -7,6 +7,7 @@ const listProjectsQuery = getQueryFile('/projects/index.sql');
 const paginateQuery = getQueryFile('/helpers/paginate.sql');
 const standardColumns = getQueryFile('/helpers/standard-projects-columns.sql');
 const spatialColumns = getQueryFile('/helpers/shp-projects-columns.sql');
+const userProjectsQuery = getQueryFile('/projects/lup-projects.sql');
 
 const buildProjectsSQL = (req, type = 'filter') => {
   const {
@@ -87,8 +88,6 @@ const buildProjectsSQL = (req, type = 'filter') => {
       if (!['archive', 'reviewed', 'to-review', 'upcoming'].includes(project_lup_status)) {
         throw new Error('Must be one of archive, reviewed, to-review, upcoming');
       }
-
-      const userProjectsQuery = getQueryFile('/projects/lup-projects.sql');
 
       return pgp.as.format(userProjectsQuery, {
         id: contactId,
