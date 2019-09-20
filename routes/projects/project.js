@@ -52,6 +52,12 @@ router.get('/', async (req, res) => {
               id: `m-${project.dcp_ceqrnumber}-${idx}`,
             })),
           },
+          dispositions: {
+            data: (project.lup_dispositions || []).map((disposition, idx) => ({
+              type: 'disposition',
+              id: `d-${project.dcp_ceqrnumber}-${idx}`,
+            })),
+          },
         },
       },
       included: [
@@ -94,6 +100,28 @@ router.get('/', async (req, res) => {
                   return acc;
                 }, {}),
             };
+          }),
+        ...project.lup_dispositions
+          .map((disposition, idx) => {
+            return {
+              type: 'disposition',
+              id: `d-${project.dcp_ceqrnumber}-${idx}`,
+              attributes: Object.keys(disposition)
+                .reduce((acc, curr) => {
+                  const cleanedKey = curr.replace('dcp_', '');
+                  acc[camelcase(cleanedKey)] = disposition[curr];
+
+                  return acc;
+                }, {}),
+              relationships: {
+                action: {
+                  data: {
+                    id: `${project.dcp_ceqrnumber}-${idx}`,
+                    type: 'actions',
+                  }
+                }
+              },
+            }
           }),
       ],
     });

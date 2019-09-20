@@ -350,7 +350,8 @@ SELECT
         'dateofpublichearing', disp.dcp_dateofpublichearing,
         'boroughboardrecommendation', disp.dcp_boroughboardrecommendation,
         'communityboardrecommendation', disp.dcp_communityboardrecommendation,
-        'boroughpresidentrecommendation', disp.dcp_boroughpresidentrecommendation
+        'boroughpresidentrecommendation', disp.dcp_boroughpresidentrecommendation,
+        'dcp_projectaction', disp.dcp_projectaction
       )
     )
     FROM dcp_communityboarddisposition AS disp
