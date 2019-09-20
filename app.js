@@ -32,6 +32,7 @@ app.all('*', (req, res, next) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,X-Query-Id');
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, PATCH, DELETE');
   } else {
     res.header('Access-Control-Allow-Origin', '*');
   }
@@ -49,6 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 app.use('/projects.:filetype', require('./routes/projects/download'));
 app.use('/projects', require('./routes/projects'));
+app.use('/dispositions/:id', require('./routes/dispositions/create'));
 app.use('/ceqr', require('./routes/ceqr'));
 app.use('/export', require('./routes/export'));
 app.use('/login', require('./routes/login'));
