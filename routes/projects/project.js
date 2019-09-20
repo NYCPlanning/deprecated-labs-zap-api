@@ -103,9 +103,11 @@ router.get('/', async (req, res) => {
           }),
         ...project.lup_dispositions
           .map((disposition, idx) => {
+            const dispositionId = `d-${project.dcp_ceqrnumber}-${idx}`;
+
             return {
               type: 'disposition',
-              id: `d-${project.dcp_ceqrnumber}-${idx}`,
+              id: dispositionId,
               attributes: Object.keys(disposition)
                 .reduce((acc, curr) => {
                   const cleanedKey = curr.replace('dcp_', '');
@@ -116,12 +118,12 @@ router.get('/', async (req, res) => {
               relationships: {
                 action: {
                   data: {
-                    id: `${project.dcp_ceqrnumber}-${idx}`,
+                    id: dispositionId,
                     type: 'actions',
-                  }
-                }
+                  },
+                },
               },
-            }
+            };
           }),
       ],
     });
