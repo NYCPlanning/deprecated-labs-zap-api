@@ -195,7 +195,7 @@ SELECT
           WHEN mm.dcp_milestone = 'a43beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
           WHEN mm.dcp_milestone = '863beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
           WHEN mm.dcp_milestone = '7c3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualstartdate
-          WHEN mm.dcp_milestone = '7e3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
+          WHEN mm.dcp_milestone = '7e3beec4-dad0-e711-8116-1458d04e2fb8' THEN mm.dcp_actualenddate
           WHEN mm.dcp_milestone = '883beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualstartdate
           WHEN mm.dcp_milestone = '783beec4-dad0-e711-8116-1458d04e2fb8' THEN mm.dcp_actualstartdate
           WHEN mm.dcp_milestone = 'aa3beec4-dad0-e711-8116-1458d04e2fb8' AND p.dcp_publicstatus <> 'Filed' THEN mm.dcp_actualenddate
