@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 require('dotenv').config();
 
-const { SLACK_WEBHOOK_URL, HOST } = process.env;
+const { SLACK_WEBHOOK_URL, TARGET_ENV_HOST } = process.env;
 const argv = process.argv.slice(2);
 
 // init slack client
@@ -18,7 +18,7 @@ slack.send(`Initializing newly filed project update task with ${intervalMin} min
 // Parsing the response as a proxy for ensuring we are getting back an expected response
 const requestAndParse = async () => {
   try {
-    const res = await fetch(`${HOST}/projects/new-filed`);
+    const res = await fetch(`${TARGET_ENV_HOST}/projects/new-filed`);
     const json = await res.json();
     return { ok: res.ok, json };
   } catch (err) {
