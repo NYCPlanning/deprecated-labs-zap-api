@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     try {
       project.video_links = await getVideoLinks(project.dcp_name);
     } catch (e) {
-      console.log(e);
+      console.log(e); // eslint-disable-line
     }
 
     res.send({
