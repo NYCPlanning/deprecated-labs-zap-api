@@ -25,7 +25,12 @@ router.get('/', async (req, res) => {
     };
 
     await normalizeSupportDocs(project);
-    project.video_links = await getVideoLinks(project.dcp_name);
+
+    try {
+      project.video_links = await getVideoLinks(project.dcp_name);
+    } catch (e) {
+      console.log(e);
+    }
 
     res.send({
       data: {
