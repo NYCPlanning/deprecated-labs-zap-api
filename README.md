@@ -1,3 +1,5 @@
+# *** DEPRECATED ***
+
 [![CircleCI](https://circleci.com/gh/NYCPlanning/labs-zap-api/tree/develop.svg?style=svg)](https://circleci.com/gh/NYCPlanning/labs-zap-api/tree/develop)
 
 # labs-zap-api
